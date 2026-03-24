@@ -302,7 +302,7 @@ export default function ChatInput({
                         <polyline points="21 15 16 10 5 21" />
                       </svg>
                     </span>
-                    Fotos e imágenes
+                    Fotos   
                   </button>
 
                   <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "3px 6px" }} />
