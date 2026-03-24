@@ -401,13 +401,6 @@ export default function ChatInput({
         </div>
       </form>
 
-      <p style={{
-        textAlign: "center", marginTop: 10,
-        fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300,
-        fontSize: 12, color: "rgba(255,255,255,0.18)",
-      }}>
-        Alt+K para enfoque rápido
-      </p>
 
       {/* Hidden inputs */}
       <input type="file" ref={photoRef} style={{ display: "none" }} multiple accept="image/*"
