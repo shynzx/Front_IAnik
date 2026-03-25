@@ -5,7 +5,7 @@ import { BG, pp } from "../chat/tokens";
 import Sidebar from "../chat/Sidebar";
 
 interface RegisterScreenProps {
-  onRegister: (name: string, email: string, password: string) => void;
+  onRegister: (name: string, email: string, password: string) => Promise<void>;
   onGoLogin: () => void;
   onGoHome: () => void;
 }
@@ -60,8 +60,8 @@ export default function RegisterScreen({
     setLoading(true);
     try {
       await onRegister(name, email, password);
-    } catch {
-      setError("No se pudo crear la cuenta. Inténtalo de nuevo.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear la cuenta. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }

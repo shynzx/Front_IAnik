@@ -5,7 +5,7 @@ import { BG, pp } from "../chat/tokens";
 import Sidebar from "../chat/Sidebar";
 
 interface LoginScreenProps {
-  onLogin: (email: string, password: string) => void;
+  onLogin: (email: string, password: string) => Promise<void>;
   onGoRegister: () => void;
   onGoRecover: () => void;
   onGoHome: () => void;
@@ -32,8 +32,8 @@ export default function LoginScreen({
     setLoading(true);
     try {
       await onLogin(email, password);
-    } catch {
-      setError("Correo o contraseña incorrectos. Inténtalo de nuevo.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Correo o contraseña incorrectos. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }

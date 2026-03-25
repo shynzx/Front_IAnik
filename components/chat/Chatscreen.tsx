@@ -23,6 +23,7 @@ interface ChatScreenProps {
   onInputChange: (value: string) => void;
   onSubmit: (e: FormEvent, attachments: Attachment[]) => void;
   onFiles: (files: FileList | null) => void;
+  onDeleteDoc: (doc: Doc) => Promise<void>;
   onDragLeave: () => void;
   onDocsOpen: (value: boolean) => void;
   onDocsFullscreen: (value: boolean) => void;
@@ -48,6 +49,7 @@ export default function ChatScreen({
   onInputChange,
   onSubmit,
   onFiles,
+  onDeleteDoc,
   onDragLeave,
   onDocsOpen,
   onDocsFullscreen,
@@ -121,6 +123,7 @@ export default function ChatScreen({
               onFullscreen={onDocsFullscreen}
               onClose={() => { onDocsFullscreen(false); onDocsOpen(false); }}
               onFiles={onFiles}
+              onDeleteDoc={onDeleteDoc}
             />
           </aside>
         )}
@@ -135,6 +138,7 @@ export default function ChatScreen({
             onFullscreen={onDocsFullscreen}
             onClose={() => { onDocsFullscreen(false); onDocsOpen(false); }}
             onFiles={onFiles}
+            onDeleteDoc={onDeleteDoc}
           />
         )}
 

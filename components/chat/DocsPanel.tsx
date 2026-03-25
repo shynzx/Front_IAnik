@@ -13,6 +13,7 @@ interface DocsPanelProps {
   onFullscreen: (value: boolean) => void;
   onClose: () => void;
   onFiles: (files: FileList | null) => void;
+  onDeleteDoc: (doc: Doc) => Promise<void>;
 }
 
 /* ── Document viewer modal ──────────────────────────────── */
@@ -181,10 +182,24 @@ export default function DocsPanel({
   onFullscreen,
   onClose,
   onFiles,
+  onDeleteDoc,
 }: DocsPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (doc: Doc, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (deletingId === doc.id) return;
+    setDeletingId(doc.id);
+    try {
+      await onDeleteDoc(doc);
+      if (selectedDoc?.id === doc.id) setSelectedDoc(null);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Working search: filters by name AND content
   const filteredDocs = docs.filter((d) => {
@@ -369,7 +384,7 @@ export default function DocsPanel({
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
               <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
-                Sin resultados para "{docSearch}"
+                Sin resultados para &quot;{docSearch}&quot;
               </p>
             </div>
           )}
@@ -392,6 +407,8 @@ export default function DocsPanel({
                 doc={doc}
                 searchQuery={docSearch}
                 onClick={() => setSelectedDoc(doc)}
+                onDelete={(e) => handleDelete(doc, e)}
+                deleting={deletingId === doc.id}
               />
             ))}
           </div>
@@ -629,11 +646,33 @@ export default function DocsPanel({
                     </span>
                   )}
                 </div>
-                {/* Eye icon hint */}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+                <button
+                  onClick={(e) => handleDelete(doc, e)}
+                  disabled={deletingId === doc.id}
+                  style={{
+                    color: "rgba(255,255,255,0.35)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: deletingId === doc.id ? "not-allowed" : "pointer",
+                    padding: 6,
+                    borderRadius: 8,
+                    lineHeight: 0,
+                    flexShrink: 0,
+                  }}
+                  title="Eliminar"
+                >
+                  {deletingId === doc.id ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12a9 9 0 11-6.219-8.56" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2" />
+                      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                    </svg>
+                  )}
+                </button>
               </div>
             ))
           )}
@@ -703,10 +742,14 @@ function DocCard({
   doc,
   searchQuery,
   onClick,
+  onDelete,
+  deleting,
 }: {
   doc: Doc;
   searchQuery: string;
   onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+  deleting: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const preview = doc.content?.slice(0, 120).trim();
@@ -771,18 +814,38 @@ function DocCard({
             {formatFileSize(doc.size)}
           </span>
         )}
-        <span
-          style={{
-            fontFamily: "var(--font-poppins), sans-serif",
-            fontWeight: 300,
-            fontSize: 11,
-            color: hovered ? "#826dd2" : "rgba(255,255,255,0.25)",
-            marginLeft: "auto",
-            transition: "color .15s",
-          }}
-        >
-          Ver contenido →
-        </span>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "var(--font-poppins), sans-serif",
+              fontWeight: 300,
+              fontSize: 11,
+              color: hovered ? "#826dd2" : "rgba(255,255,255,0.25)",
+              transition: "color .15s",
+            }}
+          >
+            Ver contenido →
+          </span>
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            style={{
+              color: "rgba(255,255,255,0.4)",
+              background: "transparent",
+              border: "none",
+              cursor: deleting ? "not-allowed" : "pointer",
+              padding: 2,
+              lineHeight: 0,
+            }}
+            title="Eliminar"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2" />
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
