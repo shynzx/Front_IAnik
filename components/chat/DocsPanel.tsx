@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Doc, pp, gradText } from "./tokens";
 import DocIcon from "./DocIcon";
+import { formatFileSize } from "./Filereader";
 
 
 interface DocsPanelProps {
@@ -609,6 +610,74 @@ export default function DocsPanel({
             </div>
           ) : (
             filteredDocs.slice(0, 6).map((doc) => (
+              doc.loading ? (
+                /* ── Fila de carga con barra de progreso ── */
+                <div
+                  key={doc.id}
+                  style={{
+                    padding: "10px 10px 12px",
+                    borderRadius: 10,
+                    marginBottom: 2,
+                    background: "rgba(130,109,210,0.06)",
+                    border: "1px solid rgba(130,109,210,0.15)",
+                  }}
+                >
+                  <style>{`
+                    @keyframes progressBar {
+                      0%   { width: 8%; }
+                      30%  { width: 45%; }
+                      60%  { width: 72%; }
+                      85%  { width: 88%; }
+                      100% { width: 93%; }
+                    }
+                    @keyframes progressGlow {
+                      0%, 100% { opacity: 1; }
+                      50%      { opacity: 0.6; }
+                    }
+                  `}</style>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    {/* Icono animado */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: "50%",
+                      background: "rgba(130,109,210,0.2)",
+                      border: "1px solid rgba(130,109,210,0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
+                      animation: "progressGlow 1.6s ease-in-out infinite",
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 3v4a1 1 0 001 1h4" />
+                        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{
+                        ...pp, fontSize: 12, color: "rgba(255,255,255,0.7)",
+                        overflow: "hidden", textOverflow: "ellipsis",
+                        whiteSpace: "nowrap", display: "block",
+                      }}>
+                        {doc.name}
+                      </span>
+                      <span style={{ ...pp, fontSize: 11, color: "#826dd2" }}>
+                        Procesando…
+                      </span>
+                    </div>
+                  </div>
+                  {/* Barra de progreso */}
+                  <div style={{
+                    height: 4, borderRadius: 99,
+                    background: "rgba(255,255,255,0.07)",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{
+                      height: "100%", borderRadius: 99,
+                      background: "linear-gradient(90deg, #826dd2, #b09ae8)",
+                      animation: "progressBar 8s cubic-bezier(0.4,0,0.2,1) forwards",
+                      boxShadow: "0 0 8px rgba(130,109,210,0.7)",
+                    }} />
+                  </div>
+                </div>
+              ) : (
               <div
                 key={doc.id}
                 className="doc-row"
@@ -674,6 +743,7 @@ export default function DocsPanel({
                   )}
                 </button>
               </div>
+              )
             ))
           )}
         </div>

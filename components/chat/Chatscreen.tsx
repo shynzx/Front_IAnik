@@ -31,10 +31,14 @@ interface ChatScreenProps {
   onTypingComplete: () => void;
   onGoLogin: () => void;
   onGoRegister: () => void;
+  onEditMessage: (index: number, newContent: string) => void;
 }
 
 const SIDEBAR_W  = 64;
 const DOCPANEL_W = 264;
+// Auth buttons are ~220px wide at right:24 — reserve that from the right
+// so bubbles never reach them.
+const AUTH_BTN_RESERVED = 230;
 
 export default function ChatScreen({
   messages,
@@ -57,26 +61,41 @@ export default function ChatScreen({
   onTypingComplete,
   onGoLogin,
   onGoRegister,
+  onEditMessage,
 }: ChatScreenProps) {
-  // How much the main content area is offset from the left
   const panelOpen   = docsOpen && !docsFullscreen;
   const mainPadLeft = SIDEBAR_W + (panelOpen ? DOCPANEL_W : 0);
 
+  // When the docs panel is open the main column is narrower, so we shrink
+  // the content max-width to keep everything centred and away from the
+  // auth buttons on the right.
+  const contentMaxWidth = panelOpen ? 670 : 720;
+
   return (
     <>
-      {/* ── Global layout shell ─────────────────────────── */}
       <style>{`
         html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
 
-        /* Smooth panel transition */
-        .chat-main {
-          transition: margin-left 0.22s ease, width 0.22s ease;
+        .chat-main { transition: margin-left 0.22s ease, width 0.22s ease; }
+        .chat-content { transition: max-width 0.22s ease; }
+
+        /* Thin purple scrollbar flush against the right window edge */
+        .chat-scroll::-webkit-scrollbar       { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb {
+          background: rgba(130,109,210,0.35);
+          border-radius: 99px;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(130,109,210,0.6);
         }
 
-        /* Responsive: collapse docs panel on small screens */
         @media (max-width: 640px) {
           .docs-panel-aside { display: none !important; }
-          .chat-main        { margin-left: ${SIDEBAR_W}px !important; width: calc(100% - ${SIDEBAR_W}px) !important; }
+          .chat-main {
+            margin-left: ${SIDEBAR_W}px !important;
+            width: calc(100% - ${SIDEBAR_W}px) !important;
+          }
         }
       `}</style>
 
@@ -91,7 +110,7 @@ export default function ChatScreen({
           position: "relative",
         }}
       >
-        {/* ── Fixed sidebar (always present) ────────────── */}
+        {/* ── Fixed sidebar ─────────────────────────────────── */}
         <Sidebar
           phase="chat"
           docsOpen={docsOpen}
@@ -101,7 +120,7 @@ export default function ChatScreen({
           onDocsClick={() => onDocsOpen(!docsOpen)}
         />
 
-        {/* ── Docs panel (slides in beside sidebar) ─────── */}
+        {/* ── Docs panel (beside sidebar) ────────────────────── */}
         {docsOpen && !docsFullscreen && (
           <aside
             className="docs-panel-aside"
@@ -128,7 +147,6 @@ export default function ChatScreen({
           </aside>
         )}
 
-        {/* Fullscreen docs panel */}
         {docsOpen && docsFullscreen && (
           <DocsPanel
             docs={docs}
@@ -142,7 +160,7 @@ export default function ChatScreen({
           />
         )}
 
-        {/* ── Main chat area ────────────────────────────── */}
+        {/* ── Main column ───────────────────────────────────── */}
         <main
           className="chat-main"
           style={{
@@ -155,7 +173,7 @@ export default function ChatScreen({
             position: "relative",
           }}
         >
-          {/* Auth buttons — positioned inside main so they never overlap the panel */}
+          {/* Auth buttons — floats at top-right, never scrolls */}
           <div
             style={{
               position: "absolute",
@@ -169,28 +187,37 @@ export default function ChatScreen({
             <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
           </div>
 
-          {/* Scrollable messages area */}
+          {/* ── Scrollable messages ─────────────────────────── */}
           <div
+            className="chat-scroll"
             style={{
               flex: 1,
               overflowY: "auto",
+              overflowX: "hidden",
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(130,109,210,0.35) transparent",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              padding: "64px 32px 0",
-              // Custom scrollbar
-              scrollbarWidth: "thin",
-              scrollbarColor: "rgba(130,109,210,0.3) transparent",
+              paddingTop: 68,
+              paddingRight: 32,
+              paddingLeft: panelOpen ? 12 : 32,
+              paddingBottom: 0,
             }}
           >
-            <MessageList
-              messages={messages}
-              loading={loading}
-              onTypingComplete={onTypingComplete}
-            />
+            {/* Shrink content width when panel is open so messages stay
+                centred and never reach the auth buttons on the right */}
+            <div className="chat-content" style={{ width: "100%", maxWidth: contentMaxWidth }}>
+              <MessageList
+                messages={messages}
+                loading={loading}
+                onTypingComplete={onTypingComplete}
+                onEditMessage={onEditMessage}
+              />
+            </div>
           </div>
 
-          {/* Pinned input bar */}
+          {/* ── Pinned input bar ────────────────────────────── */}
           <div
             style={{
               flexShrink: 0,
@@ -200,18 +227,21 @@ export default function ChatScreen({
               background: "linear-gradient(to top, rgba(0,0,0,0.35) 60%, transparent)",
             }}
           >
-            <ChatInput
-              value={input}
-              loading={loading}
-              typing={typing}
-              onChange={onInputChange}
-              onSubmit={onSubmit}
-              onFiles={onFiles}
-            />
+            {/* ChatInput has its own maxWidth:720 internally; we override
+                via a wrapper so it matches the message area exactly */}
+            <div className="chat-content" style={{ width: "100%", maxWidth: contentMaxWidth }}>
+              <ChatInput
+                value={input}
+                loading={loading}
+                typing={typing}
+                onChange={onInputChange}
+                onSubmit={onSubmit}
+                onFiles={onFiles}
+              />
+            </div>
           </div>
         </main>
 
-        {/* ── Drag overlay ──────────────────────────────── */}
         {dragActive && <DragOverlay onDrop={onFiles} onLeave={onDragLeave} />}
       </div>
     </>

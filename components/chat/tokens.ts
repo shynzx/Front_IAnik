@@ -18,8 +18,11 @@ export type Doc = {
   type: "pdf" | "word";
   id: string;
   content?: string;
+  htmlContent?: string;  // HTML limpio para DOCX (mammoth)
+  fileUrl?: string;      // blob URL para visor PDF
   size?: number;
   uploadedAt?: Date;
+  loading?: boolean;     // true mientras se procesa el archivo
 };
 
 /* ─── Design tokens ──────────────────────────────────────── */

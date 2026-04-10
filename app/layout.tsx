@@ -26,6 +26,20 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased font-sans`}
       >
+        {/* PDF.js — needed to extract text from uploaded PDFs */}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if (typeof window !== 'undefined') {
+              window.addEventListener('load', function() {
+                if (window.pdfjsLib) {
+                  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                }
+              });
+            }
+          `
+        }} />
         {children}
       </body>
     </html>

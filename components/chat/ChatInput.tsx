@@ -6,7 +6,7 @@ export type Attachment = {
   id: string;
   file: File;
   kind: "image" | "document";
-  preview?: string; // object URL for images
+  preview?: string;
   name: string;
 };
 
@@ -16,7 +16,7 @@ interface ChatInputProps {
   typing: boolean;
   onChange: (value: string) => void;
   onSubmit: (e: FormEvent, attachments: Attachment[]) => void;
-  onFiles: (files: FileList | null) => void;
+  onFiles?: (files: FileList | null) => void; // solo para el panel de docs, NO se llama desde aquí
 }
 
 export default function ChatInput({
@@ -55,7 +55,7 @@ export default function ChatInput({
     return () => attachments.forEach(a => a.preview && URL.revokeObjectURL(a.preview));
   }, []);
 
-  /* ── Add files ── */
+  /* ── Add files — SOLO adjunta al mensaje, NO toca el panel de documentos ── */
   const addFiles = (files: FileList | null, kind: "image" | "document") => {
     if (!files) return;
     const next: Attachment[] = Array.from(files).map(file => ({
@@ -89,18 +89,21 @@ export default function ChatInput({
     name.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
 
   return (
-    <div style={{ width: "100%", maxWidth: 720 }}>
+    <div style={{ width: "100%" }}>
       <style>{`
         @keyframes attachMenuIn {
-          from { opacity:0; transform:translateY(6px) scale(.97); }
+          from { opacity:0; transform:translateY(8px) scale(.96); }
           to   { opacity:1; transform:translateY(0)   scale(1);   }
         }
         @keyframes chipIn {
           from { opacity:0; transform:scale(.85); }
           to   { opacity:1; transform:scale(1);   }
         }
-        .attach-opt:hover  { background:rgba(130,109,210,0.15)!important; color:#fff!important; }
+        .attach-opt:hover { background:rgba(130,109,210,0.13)!important; }
+        .attach-opt:hover .attach-opt-label { color:#fff!important; }
         .chip-remove:hover { background:rgba(255,255,255,0.22)!important; }
+        .send-btn:hover:not(:disabled) { background:#9c88e0!important; }
+        .clip-btn:hover { color:#826dd2!important; background:rgba(130,109,210,0.1)!important; }
       `}</style>
 
       <form onSubmit={handleSubmit}>
@@ -119,14 +122,14 @@ export default function ChatInput({
           }}
         >
 
-          {/* ── Chips row (shown when there are attachments) ── */}
+          {/* ── Chips row ── */}
           {attachments.length > 0 && (
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
                 gap: 6,
-                padding: "2px 6px 8px 42px", // indent to align with text input
+                padding: "2px 6px 8px 42px",
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 marginBottom: 4,
               }}
@@ -141,7 +144,7 @@ export default function ChatInput({
                     background: "rgba(130,109,210,0.14)",
                     border: "1px solid rgba(130,109,210,0.3)",
                     borderRadius: 10,
-                    padding: a.kind === "image" ? "3px 8px 3px 3px" : "4px 8px 4px 7px",
+                    padding: "3px 8px 3px 4px",
                     animation: "chipIn .15s ease",
                     maxWidth: 200,
                     minWidth: 0,
@@ -153,72 +156,54 @@ export default function ChatInput({
                       src={a.preview}
                       alt={a.name}
                       style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 7,
-                        objectFit: "cover",
-                        flexShrink: 0,
-                        display: "block",
+                        width: 34, height: 34, borderRadius: 7,
+                        objectFit: "cover", flexShrink: 0, display: "block",
                       }}
                     />
                   )}
 
-                  {/* Document badge */}
+                  {/* Document badge — minimal dark style matching project standard */}
                   {a.kind === "document" && (
                     <span
                       style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        background: "linear-gradient(135deg,#42a5f5,#7e57c2)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        width: 28, height: 28, borderRadius: 6,
+                        background: "rgba(130,109,210,0.12)",
+                        border: "1px solid rgba(130,109,210,0.25)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
                         flexShrink: 0,
-                        fontSize: 8,
-                        fontWeight: 700,
-                        color: "#fff",
-                        letterSpacing: 0.3,
                       }}
                     >
-                      {fileExt(a.name)}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 3v4a1 1 0 001 1h4" />
+                        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                        <line x1="9" y1="13" x2="15" y2="13" />
+                        <line x1="9" y1="17" x2="13" y2="17" />
+                      </svg>
                     </span>
                   )}
 
-                  {/* Filename */}
                   <span
                     style={{
                       fontFamily: "var(--font-poppins), sans-serif",
-                      fontWeight: 300,
-                      fontSize: 12,
+                      fontWeight: 300, fontSize: 12,
                       color: "rgba(255,255,255,0.8)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      maxWidth: 110,
+                      overflow: "hidden", textOverflow: "ellipsis",
+                      whiteSpace: "nowrap", maxWidth: 110,
                     }}
                   >
                     {a.name}
                   </span>
 
-                  {/* Remove button */}
                   <button
                     type="button"
                     className="chip-remove"
                     onClick={() => removeAttachment(a.id)}
                     style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 4,
-                      background: "rgba(255,255,255,0.1)",
-                      border: "none",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      padding: 0,
-                      transition: "background .12s",
+                      width: 16, height: 16, borderRadius: 4,
+                      background: "rgba(255,255,255,0.1)", border: "none",
+                      cursor: "pointer", display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, padding: 0, transition: "background .12s",
                     }}
                   >
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round">
@@ -234,22 +219,19 @@ export default function ChatInput({
           {/* ── Main row ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
 
-            {/* Clip button */}
+            {/* Clip / attach button */}
             <div style={{ position: "relative", flexShrink: 0 }}>
               <button
                 ref={clipRef}
                 type="button"
+                className="clip-btn"
                 onClick={() => setMenuOpen(v => !v)}
                 style={{
                   color: menuOpen ? "#826dd2" : "rgba(255,255,255,0.35)",
                   background: menuOpen ? "rgba(130,109,210,0.12)" : "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 8,
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  border: "none", cursor: "pointer",
+                  padding: 8, borderRadius: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "color .15s, background .15s",
                 }}
               >
@@ -258,7 +240,7 @@ export default function ChatInput({
                 </svg>
               </button>
 
-              {/* Dropdown menu */}
+              {/* ── Dropdown menu ── */}
               {menuOpen && (
                 <div
                   ref={menuRef}
@@ -271,13 +253,13 @@ export default function ChatInput({
                     border: "1px solid rgba(255,255,255,0.1)",
                     borderRadius: 14,
                     padding: 6,
-                    minWidth: 200,
-                    boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(130,109,210,0.15)",
+                    minWidth: 300,
+                    boxShadow: "0 12px 400px rgba(0,0,0,0.6), 0 0 0 1px rgba(130,109,210,0.15)",
                     zIndex: 100,
                     animation: "attachMenuIn .15s ease",
                   }}
                 >
-                  {/* Photos */}
+                  {/* ── Fotos ── */}
                   <button
                     type="button"
                     className="attach-opt"
@@ -292,22 +274,26 @@ export default function ChatInput({
                     }}
                   >
                     <span style={{
-                      width: 32, height: 32, borderRadius: 8,
-                      background: "linear-gradient(135deg,#f06292,#ab47bc)",
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                      background: "rgba(130,109,210,0.12)",
+                      border: "1px solid rgba(130,109,210,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                         <circle cx="8.5" cy="8.5" r="1.5" />
                         <polyline points="21 15 16 10 5 21" />
                       </svg>
                     </span>
-                    Fotos   
+                    Agregar foto
+                    <span style={{ marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 }}>
+                      JPG, PNG, GIF
+                    </span>
                   </button>
 
                   <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "3px 6px" }} />
 
-                  {/* Files */}
+                  {/* ── Archivos ── */}
                   <button
                     type="button"
                     className="attach-opt"
@@ -322,16 +308,19 @@ export default function ChatInput({
                     }}
                   >
                     <span style={{
-                      width: 32, height: 32, borderRadius: 8,
-                      background: "linear-gradient(135deg,#42a5f5,#7e57c2)",
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                      background: "rgba(130,109,210,0.12)",
+                      border: "1px solid rgba(130,109,210,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 3v4a1 1 0 001 1h4" />
                         <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                        <line x1="9" y1="13" x2="15" y2="13" />
+                        <line x1="9" y1="17" x2="13" y2="17" />
                       </svg>
                     </span>
-                    Archivos
+                    Agregar archivo
                     <span style={{ marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 }}>
                       PDF, DOC
                     </span>
@@ -340,22 +329,24 @@ export default function ChatInput({
               )}
             </div>
 
-            {/* Text */}
+            {/* Text input */}
             <input
               value={value}
               onChange={(e) => onChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (canSend) handleSubmit(e as unknown as FormEvent);
+                }
+              }}
               placeholder={attachments.length ? "Añade un mensaje..." : "Escribe tu mensaje a IAnik"}
               disabled={loading || typing}
               style={{
                 flex: 1,
-                background: "transparent",
-                border: "none",
-                outline: "none",
+                background: "transparent", border: "none", outline: "none",
                 fontFamily: "var(--font-poppins), sans-serif",
-                fontWeight: 300,
-                fontSize: 15,
-                color: "#fff",
-                padding: "6px 0",
+                fontWeight: 300, fontSize: 15,
+                color: "#fff", padding: "6px 0",
                 caretColor: "#826dd2",
               }}
             />
@@ -364,27 +355,22 @@ export default function ChatInput({
             {attachments.length > 0 && (
               <span style={{
                 flexShrink: 0,
-                background: "#826dd2",
-                color: "#fff",
-                borderRadius: 20,
-                fontSize: 11,
+                background: "#826dd2", color: "#fff",
+                borderRadius: 20, fontSize: 11,
                 fontFamily: "var(--font-poppins), sans-serif",
-                fontWeight: 500,
-                padding: "2px 7px",
-                letterSpacing: 0.2,
+                fontWeight: 500, padding: "2px 7px", letterSpacing: 0.2,
               }}>
                 {attachments.length}
               </span>
             )}
 
-            {/* Send */}
+            {/* Send button */}
             <button
               type="submit"
+              className="send-btn"
               disabled={!canSend}
               style={{
-                padding: 10,
-                borderRadius: 10,
-                flexShrink: 0,
+                padding: 10, borderRadius: 10, flexShrink: 0,
                 border: "none",
                 cursor: canSend ? "pointer" : "not-allowed",
                 background: canSend ? "#826dd2" : "rgba(255,255,255,0.05)",
@@ -401,12 +387,17 @@ export default function ChatInput({
         </div>
       </form>
 
-
-      {/* Hidden inputs */}
-      <input type="file" ref={photoRef} style={{ display: "none" }} multiple accept="image/*"
-        onChange={(e) => addFiles(e.target.files, "image")} />
-      <input type="file" ref={fileRef}  style={{ display: "none" }} multiple accept=".pdf,.doc,.docx"
-        onChange={(e) => { addFiles(e.target.files, "document"); onFiles(e.target.files); }} />
+      {/* Hidden file inputs — these feed ONLY the message attachments */}
+      <input
+        type="file" ref={photoRef} style={{ display: "none" }}
+        multiple accept="image/*"
+        onChange={(e) => addFiles(e.target.files, "image")}
+      />
+      <input
+        type="file" ref={fileRef} style={{ display: "none" }}
+        multiple accept=".pdf,.doc,.docx"
+        onChange={(e) => addFiles(e.target.files, "document")}
+      />
     </div>
   );
 }

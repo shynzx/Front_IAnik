@@ -33,7 +33,7 @@ export default function Sidebar({
         alignItems: "center",
         paddingTop: 24,
         paddingBottom: 24,
-        gap: 20,
+        gap: 10,
         zIndex: 50,
       }}
     >

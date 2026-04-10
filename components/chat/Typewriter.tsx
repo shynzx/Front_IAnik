@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface TypewriterProps {
   text: string;
@@ -10,20 +10,28 @@ interface TypewriterProps {
 
 export default function Typewriter({ text, onUpdate, onComplete }: TypewriterProps) {
   const [d, setD] = useState("");
+  // Use refs so changing callbacks never restart the effect
+  const onUpdateRef  = useRef(onUpdate);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => { onUpdateRef.current  = onUpdate;  }, [onUpdate]);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
-    const w = text.split(/(\s+)/);
+    // Reset display when text changes (new message)
+    setD("");
+    const words = text.split(/(\s+)/);
     let i = 0;
     const t = setInterval(() => {
-      setD(w.slice(0, ++i).join(""));
-      onUpdate?.();
-      if (i >= w.length) {
+      setD(words.slice(0, ++i).join(""));
+      onUpdateRef.current?.();
+      if (i >= words.length) {
         clearInterval(t);
-        onComplete?.();
+        onCompleteRef.current?.();
       }
     }, 20);
     return () => clearInterval(t);
-  }, [text, onUpdate, onComplete]);
+  }, [text]); // Only restart when the actual text changes
 
   return <>{d}</>;
 }

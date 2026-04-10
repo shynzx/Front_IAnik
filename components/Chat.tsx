@@ -10,11 +10,11 @@ import RecoverScreen from "./Log/Recoverscreen";
 import { Attachment } from "./chat/ChatInput";
 import { loginWithPassword, signupUser, ragUploadFile, ragAsk, ragListFiles, ragDeleteFile, RAGFileResponse } from "@/lib/api";
 
-
 type Screen = "onboard" | "chat" | "login" | "register" | "recover";
 
 export default function Chat() {
-  const [screen, setScreen] = useState<Screen>("onboard");
+
+  const [screen, setScreen] = useState<Screen>("chat");
 
   const [messages, setMessages]     = useState<Msg[]>([]);
   const [docs, setDocs]             = useState<Doc[]>([]);
@@ -25,6 +25,11 @@ export default function Chat() {
   const [docsOpen, setDocsOpen]     = useState(false);
   const [docsFullscreen, setDocsFullscreen] = useState(false);
   const [docSearch, setDocSearch]   = useState("");
+
+  useEffect(() => {
+    localStorage.setItem("auth_token", "fake-token");
+    localStorage.setItem("auth_token_type", "bearer");
+  }, []);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem("auth_token");
@@ -56,7 +61,6 @@ export default function Chat() {
         type: file.toLowerCase().endsWith(".pdf") ? "pdf" : "word",
       };
     }
-
     const name = file.filename || file.name || "archivo";
     return {
       id: name,
@@ -69,8 +73,12 @@ export default function Chat() {
   };
 
   const loadRagFiles = useCallback(async () => {
-    const files = await ragListFiles(getAuthHeader());
-    setDocs(files.map(normalizeRagFile));
+    try {
+      const files = await ragListFiles(getAuthHeader());
+      setDocs(files.map(normalizeRagFile));
+    } catch {
+      console.log("Modo sin backend: ignorando carga de archivos");
+    }
   }, []);
 
   useEffect(() => {
@@ -81,47 +89,49 @@ export default function Chat() {
 
   const handleFiles = async (files: FileList | null) => {
     if (!files) return;
-    if (!getAuthHeader()) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "sys", content: "Inicia sesión para subir archivos al RAG." },
-      ]);
-      setScreen("login");
-      return;
-    }
-
     const validFiles = Array.from(files).filter((f) => /\.(pdf|doc|docx)$/i.test(f.name));
     if (!validFiles.length) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "sys", content: "Solo se permiten archivos PDF, DOC o DOCX para RAG." },
-      ]);
+      setMessages((prev) => [...prev, { role: "sys", content: "Solo se permiten archivos PDF, DOC o DOCX." }]);
       return;
     }
-
-    try {
-      for (const file of validFiles) {
-        await ragUploadFile(file, getAuthHeader());
-      }
-      await loadRagFiles();
-      setMessages((prev) => [
-        ...prev,
-        { role: "sys", content: `${validFiles.length} archivo${validFiles.length > 1 ? "s" : ""} cargado${validFiles.length > 1 ? "s" : ""} al RAG.` },
-      ]);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "No se pudieron subir los archivos al RAG.";
-      if (isAuthError(errorMessage)) {
-        clearAuth();
-        setScreen("login");
-      }
-      setMessages((prev) => [
-        ...prev,
-        { role: "sys", content: errorMessage },
-      ]);
+    const newDocs: Doc[] = [];
+    for (const file of validFiles) {
+      const name = file.name;
+      const id   = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const type: Doc["type"] = name.toLowerCase().endsWith(".pdf") ? "pdf" : "word";
+      let uploaded = false;
+      try {
+        const auth = getAuthHeader();
+        if (auth) { await ragUploadFile(file, auth); uploaded = true; }
+      } catch { /* ignore */ }
+      let content = "";
+      try {
+        const { extractFileContent } = await import("./chat/Filereader");
+        content = await extractFileContent(file);
+      } catch { /* ignore */ }
+      newDocs.push({ id, name, type, content, size: file.size, uploadedAt: new Date() });
+      if (uploaded) { try { await loadRagFiles(); } catch { /* ignore */ } }
     }
-
+    setDocs((prev) => {
+      const existingNames = new Set(prev.map((d) => d.name));
+      const unique = newDocs.filter((d) => !existingNames.has(d.name));
+      return unique.length ? [...prev, ...unique] : prev;
+    });
     setDragActive(false);
-    if (screen === "onboard") setScreen("chat");
+  };
+
+  // ── Función central de envío/regeneración ──────────────────────────────
+  const askAI = async (question: string, attachments: Msg["attachments"] = []) => {
+    setLoading(true);
+    // 🔥 Respuesta fake (modo demo) — reemplaza con tu llamada ragAsk()
+    setTimeout(() => {
+      setLoading(false);
+      setTyping(true);
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "Respuesta simulada (sin backend)." },
+      ]);
+    }, 1000);
   };
 
   const handleSubmit = async (e: FormEvent, attachments: Attachment[]) => {
@@ -129,140 +139,64 @@ export default function Chat() {
     if ((!input.trim() && attachments.length === 0) || loading || typing) return;
 
     const question = input.trim();
-    const userMsg: Msg = {
-      role: "user",
-      content: question,
-      attachments: attachments.map((a) => ({
-        id: a.id,
-        kind: a.kind,
-        name: a.name,
-        preview: a.preview,
-      })),
-    };
+    const msgAttachments: Msg["attachments"] = attachments.map((a) => ({
+      id: a.id,
+      kind: a.kind,
+      name: a.name,
+      preview: a.preview,
+    }));
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { role: "user", content: question, attachments: msgAttachments }]);
     setInput("");
-
-    if (!question) return;
-
-    const filenames = docs.map((doc) => doc.name);
-    if (filenames.length === 0) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "sys", content: "Primero sube al menos un archivo para consultar el RAG." },
-      ]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const answer = await ragAsk(question, filenames, getAuthHeader());
-      setLoading(false);
-      setTyping(true);
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", content: answer },
-      ]);
-    } catch (err) {
-      setLoading(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "sys",
-          content: err instanceof Error ? err.message : "No se pudo consultar el sistema RAG.",
-        },
-      ]);
-    }
+    await askAI(question, msgAttachments);
   };
 
-  const handleLogin = async (email: string, password: string) => {
-    const tokenData = await loginWithPassword(email, password);
-    localStorage.setItem("auth_token", tokenData.access_token);
-    localStorage.setItem("auth_token_type", tokenData.token_type || "bearer");
-    await loadRagFiles();
-    setScreen("chat");
-  };
+  // ── Editar mensaje de usuario ───────────────────────────────────────────
+  // Recibe el índice del mensaje editado y el nuevo texto.
+  // Elimina ese mensaje y todo lo que vino después, luego regenera.
+  const handleEditMessage = useCallback(async (msgIndex: number, newContent: string) => {
+    if (!newContent.trim() || loading || typing) return;
 
-  const handleRegister = async (name: string, email: string, password: string) => {
-    await signupUser(name, email, password);
-    const tokenData = await loginWithPassword(email, password);
-    localStorage.setItem("auth_token", tokenData.access_token);
-    localStorage.setItem("auth_token_type", tokenData.token_type || "bearer");
-    await loadRagFiles();
-    setScreen("chat");
-  };
+    setMessages((prev) => {
+      // Conserva todo hasta el mensaje editado (exclusive) y agrega la versión nueva
+      const before = prev.slice(0, msgIndex);
+      const edited = { ...prev[msgIndex], content: newContent.trim() };
+      return [...before, edited];
+    });
+
+    await askAI(newContent.trim());
+  }, [loading, typing]);
+
+  const handleLogin = async () => { setScreen("chat"); };
+  const handleRegister = async () => { setScreen("chat"); };
 
   const handleDeleteDoc = async (doc: Doc) => {
-    await ragDeleteFile(doc.name, getAuthHeader());
-    await loadRagFiles();
+    try {
+      const auth = getAuthHeader();
+      if (auth) await ragDeleteFile(doc.id, auth);
+    } catch { /* ignore */ }
+    setDocs((prev) => prev.filter((d) => d.id !== doc.id));
   };
 
   useEffect(() => {
     if (screen !== "chat") return;
-    loadRagFiles().catch((err) => {
-      const errorMessage = err instanceof Error ? err.message : "No se pudo cargar la lista de archivos del RAG.";
-      if (isAuthError(errorMessage)) {
-        clearAuth();
-        setScreen("login");
-      }
-      setMessages((prev) => {
-        if (prev.some((msg) => msg.role === "sys" && msg.content.includes("No se pudo cargar la lista de archivos del RAG"))) {
-          return prev;
-        }
-        return [...prev, { role: "sys", content: errorMessage }];
-      });
-    });
+    loadRagFiles();
   }, [screen, loadRagFiles]);
 
-  const handleRecover = async (email: string) => {
-    console.log("Recover:", email);
-    setScreen("login");
-  };
+  const handleRecover = async () => { setScreen("login"); };
 
-  if (screen === "login") {
-    return (
-      <LoginScreen
-        onLogin={handleLogin}
-        onGoRegister={() => setScreen("register")}
-        onGoRecover={() => setScreen("recover")}
-        onGoHome={() => setScreen("onboard")}
-      />
-    );
-  }
-
-  if (screen === "register") {
-    return (
-      <RegisterScreen
-        onRegister={handleRegister}
-        onGoLogin={() => setScreen("login")}
-        onGoHome={() => setScreen("onboard")}
-      />
-    );
-  }
-
-  if (screen === "recover") {
-    return (
-      <RecoverScreen
-        onRecover={handleRecover}
-        onGoLogin={() => setScreen("login")} onVerifyCode={function (code: string): Promise<void> {
-          throw new Error("Function not implemented.");
-        } } onNewPassword={function (password: string): Promise<void> {
-          throw new Error("Function not implemented.");
-        } }      />
-    );
-  }
-
-  if (screen === "onboard") {
-    return (
-      <OnboardingScreen
-        dragActive={dragActive}
-        onFiles={handleFiles}
-        onDragLeave={() => setDragActive(false)}
-        onGoLogin={() => setScreen("login")}
-        onGoRegister={() => setScreen("register")}
-      />
-    );
-  }
+  if (screen === "login") return (
+    <LoginScreen onLogin={handleLogin} onGoRegister={() => setScreen("register")} onGoRecover={() => setScreen("recover")} onGoHome={() => setScreen("chat")} />
+  );
+  if (screen === "register") return (
+    <RegisterScreen onRegister={handleRegister} onGoLogin={() => setScreen("login")} onGoHome={() => setScreen("chat")} />
+  );
+  if (screen === "recover") return (
+    <RecoverScreen onRecover={handleRecover} onGoLogin={() => setScreen("login")} onVerifyCode={async () => {}} onNewPassword={async () => {}} />
+  );
+  if (screen === "onboard") return (
+    <OnboardingScreen dragActive={dragActive} onFiles={handleFiles} onDragLeave={() => setDragActive(false)} onGoLogin={() => setScreen("login")} onGoRegister={() => setScreen("register")} />
+  );
 
   return (
     <ChatScreen
@@ -286,6 +220,7 @@ export default function Chat() {
       onTypingComplete={() => setTyping(false)}
       onGoLogin={() => setScreen("login")}
       onGoRegister={() => setScreen("register")}
+      onEditMessage={handleEditMessage}
     />
   );
 }
