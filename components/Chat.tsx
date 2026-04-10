@@ -14,7 +14,8 @@ type Screen = "onboard" | "chat" | "login" | "register" | "recover";
 
 export default function Chat() {
 
-  const [screen, setScreen] = useState<Screen>("chat");
+  // 🔥 REGRESA AL FLUJO ORIGINAL
+  const [screen, setScreen] = useState<Screen>("onboard");
 
   const [messages, setMessages]     = useState<Msg[]>([]);
   const [docs, setDocs]             = useState<Doc[]>([]);
@@ -103,14 +104,14 @@ export default function Chat() {
       try {
         const auth = getAuthHeader();
         if (auth) { await ragUploadFile(file, auth); uploaded = true; }
-      } catch { /* ignore */ }
+      } catch {}
       let content = "";
       try {
         const { extractFileContent } = await import("./chat/Filereader");
         content = await extractFileContent(file);
-      } catch { /* ignore */ }
+      } catch {}
       newDocs.push({ id, name, type, content, size: file.size, uploadedAt: new Date() });
-      if (uploaded) { try { await loadRagFiles(); } catch { /* ignore */ } }
+      if (uploaded) { try { await loadRagFiles(); } catch {} }
     }
     setDocs((prev) => {
       const existingNames = new Set(prev.map((d) => d.name));
@@ -120,10 +121,8 @@ export default function Chat() {
     setDragActive(false);
   };
 
-  // ── Función central de envío/regeneración ──────────────────────────────
   const askAI = async (question: string, attachments: Msg["attachments"] = []) => {
     setLoading(true);
-    // 🔥 Respuesta fake (modo demo) — reemplaza con tu llamada ragAsk()
     setTimeout(() => {
       setLoading(false);
       setTyping(true);
@@ -151,14 +150,10 @@ export default function Chat() {
     await askAI(question, msgAttachments);
   };
 
-  // ── Editar mensaje de usuario ───────────────────────────────────────────
-  // Recibe el índice del mensaje editado y el nuevo texto.
-  // Elimina ese mensaje y todo lo que vino después, luego regenera.
   const handleEditMessage = useCallback(async (msgIndex: number, newContent: string) => {
     if (!newContent.trim() || loading || typing) return;
 
     setMessages((prev) => {
-      // Conserva todo hasta el mensaje editado (exclusive) y agrega la versión nueva
       const before = prev.slice(0, msgIndex);
       const edited = { ...prev[msgIndex], content: newContent.trim() };
       return [...before, edited];
@@ -174,7 +169,7 @@ export default function Chat() {
     try {
       const auth = getAuthHeader();
       if (auth) await ragDeleteFile(doc.id, auth);
-    } catch { /* ignore */ }
+    } catch {}
     setDocs((prev) => prev.filter((d) => d.id !== doc.id));
   };
 
@@ -186,14 +181,17 @@ export default function Chat() {
   const handleRecover = async () => { setScreen("login"); };
 
   if (screen === "login") return (
-    <LoginScreen onLogin={handleLogin} onGoRegister={() => setScreen("register")} onGoRecover={() => setScreen("recover")} onGoHome={() => setScreen("chat")} />
+    <LoginScreen onLogin={handleLogin} onGoRegister={() => setScreen("register")} onGoRecover={() => setScreen("recover")} onGoHome={() => setScreen("onboard")} />
   );
+
   if (screen === "register") return (
-    <RegisterScreen onRegister={handleRegister} onGoLogin={() => setScreen("login")} onGoHome={() => setScreen("chat")} />
+    <RegisterScreen onRegister={handleRegister} onGoLogin={() => setScreen("login")} onGoHome={() => setScreen("onboard")} />
   );
+
   if (screen === "recover") return (
     <RecoverScreen onRecover={handleRecover} onGoLogin={() => setScreen("login")} onVerifyCode={async () => {}} onNewPassword={async () => {}} />
   );
+
   if (screen === "onboard") return (
     <OnboardingScreen dragActive={dragActive} onFiles={handleFiles} onDragLeave={() => setDragActive(false)} onGoLogin={() => setScreen("login")} onGoRegister={() => setScreen("register")} />
   );
