@@ -1,0 +1,33 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Líneas de conexión -->
+  <g stroke="#373f45" stroke-width="6" stroke-linecap="round">
+    <!-- Vertical y Horizontal -->
+    <line x1="100" y1="100" x2="100" y2="30" />
+    <line x1="100" y1="100" x2="170" y2="100" />
+    <line x1="100" y1="100" x2="100" y2="170" />
+    <line x1="100" y1="100" x2="30" y2="100" />
+    
+    <!-- Diagonales -->
+    <line x1="100" y1="100" x2="149.5" y2="50.5" />
+    <line x1="100" y1="100" x2="149.5" y2="149.5" />
+    <line x1="100" y1="100" x2="50.5" y2="149.5" />
+    <line x1="100" y1="100" x2="50.5" y2="50.5" />
+  </g>
+
+  <!-- Círculos -->
+  <g fill="#373f45">
+    <!-- Círculo Central -->
+    <circle cx="100" cy="100" r="16" />
+
+    <!-- Círculos Externos -->
+    <circle cx="100" cy="30" r="12" />
+    <circle cx="170" cy="100" r="12" />
+    <circle cx="100" cy="170" r="12" />
+    <circle cx="30" cy="100" r="12" />
+    
+    <circle cx="149.5" cy="50.5" r="12" />
+    <circle cx="149.5" cy="149.5" r="12" />
+    <circle cx="50.5" cy="149.5" r="12" />
+    <circle cx="50.5" cy="50.5" r="12" />
+  </g>
+</svg>
