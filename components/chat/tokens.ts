@@ -11,6 +11,7 @@ export type Msg = {
   role: "user" | "ai" | "sys";
   content: string;
   attachments?: MsgAttachment[];
+  flashcardSetId?: string; // si este mensaje tiene flashcards adjuntas
 };
 
 export type Doc = {
@@ -18,11 +19,55 @@ export type Doc = {
   type: "pdf" | "word";
   id: string;
   content?: string;
-  htmlContent?: string;  // HTML limpio para DOCX (mammoth)
-  fileUrl?: string;      // blob URL para visor PDF
+  htmlContent?: string;
+  fileUrl?: string;
   size?: number;
   uploadedAt?: Date;
-  loading?: boolean;     // true mientras se procesa el archivo
+  loading?: boolean;
+};
+
+// ── Resúmenes ────────────────────────────────────────────
+export type SummaryLevel = "full" | "chapter" | "topic";
+
+export type Summary = {
+  level: string;
+  topicLabel: string;
+  id: string;
+  docId: string;
+  docName: string;
+  title: string;
+  prompt: string;
+  content: string;
+  keyPoints: string[];
+  createdAt: Date;
+  loading?: boolean;
+};
+
+// ── Flashcards ───────────────────────────────────────────
+export type FlashcardStatus = "pending" | "learned" | "review";
+
+export type AnswerOption = {
+  text: string;
+  rationale: string;
+  isCorrect: boolean;
+};
+
+export type Flashcard = {
+  id: string;
+  question: string;
+  answer: string;
+  status: FlashcardStatus;
+  answerOptions?: AnswerOption[]; // Opcional: Para preguntas tipo Quiz
+  hint?: string;                  // Opcional: Para mostrar una pista
+};
+
+export type FlashcardSet = {
+  id: string;
+  title: string;
+  topic: string;
+  cards: Flashcard[];
+  createdAt: Date;
+  loading?: boolean;
 };
 
 /* ─── Design tokens ──────────────────────────────────────── */
