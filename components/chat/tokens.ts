@@ -4,14 +4,16 @@ export type MsgAttachment = {
   id: string;
   kind: "image" | "document";
   name: string;
-  preview?: string; // object URL for images
+  preview?: string;
 };
 
 export type Msg = {
   role: "user" | "ai" | "sys";
   content: string;
   attachments?: MsgAttachment[];
+  examSetId?:      string; // si este mensaje tiene un examen adjunto
   flashcardSetId?: string; // si este mensaje tiene flashcards adjuntas
+  typed?: boolean;          // true cuando el Typewriter ya terminó de animar este mensaje
 };
 
 export type Doc = {
@@ -43,8 +45,8 @@ export type Summary = {
   loading?: boolean;
 };
 
-// ── Flashcards ───────────────────────────────────────────
-export type FlashcardStatus = "pending" | "learned" | "review";
+// ── Exámenes (RF-06) ─────────────────────────────────────
+export type ExamCardStatus = "pending" | "learned" | "review";
 
 export type AnswerOption = {
   text: string;
@@ -52,13 +54,33 @@ export type AnswerOption = {
   isCorrect: boolean;
 };
 
+export type ExamCard = {
+  id: string;
+  question: string;
+  answer: string;
+  status: ExamCardStatus;
+  answerOptions?: AnswerOption[]; // preguntas tipo quiz (opción múltiple / V-F)
+  hint?: string;
+};
+
+export type ExamSet = {
+  id: string;
+  title: string;
+  topic: string;
+  cards: ExamCard[];
+  createdAt: Date;
+  loading?: boolean;
+};
+
+// ── Flashcards (RF-05) ───────────────────────────────────
+export type FlashcardStatus = "pending" | "learned" | "review";
+
 export type Flashcard = {
+  answerOptions: any;
   id: string;
   question: string;
   answer: string;
   status: FlashcardStatus;
-  answerOptions?: AnswerOption[]; // Opcional: Para preguntas tipo Quiz
-  hint?: string;                  // Opcional: Para mostrar una pista
 };
 
 export type FlashcardSet = {

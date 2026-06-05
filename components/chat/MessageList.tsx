@@ -1,28 +1,31 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { Msg, MsgAttachment, FlashcardSet, gradText } from "./tokens";
+import { Msg, MsgAttachment, ExamSet, FlashcardSet, gradText } from "./tokens";
 import Typewriter from "./Typewriter";
 import ChatReadyBanner from "./ChatReadyBanner";
+
 import FlashcardModal from "./Flashcardmodal";
+import ExamModal from "./Exammodal";
 
 
 interface MessageListProps {
   messages: Msg[];
   loading: boolean;
+  examSets: ExamSet[];
   flashcardSets: FlashcardSet[];
   onTypingComplete: () => void;
   onEditMessage: (index: number, newContent: string) => void;
+  onUpdateExamCard: (setId: string, cardId: string, status: "pending" | "learned" | "review") => void;
   onUpdateFlashcard: (setId: string, cardId: string, status: "pending" | "learned" | "review") => void;
 }
 
-/* ── Attachment preview inside a user bubble ── */
+/* ── Attachment preview ── */
 function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
   if (!attachments.length) return null;
   const images  = attachments.filter(a => a.kind === "image");
   const docs    = attachments.filter(a => a.kind === "document");
   const fileExt = (name: string) => name.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 6 }}>
       {images.length > 0 && (
@@ -37,12 +40,8 @@ function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {docs.map(doc => (
             <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "4px 10px 4px 7px" }}>
-              <span style={{ width: 24, height: 24, borderRadius: 5, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, fontWeight: 700, color: "#fff", letterSpacing: 0.3, flexShrink: 0 }}>
-                {fileExt(doc.name)}
-              </span>
-              <span style={{ fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.9)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {doc.name}
-              </span>
+              <span style={{ width: 24, height: 24, borderRadius: 5, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, fontWeight: 700, color: "#fff", letterSpacing: 0.3, flexShrink: 0 }}>{fileExt(doc.name)}</span>
+              <span style={{ fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.9)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.name}</span>
             </div>
           ))}
         </div>
@@ -51,35 +50,18 @@ function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
   );
 }
 
-/* ── Flashcard chip — aparece dentro del mensaje de la IA ── */
-function FlashcardChip({
-  set,
-  onOpen,
-}: {
-  set: FlashcardSet;
-  onOpen: () => void;
-}) {
+/* ── Exam chip ── */
+function ExamChip({ set, onOpen }: { set: ExamSet; onOpen: () => void }) {
   const [hovered, setHovered] = useState(false);
   const learned = set.cards.filter(c => c.status === "learned").length;
   const total   = set.cards.length;
 
   if (set.loading) {
     return (
-      <div style={{
-        marginTop: 12,
-        display: "inline-flex", alignItems: "center", gap: 8,
-        padding: "9px 14px", borderRadius: 12,
-        background: "rgba(130,109,210,0.08)",
-        border: "1px solid rgba(130,109,210,0.2)",
-      }}>
+      <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 12, background: "rgba(130,109,210,0.08)", border: "1px solid rgba(130,109,210,0.2)" }}>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round"
-          style={{ animation: "spin 1s linear infinite", flexShrink: 0 }}>
-          <path d="M21 12a9 9 0 11-6.219-8.56"/>
-        </svg>
-        <span style={{ fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
-          Generando flashcards…
-        </span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite", flexShrink: 0 }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+        <span style={{ fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.55)" }}>Generando examen…</span>
       </div>
     );
   }
@@ -90,41 +72,76 @@ function FlashcardChip({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        marginTop: 12,
-        display: "inline-flex", alignItems: "center", gap: 10,
+        marginTop: 12, display: "inline-flex", alignItems: "center", gap: 10,
         padding: "10px 16px", borderRadius: 12,
         background: hovered ? "rgba(130,109,210,0.18)" : "rgba(130,109,210,0.08)",
         border: `1px solid ${hovered ? "rgba(130,109,210,0.45)" : "rgba(130,109,210,0.25)"}`,
-        cursor: "pointer", transition: "all .15s",
-        fontFamily: "var(--font-poppins), sans-serif",
-        textAlign: "left",
+        cursor: "pointer", transition: "all .15s", fontFamily: "var(--font-poppins), sans-serif", textAlign: "left",
       }}
     >
-      {/* Icono */}
-      <div style={{
-        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-        background: "linear-gradient(135deg,#826dd2,#4f3fa0)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
+      <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: "linear-gradient(135deg,#826dd2,#4f3fa0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Exam/clipboard icon */}
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <path d="M8 21h8M12 17v4"/>
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <path d="M9 12l2 2 4-4"/>
         </svg>
       </div>
-
-      {/* Info */}
       <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        <span style={{ fontWeight: 500, fontSize: 13, color: "#fff" }}>
-          {set.title}
-        </span>
+        <span style={{ fontWeight: 500, fontSize: 13, color: "#fff" }}>{set.title}</span>
         <span style={{ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.45)" }}>
-          {total} tarjetas
-          {learned > 0 && ` · ${learned} aprendidas`}
+          {total} preguntas{learned > 0 && ` · ${learned} correctas`}
         </span>
       </div>
-
-      {/* Arrow */}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(130,109,210,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, flexShrink: 0 }}>
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  );
+}
+
+/* ── Flashcard chip ── */
+function FlashcardChip({ set, onOpen }: { set: FlashcardSet; onOpen: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  const learned = set.cards.filter(c => c.status === "learned").length;
+  const total   = set.cards.length;
+
+  if (set.loading) {
+    return (
+      <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 12, background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.18)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite", flexShrink: 0 }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+        <span style={{ fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300, fontSize: 13, color: "rgba(255,255,255,0.55)" }}>Generando flashcards…</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={onOpen}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        marginTop: 12, display: "inline-flex", alignItems: "center", gap: 10,
+        padding: "10px 16px", borderRadius: 12,
+        background: hovered ? "rgba(74,222,128,0.12)" : "rgba(74,222,128,0.06)",
+        border: `1px solid ${hovered ? "rgba(74,222,128,0.4)" : "rgba(74,222,128,0.2)"}`,
+        cursor: "pointer", transition: "all .15s", fontFamily: "var(--font-poppins), sans-serif", textAlign: "left",
+      }}
+    >
+      <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: "linear-gradient(135deg,#22c55e,#16a34a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Flashcard/stack icon */}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>
+        </svg>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <span style={{ fontWeight: 500, fontSize: 13, color: "#fff" }}>{set.title}</span>
+        <span style={{ fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.45)" }}>
+          {total} tarjetas{learned > 0 && ` · ${learned} aprendidas`}
+        </span>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(74,222,128,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, flexShrink: 0 }}>
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </button>
@@ -141,7 +158,7 @@ function UserBubble({
   onEditMessage: (index: number, newContent: string) => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const [draft,   setDraft]   = useState(message.content);
+  const [draft, setDraft]     = useState(message.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const hasAttachments = message.attachments && message.attachments.length > 0;
@@ -179,13 +196,7 @@ function UserBubble({
       {hovered && !anyEditing && canEdit && (
         <button
           onClick={() => { setHovered(false); onStartEdit(flatIndex); }}
-          style={{
-            position: "absolute", top: "50%", left: 0, transform: "translateY(-50%)",
-            background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 8, padding: 6, cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center",
-            color: "rgba(255,255,255,0.5)", transition: "all .15s", zIndex: 10,
-          }}
+          style={{ position: "absolute", top: "50%", left: 0, transform: "translateY(-50%)", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.5)", transition: "all .15s", zIndex: 10 }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(130,109,210,0.2)"; (e.currentTarget as HTMLButtonElement).style.color = "#826dd2"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(130,109,210,0.4)"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.07)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.5)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
           title="Editar mensaje"
@@ -221,11 +232,12 @@ function UserBubble({
 
 /* ── Main component ── */
 export default function MessageList({
-  messages, loading, flashcardSets,
-  onTypingComplete, onEditMessage, onUpdateFlashcard,
+  messages, loading, examSets, flashcardSets,
+  onTypingComplete, onEditMessage, onUpdateExamCard, onUpdateFlashcard,
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const [editingIndex, setEditingIndex]       = useState<number | null>(null);
+  const [openExamSet, setOpenExamSet]         = useState<ExamSet | null>(null);
   const [openFlashcardSet, setOpenFlashcardSet] = useState<FlashcardSet | null>(null);
 
   const scrollToBottom = useCallback(
@@ -247,18 +259,26 @@ export default function MessageList({
 
   return (
     <>
-      {/* Modal de flashcards */}
+      {/* Exam modal */}
+      {openExamSet && (
+        <ExamModal
+          set={openExamSet}
+          onClose={() => setOpenExamSet(null)}
+          onUpdateCard={(setId, cardId, status) => {
+            onUpdateExamCard(setId, cardId, status);
+            setOpenExamSet(prev => prev ? { ...prev, cards: prev.cards.map(c => c.id === cardId ? { ...c, status } : c) } : null);
+          }}
+        />
+      )}
+
+      {/* Flashcard modal */}
       {openFlashcardSet && (
         <FlashcardModal
           set={openFlashcardSet}
           onClose={() => setOpenFlashcardSet(null)}
           onUpdateCard={(setId, cardId, status) => {
             onUpdateFlashcard(setId, cardId, status);
-            // actualizar el set abierto localmente también
-            setOpenFlashcardSet(prev => prev ? {
-              ...prev,
-              cards: prev.cards.map(c => c.id === cardId ? { ...c, status } : c)
-            } : null);
+            setOpenFlashcardSet(prev => prev ? { ...prev, cards: prev.cards.map(c => c.id === cardId ? { ...c, status } : c) } : null);
           }}
         />
       )}
@@ -271,7 +291,7 @@ export default function MessageList({
             {group.map((m, i) => {
               flatIndex++;
               const currentFlatIndex = flatIndex;
-              const isLastAi = m.role === "ai" && currentFlatIndex === lastAiIndex;
+              const isLastAi = m.role === "ai" && currentFlatIndex === lastAiIndex && !m.typed;
 
               if (m.role === "user") {
                 return (
@@ -286,10 +306,9 @@ export default function MessageList({
                 );
               }
 
-              // Buscar si este mensaje tiene un FlashcardSet adjunto
-              const attachedSet = m.flashcardSetId
-                ? flashcardSets.find(s => s.id === m.flashcardSetId) ?? null
-                : null;
+              // MODIFICACIÓN CRÍTICA: Se protege el .find() con un fallback a []
+              const attachedExam      = m.examSetId      ? (examSets || []).find(s => s.id === m.examSetId) ?? null      : null;
+              const attachedFlashcard = m.flashcardSetId ? (flashcardSets || []).find(s => s.id === m.flashcardSetId) ?? null : null;
 
               return (
                 <div
@@ -310,25 +329,24 @@ export default function MessageList({
                     lineHeight: m.role === "sys" ? "22px" : "28px",
                   }}
                 >
-                  {m.role === "sys" && (
-                    <span style={{ color: "rgba(255,255,255,0.38)" }}>{m.content}</span>
-                  )}
+                  {m.role === "sys" && <span style={{ color: "rgba(255,255,255,0.38)" }}>{m.content}</span>}
                   {m.role === "ai" && (
                     <>
                       <span style={{ display: "block", ...gradText }}>
-                        {isLastAi ? (
-                          <Typewriter text={m.content} onUpdate={scrollToBottom} onComplete={onTypingComplete} />
-                        ) : (
-                          m.content
-                        )}
+                        {isLastAi
+                          ? <Typewriter text={m.content} onUpdate={scrollToBottom} onComplete={onTypingComplete} />
+                          : m.content
+                        }
                       </span>
 
-                      {/* Chip de flashcards — se muestra solo si hay un set adjunto */}
-                      {attachedSet && (
-                        <FlashcardChip
-                          set={attachedSet}
-                          onOpen={() => setOpenFlashcardSet(attachedSet)}
-                        />
+                      {/* Exam chip */}
+                      {attachedExam && (
+                        <ExamChip set={attachedExam} onOpen={() => setOpenExamSet(attachedExam)} />
+                      )}
+
+                      {/* Flashcard chip */}
+                      {attachedFlashcard && (
+                        <FlashcardChip set={attachedFlashcard} onOpen={() => setOpenFlashcardSet(attachedFlashcard)} />
                       )}
                     </>
                   )}

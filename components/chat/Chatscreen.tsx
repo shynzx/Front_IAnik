@@ -1,19 +1,25 @@
 "use client";
 
-import { FormEvent } from "react";
-import { Msg, Doc, BG, FlashcardSet } from "./tokens";
+import { FormEvent, useState } from "react";
+import { Msg, Doc, BG, FlashcardSet, ExamSet, ExamCard, Summary } from "./tokens";
 import { Attachment } from "./ChatInput";
-import Sidebar from "./Sidebar";
-import AuthButtons from "./AuthButtons";
+import { AuthUser } from "../Chat"; // ajusta el path según tu estructura
+
 import DocsPanel from "./DocsPanel";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import DragOverlay from "./DragOverlay";
+import SummaryScreen from "../Resumenes/SummaryScreen";
+import Sidebar from "./Sidebar";
+import AuthButtons from "./AuthButtons";
+import DashboardScreen from "../Dashboard/Dashboardscreen";
 
 interface ChatScreenProps {
   messages: Msg[];
   docs: Doc[];
   flashcardSets: FlashcardSet[];
+  examSets: ExamSet[];
+  summaries: Summary[];
   input: string;
   loading: boolean;
   typing: boolean;
@@ -21,6 +27,8 @@ interface ChatScreenProps {
   docsOpen: boolean;
   docsFullscreen: boolean;
   docSearch: string;
+  activePage: "chat" | "summaries" | "dashboard";
+  onActivePageChange: (page: "chat" | "summaries" | "dashboard") => void;
   onInputChange: (value: string) => void;
   onSubmit: (e: FormEvent, attachments: Attachment[]) => void;
   onFiles: (files: FileList | null) => void;
@@ -30,41 +38,53 @@ interface ChatScreenProps {
   onDocsFullscreen: (value: boolean) => void;
   onDocSearchChange: (value: string) => void;
   onTypingComplete: () => void;
+  // Auth
+  user: AuthUser | null;
   onGoLogin: () => void;
   onGoRegister: () => void;
+  onLogout: () => void;
+  // Content
   onEditMessage: (index: number, newContent: string) => void;
   onUpdateFlashcard: (setId: string, cardId: string, status: "pending" | "learned" | "review") => void;
+  onUpdateExamCard: (setId: string, cardId: string, status: ExamCard["status"]) => void;
+  onGenerateSummary: (selectedDocs: Doc[], title: string, prompt: string) => Promise<string | null>;
+  onDeleteSummary: (id: string) => void;
 }
 
-const SIDEBAR_W  = 64;
 const DOCPANEL_W = 264;
 
 export default function ChatScreen({
-  messages, docs, flashcardSets,
+  messages, docs, flashcardSets, examSets, summaries,
   input, loading, typing, dragActive,
   docsOpen, docsFullscreen, docSearch,
+  activePage, onActivePageChange,
   onInputChange, onSubmit, onFiles, onDeleteDoc, onDragLeave,
   onDocsOpen, onDocsFullscreen, onDocSearchChange,
-  onTypingComplete, onGoLogin, onGoRegister,
-  onEditMessage, onUpdateFlashcard,
+  onTypingComplete,
+  user, onGoLogin, onGoRegister, onLogout,
+  onEditMessage, onUpdateFlashcard, onUpdateExamCard,
+  onGenerateSummary, onDeleteSummary,
 }: ChatScreenProps) {
-  const panelOpen      = docsOpen && !docsFullscreen;
-  const mainPadLeft    = SIDEBAR_W + (panelOpen ? DOCPANEL_W : 0);
-  const contentMaxWidth = panelOpen ? 670 : 720;
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  const SIDEBAR_W   = sidebarExpanded ? 200 : 64;
+  const panelOpen   = docsOpen && !docsFullscreen;
+  const mainPadLeft = SIDEBAR_W + (panelOpen ? DOCPANEL_W : 0);
+  const contentMaxWidth = 720;
 
   return (
     <>
       <style>{`
         html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
-        .chat-main    { transition: margin-left 0.22s ease, width 0.22s ease; }
-        .chat-content { transition: max-width 0.22s ease; }
+        .chat-main         { transition: margin-left 0.22s ease, width 0.22s ease; }
+        .docs-panel-aside  { transition: left 0.22s ease; }
         .chat-scroll::-webkit-scrollbar       { width: 6px; }
         .chat-scroll::-webkit-scrollbar-track { background: transparent; }
         .chat-scroll::-webkit-scrollbar-thumb { background: rgba(130,109,210,0.35); border-radius: 99px; }
         .chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(130,109,210,0.6); }
         @media (max-width: 640px) {
           .docs-panel-aside { display: none !important; }
-          .chat-main { margin-left: ${SIDEBAR_W}px !important; width: calc(100% - ${SIDEBAR_W}px) !important; }
+          .chat-main { margin-left: ${SIDEBAR_W}px !important; width: calc(100vw - ${SIDEBAR_W}px) !important; }
         }
       `}</style>
 
@@ -75,15 +95,20 @@ export default function ChatScreen({
           docsOpen={docsOpen}
           docsFullscreen={docsFullscreen}
           hasMessages={messages.length > 0}
-          onChatClick={() => { onDocsOpen(false); onDocsFullscreen(false); }}
+          activePage={activePage}
+          expanded={sidebarExpanded}
+          onLogoClick={() => setSidebarExpanded(!sidebarExpanded)}
+          onChatClick={() => onActivePageChange("chat")}
           onDocsClick={() => onDocsOpen(!docsOpen)}
+          onSummariesClick={() => { onActivePageChange("summaries"); onDocsFullscreen(false); }}
+          onDashboardClick={() => { onActivePageChange("dashboard"); onDocsFullscreen(false); }}
+          // User profile
+          user={user}
+          onLogout={onLogout}
         />
 
         {docsOpen && !docsFullscreen && (
-          <aside
-            className="docs-panel-aside"
-            style={{ position: "fixed", top: 0, left: SIDEBAR_W, width: DOCPANEL_W, height: "100vh", zIndex: 45, flexShrink: 0 }}
-          >
+          <aside className="docs-panel-aside" style={{ position: "fixed", top: 0, left: SIDEBAR_W, width: DOCPANEL_W, height: "100vh", zIndex: 45, flexShrink: 0 }}>
             <DocsPanel
               docs={docs} docSearch={docSearch} docsFullscreen={false}
               onSearchChange={onDocSearchChange} onFullscreen={onDocsFullscreen}
@@ -102,47 +127,53 @@ export default function ChatScreen({
           />
         )}
 
-        <main
-          className="chat-main"
-          style={{ marginLeft: mainPadLeft, width: `calc(100% - ${mainPadLeft}px)`, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}
-        >
-          <div style={{ position: "absolute", top: 20, right: 24, display: "flex", gap: 12, zIndex: 40 }}>
-            <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
+        <main className="chat-main" style={{ marginLeft: mainPadLeft, width: `calc(100vw - ${mainPadLeft}px)`, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", boxSizing: "border-box" }}>
+
+          {/* Auth buttons — solo visibles si NO hay sesión */}
+          {!user && (
+            <div style={{ position: "absolute", top: 20, right: 24, display: "flex", gap: 12, zIndex: 40 }}>
+              <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
+            </div>
+          )}
+
+          {/* ══ Chat ══ 
+              (CORRECCIÓN: Usamos display none/flex para no desmontar el elemento y conservar su scroll original) */}
+          <div style={{ display: activePage === "chat" ? "flex" : "none", flexDirection: "column", flex: 1, overflow: "hidden", width: "100%" }}>
+            <div className="chat-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "thin", scrollbarColor: "rgba(130,109,210,0.35) transparent", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 68, paddingRight: 32, paddingLeft: 32, paddingBottom: 0, boxSizing: "border-box", width: "100%" }}>
+              <div className="chat-content" style={{ width: "100%", maxWidth: contentMaxWidth, boxSizing: "border-box" }}>
+                <MessageList
+                  messages={messages} loading={loading} flashcardSets={flashcardSets} examSets={examSets}
+                  onTypingComplete={onTypingComplete} onEditMessage={onEditMessage}
+                  onUpdateFlashcard={onUpdateFlashcard} onUpdateExamCard={onUpdateExamCard}
+                />
+              </div>
+            </div>
+            <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", padding: "16px 32px 28px", background: "linear-gradient(to top, rgba(0,0,0,0.35) 60%, transparent)", boxSizing: "border-box", width: "100%" }}>
+              <div className="chat-content" style={{ width: "100%", maxWidth: contentMaxWidth, boxSizing: "border-box" }}>
+                <ChatInput value={input} loading={loading} typing={typing} onChange={onInputChange} onSubmit={onSubmit} onFiles={onFiles} />
+              </div>
+            </div>
           </div>
 
-          <div
-            className="chat-scroll"
-            style={{
-              flex: 1, overflowY: "auto", overflowX: "hidden",
-              scrollbarWidth: "thin", scrollbarColor: "rgba(130,109,210,0.35) transparent",
-              display: "flex", flexDirection: "column",
-              alignItems: panelOpen ? "flex-start" : "center",
-              paddingTop: 68,
-              paddingRight: 32,
-              paddingLeft: panelOpen ? 16 : 32,
-              paddingBottom: 0,
-            }}
-          >
-            <div className="chat-content" style={{ width: "100%", maxWidth: contentMaxWidth }}>
-              <MessageList
-                messages={messages}
-                loading={loading}
-                flashcardSets={flashcardSets}
-                onTypingComplete={onTypingComplete}
-                onEditMessage={onEditMessage}
-                onUpdateFlashcard={onUpdateFlashcard}
+          {/* ══ Resúmenes ══ 
+              (CORRECCIÓN: Igual que en chat, display flex/none para conservar el scroll) */}
+          <div className="chat-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "thin", scrollbarColor: "rgba(130,109,210,0.35) transparent", display: activePage === "summaries" ? "flex" : "none", justifyContent: "center", paddingTop: 80, paddingRight: 32, paddingLeft: 32, paddingBottom: 32, boxSizing: "border-box", width: "100%" }}>
+            <div style={{ width: "100%", maxWidth: 900, boxSizing: "border-box" }}>
+              <SummaryScreen docs={docs} summaries={summaries} onGenerateSummary={onGenerateSummary} onDeleteSummary={onDeleteSummary} />
+            </div>
+          </div>
+
+          {/* ══ Dashboard ══ 
+              (CORRECCIÓN: Igual que en chat, display flex/none para conservar el scroll) */}
+          <div className="chat-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "thin", scrollbarColor: "rgba(130,109,210,0.35) transparent", display: activePage === "dashboard" ? "flex" : "none", justifyContent: "center", paddingTop: 80, paddingRight: 32, paddingLeft: 32, paddingBottom: 32, boxSizing: "border-box", width: "100%" }}>
+            <div style={{ width: "100%", maxWidth: 900, boxSizing: "border-box" }}>
+              <DashboardScreen
+                examSets={examSets} flashcardSets={flashcardSets}
+                onUpdateFlashcard={onUpdateFlashcard} onUpdateExamCard={onUpdateExamCard}
               />
             </div>
           </div>
 
-          <div style={{ flexShrink: 0, display: "flex", justifyContent: panelOpen ? "flex-start" : "center", padding: panelOpen ? "16px 32px 28px 16px" : "16px 32px 28px", background: "linear-gradient(to top, rgba(0,0,0,0.35) 60%, transparent)" }}>
-            <div className="chat-content" style={{ width: "100%", maxWidth: contentMaxWidth }}>
-              <ChatInput
-                value={input} loading={loading} typing={typing}
-                onChange={onInputChange} onSubmit={onSubmit} onFiles={onFiles}
-              />
-            </div>
-          </div>
         </main>
 
         {dragActive && <DragOverlay onDrop={onFiles} onLeave={onDragLeave} />}
