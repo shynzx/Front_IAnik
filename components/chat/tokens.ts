@@ -4,16 +4,23 @@ export type MsgAttachment = {
   id: string;
   kind: "image" | "document";
   name: string;
+<<<<<<< HEAD
   preview?: string;
+=======
+  preview?: string; // object URL for images
+>>>>>>> main
 };
 
 export type Msg = {
   role: "user" | "ai" | "sys";
   content: string;
   attachments?: MsgAttachment[];
+<<<<<<< HEAD
   examSetId?:      string; // si este mensaje tiene un examen adjunto
   flashcardSetId?: string; // si este mensaje tiene flashcards adjuntas
   typed?: boolean;          // true cuando el Typewriter ya terminó de animar este mensaje
+=======
+>>>>>>> main
 };
 
 export type Doc = {
@@ -21,6 +28,7 @@ export type Doc = {
   type: "pdf" | "word";
   id: string;
   content?: string;
+<<<<<<< HEAD
   htmlContent?: string;
   fileUrl?: string;
   size?: number;
@@ -90,6 +98,13 @@ export type FlashcardSet = {
   cards: Flashcard[];
   createdAt: Date;
   loading?: boolean;
+=======
+  htmlContent?: string;  // HTML limpio para DOCX (mammoth)
+  fileUrl?: string;      // blob URL para visor PDF
+  size?: number;
+  uploadedAt?: Date;
+  loading?: boolean;     // true mientras se procesa el archivo
+>>>>>>> main
 };
 
 /* ─── Design tokens ──────────────────────────────────────── */

@@ -5,7 +5,10 @@ import { pp, gradText } from "./tokens";
 import Sidebar from "./Sidebar";
 import AuthButtons from "./AuthButtons";
 import DragOverlay from "./DragOverlay";
+<<<<<<< HEAD
 import { AuthUser } from "../Chat";
+=======
+>>>>>>> main
 
 interface OnboardingScreenProps {
   dragActive: boolean;
@@ -13,8 +16,11 @@ interface OnboardingScreenProps {
   onDragLeave: () => void;
   onGoLogin: () => void;
   onGoRegister: () => void;
+<<<<<<< HEAD
   user: AuthUser | null;
   onLogout: () => void;
+=======
+>>>>>>> main
 }
 
 const SIDEBAR_W = 64;
@@ -25,8 +31,11 @@ export default function OnboardingScreen({
   onDragLeave,
   onGoLogin,
   onGoRegister,
+<<<<<<< HEAD
   user,
   onLogout,
+=======
+>>>>>>> main
 }: OnboardingScreenProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -47,12 +56,17 @@ export default function OnboardingScreen({
         docsOpen={false}
         docsFullscreen={false}
         hasMessages={false}
+<<<<<<< HEAD
         onChatClick={() => { } }
         onDocsClick={() => {}} 
         expanded={false} 
         onLogoClick={() => {}}
         user={user}
         onLogout={onLogout}
+=======
+        onChatClick={() => {}}
+        onDocsClick={() => {}}
+>>>>>>> main
       />
 
       {/* Main content area, offset by sidebar */}
@@ -67,6 +81,7 @@ export default function OnboardingScreen({
           position: "relative",
         }}
       >
+<<<<<<< HEAD
         {/* Auth buttons — inside main area so they never overlap sidebar.
             SOLO se muestran si el usuario NO ha iniciado sesión */}
         {!user && (
@@ -83,6 +98,21 @@ export default function OnboardingScreen({
             <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
           </div>
         )}
+=======
+        {/* Auth buttons — inside main area so they never overlap sidebar */}
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 24,
+            display: "flex",
+            gap: 12,
+            zIndex: 40,
+          }}
+        >
+          <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
+        </div>
+>>>>>>> main
 
         {/* Centered content */}
         <main
