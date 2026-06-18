@@ -1,14 +1,10 @@
 "use client";
 
 import { useRef } from "react";
-import { pp, gradText } from "./tokens";
-import Sidebar from "./Sidebar";
-import AuthButtons from "./AuthButtons";
+import { pp, gradText, BG } from "../../types";
+import Sidebar from "../layout/Sidebar";
+import AuthButtons from "../layout/AuthButtons";
 import DragOverlay from "./DragOverlay";
-<<<<<<< HEAD
-import { AuthUser } from "../Chat";
-=======
->>>>>>> main
 
 interface OnboardingScreenProps {
   dragActive: boolean;
@@ -16,11 +12,6 @@ interface OnboardingScreenProps {
   onDragLeave: () => void;
   onGoLogin: () => void;
   onGoRegister: () => void;
-<<<<<<< HEAD
-  user: AuthUser | null;
-  onLogout: () => void;
-=======
->>>>>>> main
 }
 
 const SIDEBAR_W = 64;
@@ -31,11 +22,6 @@ export default function OnboardingScreen({
   onDragLeave,
   onGoLogin,
   onGoRegister,
-<<<<<<< HEAD
-  user,
-  onLogout,
-=======
->>>>>>> main
 }: OnboardingScreenProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +31,7 @@ export default function OnboardingScreen({
         height: "100vh",
         width: "100vw",
         overflow: "hidden",
-        background: "linear-gradient(135deg, #000000 0%, #3c2850 100%)",
+        background: BG,
         display: "flex",
         position: "relative",
         fontFamily: "var(--font-poppins), sans-serif",
@@ -56,18 +42,8 @@ export default function OnboardingScreen({
         docsOpen={false}
         docsFullscreen={false}
         hasMessages={false}
-<<<<<<< HEAD
         onChatClick={() => { } }
-        onDocsClick={() => {}} 
-        expanded={false} 
-        onLogoClick={() => {}}
-        user={user}
-        onLogout={onLogout}
-=======
-        onChatClick={() => {}}
-        onDocsClick={() => {}}
->>>>>>> main
-      />
+        onDocsClick={() => { } } />
 
       {/* Main content area, offset by sidebar */}
       <div
@@ -81,24 +57,6 @@ export default function OnboardingScreen({
           position: "relative",
         }}
       >
-<<<<<<< HEAD
-        {/* Auth buttons — inside main area so they never overlap sidebar.
-            SOLO se muestran si el usuario NO ha iniciado sesión */}
-        {!user && (
-          <div
-            style={{
-              position: "absolute",
-              top: 20,
-              right: 24,
-              display: "flex",
-              gap: 12,
-              zIndex: 40,
-            }}
-          >
-            <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
-          </div>
-        )}
-=======
         {/* Auth buttons — inside main area so they never overlap sidebar */}
         <div
           style={{
@@ -112,7 +70,6 @@ export default function OnboardingScreen({
         >
           <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
         </div>
->>>>>>> main
 
         {/* Centered content */}
         <main

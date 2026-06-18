@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { pp } from "./tokens";
-import { AuthUser } from "../Chat"; 
+import { pp, AuthUser } from "../../types";
 
 interface UserPanelProps {
   user: AuthUser;
@@ -52,6 +51,7 @@ export default function UserPanel({ user, expanded, onLogout }: UserPanelProps) 
             </div>
 
             <button
+              aria-label="Cerrar sesión"
               onClick={() => { setPopupOpen(false); onLogout(); }}
               style={{
                 ...pp, width: "100%", padding: "12px 16px", background: "transparent",

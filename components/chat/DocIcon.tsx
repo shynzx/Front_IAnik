@@ -1,4 +1,4 @@
-import { Doc } from "./tokens";
+import { Doc } from "../../types";
 
 interface DocIconProps {
   type: Doc["type"];

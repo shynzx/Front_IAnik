@@ -1,4 +1,4 @@
-import { pp, gradText } from "./tokens";
+import { pp, gradText } from "../../types";
 
 interface DragOverlayProps {
   onDrop: (files: FileList) => void;

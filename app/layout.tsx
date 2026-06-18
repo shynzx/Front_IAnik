@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "@/app/globals.css";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const poppins = Poppins({
   weight: ["300", "400", "600"],
@@ -40,7 +41,7 @@ export default function RootLayout({
             }
           `
         }} />
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </body>
     </html>
   );

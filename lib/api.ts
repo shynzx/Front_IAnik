@@ -45,7 +45,7 @@ async function parseErrorMessage(res: Response) {
     if (Array.isArray(data?.detail)) return data.detail.map((item: { msg?: string }) => item?.msg).filter(Boolean).join(", ");
     if (typeof data?.message === "string") return data.message;
   } catch {
-    // If backend does not return JSON, fallback to generic status text.
+    console.warn("No se pudo parsear el cuerpo del error como JSON");
   }
   return `Error ${res.status}: ${res.statusText || "Request failed"}`;
 }
@@ -70,12 +70,23 @@ export async function fetchAPI<T = unknown>(endpoint: string, { params, skipJson
   return (await res.json()) as T;
 }
 
+let _token: string | null = null;
+let _tokenType = "bearer";
+
+export function setStoredToken(token: string, tokenType = "bearer") {
+  _token = token;
+  _tokenType = tokenType;
+}
+
+export function clearStoredToken() {
+  _token = null;
+  _tokenType = "bearer";
+}
+
 function getStoredToken() {
   if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("auth_token");
-  if (!token) return null;
-  const tokenType = localStorage.getItem("auth_token_type") || "bearer";
-  return `${tokenType} ${token}`;
+  if (!_token) return null;
+  return `${_tokenType} ${_token}`;
 }
 
 function withAuthHeader(headers: HeadersInit = {}, authHeader?: string | null): HeadersInit {

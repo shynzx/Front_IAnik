@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { pp, ExamCard, ExamSet } from "./tokens";
+import { pp, ExamCard, ExamSet } from "../../types";
 
 interface ExamModalProps {
   set: ExamSet;
@@ -16,8 +16,7 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [showHint, setShowHint]               = useState(false);
 
-  useEffect(() => { setCards(set.cards); }, [set.cards]);
-  useEffect(() => { setFlipped(false); setShowHint(false); }, [index]);
+  useEffect(() => { setCards(set.cards); setFlipped(false); setShowHint(false); }, [set, set.cards]);
 
   const card     = cards[index];
   const total    = cards.length;
@@ -131,7 +130,7 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f87171", display: "inline-block" }}/>
               {review}
             </span>
-            <button onClick={onClose} style={{ color: "rgba(255,255,255,0.4)", background: "transparent", border: "none", cursor: "pointer", padding: 6, borderRadius: 8, marginLeft: "auto" }}>
+            <button aria-label="Cerrar" onClick={onClose} style={{ color: "rgba(255,255,255,0.4)", background: "transparent", border: "none", cursor: "pointer", padding: 6, borderRadius: 8, marginLeft: "auto" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
@@ -149,6 +148,7 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
           {cards.map((c, i) => (
             <button
               key={c.id}
+              aria-label={`Ir a pregunta ${i + 1}`}
               onClick={() => setIndex(i)}
               style={{
                 width: i === index ? 20 : 8, height: 8, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, transition: "all .2s",
