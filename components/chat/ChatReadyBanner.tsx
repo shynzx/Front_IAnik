@@ -1,4 +1,4 @@
-import { pp, gradText } from "./tokens";
+import { pp, gradText } from "../../types";
 
 export default function ChatReadyBanner() {
   return (

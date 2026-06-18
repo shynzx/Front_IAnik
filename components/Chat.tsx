@@ -1,14 +1,17 @@
 ﻿"use client";
 
 import { useState, FormEvent, useEffect, useCallback } from "react";
-import { Msg, Doc } from "./chat/tokens";
+import type { Msg, Doc } from "../types";
 import OnboardingScreen from "./chat/OnboardingScreen";
-import ChatScreen from "./chat/Chatscreen";
-import LoginScreen from "./Log/Loginscreen";
-import RegisterScreen from "./Log/Registerscreen";
-import RecoverScreen from "./Log/Recoverscreen";
+import ChatScreen from "./chat/ChatScreen";
+import LoginScreen from "./auth/LoginScreen";
+import RegisterScreen from "./auth/RegisterScreen";
+import RecoverScreen from "./auth/RecoverScreen";
 import { Attachment } from "./chat/ChatInput";
-import { loginWithPassword, signupUser, ragUploadFile, ragAsk, ragListFiles, ragDeleteFile, RAGFileResponse } from "@/lib/api";
+import { loginWithPassword, signupUser, ragUploadFile, ragAsk, ragListFiles, ragDeleteFile, setStoredToken, clearStoredToken, RAGFileResponse } from "@/lib/api";
+
+let msgCounter = 0;
+const makeMsgId = () => `msg_${Date.now()}_${++msgCounter}`;
 
 type Screen = "onboard" | "chat" | "login" | "register" | "recover";
 
@@ -29,24 +32,9 @@ export default function Chat() {
   const [docSearch, setDocSearch]   = useState("");
 
   useEffect(() => {
-    // No establecer token falso automáticamente. El flujo de autenticación
-    // debe establecer `auth_token` tras un login real.
-    // Cargar usuario desde localStorage si existe
     const u = localStorage.getItem("auth_user");
     if (u) setUserName(u);
   }, []);
-
-  const getAuthHeader = () => {
-    const token = localStorage.getItem("auth_token");
-    if (!token) return null;
-    const tokenType = localStorage.getItem("auth_token_type") || "bearer";
-    return `${tokenType} ${token}`;
-  };
-
-  const clearAuth = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_token_type");
-  };
 
   const isAuthError = (message: string) => {
     const normalized = message.toLowerCase();
@@ -80,26 +68,9 @@ export default function Chat() {
   };
 
   const loadRagFiles = useCallback(async () => {
-    const auth = getAuthHeader();
-    if (!auth) {
-      console.log("No autenticado: omitiendo carga de archivos RAG");
-      return;
-    }
-
-    try {
-      const files = await ragListFiles(auth);
-      setDocs(files.map(normalizeRagFile));
-    } catch (err) {
-      console.log("Error cargando archivos RAG:", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      if (isAuthError(msg)) {
-        clearAuth();
-        setScreen("login");
-        return;
-      }
-      console.log("Modo sin backend: ignorando carga de archivos");
-    }
-  }, [setScreen]);
+    try { setDocs((await ragListFiles()).map(normalizeRagFile)); }
+    catch { console.warn("Modo sin backend: ignorando carga de archivos"); }
+  }, []);
 
   useEffect(() => {
     const onDragEnter = () => setDragActive(true);
@@ -111,7 +82,7 @@ export default function Chat() {
     if (!files) return;
     const validFiles = Array.from(files).filter((f) => /\.(pdf|doc|docx)$/i.test(f.name));
     if (!validFiles.length) {
-      setMessages((prev) => [...prev, { role: "sys", content: "Solo se permiten archivos PDF, DOC o DOCX." }]);
+      setMessages((prev) => [...prev, { id: makeMsgId(), role: "sys", content: "Solo se permiten archivos PDF, DOC o DOCX." }]);
       return;
     }
     const newDocs: Doc[] = [];
@@ -121,16 +92,15 @@ export default function Chat() {
       const type: Doc["type"] = name.toLowerCase().endsWith(".pdf") ? "pdf" : "word";
       let uploaded = false;
       try {
-        const auth = getAuthHeader();
-        if (auth) { await ragUploadFile(file, auth); uploaded = true; }
-      } catch {}
+        await ragUploadFile(file); uploaded = true;
+      } catch (e) { console.warn("Error subiendo archivo:", name, e); }
       let content = "";
       try {
-        const { extractFileContent } = await import("./chat/Filereader");
+        const { extractFileContent } = await import("../lib/fileReader");
         content = await extractFileContent(file);
-      } catch {}
+      } catch (e) { console.warn("Error extrayendo contenido:", name, e); }
       newDocs.push({ id, name, type, content, size: file.size, uploadedAt: new Date() });
-      if (uploaded) { try { await loadRagFiles(); } catch {} }
+      if (uploaded) { try { await loadRagFiles(); } catch (e) { console.warn("Error recargando archivos:", e); } }
     }
     setDocs((prev) => {
       const existingNames = new Set(prev.map((d) => d.name));
@@ -143,14 +113,13 @@ export default function Chat() {
   const askAI = async (question: string, attachments: Attachment[] = []) => {
     setLoading(true);
     try {
-      const auth = getAuthHeader();
       const filenames: string[] = [];
 
       // Si hay adjuntos locales, súbelos primero y recoge los nombres retornados por el backend
       for (const a of attachments) {
         if (!a.file) continue;
         try {
-          const res = await ragUploadFile(a.file, auth);
+          const res = await ragUploadFile(a.file);
           if (res?.filename) filenames.push(res.filename);
         } catch (e) {
           console.warn("No se pudo subir adjunto:", a.name, e);
@@ -158,18 +127,18 @@ export default function Chat() {
       }
 
       // Llamada principal al backend RAG
-      const answer = await ragAsk(question, filenames, auth);
+      const answer = await ragAsk(question, filenames);
       setTyping(false);
-      setMessages((prev) => [...prev, { role: "ai", content: answer }]);
+      setMessages((prev) => [...prev, { id: makeMsgId(), role: "ai", content: answer }]);
     } catch (err) {
-      console.log("Error en askAI:", err);
+      console.warn("Error en askAI:", err);
       const msg = err instanceof Error ? err.message : String(err);
       if (isAuthError(msg)) {
-        clearAuth();
+        clearStoredToken();
         setScreen("login");
         return;
       }
-      setMessages((prev) => [...prev, { role: "ai", content: "Error: no se obtuvo respuesta del backend." }]);
+      setMessages((prev) => [...prev, { id: makeMsgId(), role: "ai", content: "Error: no se obtuvo respuesta del backend." }]);
     } finally {
       setLoading(false);
     }
@@ -187,7 +156,7 @@ export default function Chat() {
       preview: a.preview,
     }));
 
-    setMessages((prev) => [...prev, { role: "user", content: question, attachments: msgAttachments }]);
+    setMessages((prev) => [...prev, { id: makeMsgId(), role: "user", content: question, attachments: msgAttachments }]);
     setInput("");
     // Pasar los attachments originales (con `file`) a askAI para permitir uploads
     await askAI(question, attachments);
@@ -209,14 +178,11 @@ export default function Chat() {
     try {
       const tokenResp = await loginWithPassword(email, password);
       if (tokenResp?.access_token) {
-        localStorage.setItem("auth_token", tokenResp.access_token);
-        localStorage.setItem("auth_token_type", tokenResp.token_type || "bearer");
-        // Guardar usuario (usamos el email como nombre mostrado por ahora)
+        setStoredToken(tokenResp.access_token, tokenResp.token_type || "bearer");
         localStorage.setItem("auth_user", email);
         setUserName(email);
         setScreen("chat");
-        // Cargar archivos del usuario luego del login
-        try { await loadRagFiles(); } catch {}
+        try { await loadRagFiles(); } catch (e) { console.warn("Error cargando archivos:", e); }
         return;
       }
       throw new Error("Credenciales inválidas");
@@ -229,16 +195,13 @@ export default function Chat() {
   const handleRegister = async (name: string, email: string, password: string) => {
     try {
       await signupUser(name, email, password);
-      // Auto-login tras registro
       const tokenResp = await loginWithPassword(email, password);
       if (tokenResp?.access_token) {
-        localStorage.setItem("auth_token", tokenResp.access_token);
-        localStorage.setItem("auth_token_type", tokenResp.token_type || "bearer");
-        // Guardar usuario (mostrar el nombre de registro)
+        setStoredToken(tokenResp.access_token, tokenResp.token_type || "bearer");
         localStorage.setItem("auth_user", name);
         setUserName(name);
         setScreen("chat");
-        try { await loadRagFiles(); } catch {}
+        try { await loadRagFiles(); } catch (e) { console.warn("Error cargando archivos tras registro:", e); }
         return;
       }
       throw new Error("Registro fallido");
@@ -250,9 +213,8 @@ export default function Chat() {
 
   const handleDeleteDoc = async (doc: Doc) => {
     try {
-      const auth = getAuthHeader();
-      if (auth) await ragDeleteFile(doc.id, auth);
-    } catch {}
+      await ragDeleteFile(doc.id);
+    } catch (e) { console.warn("Error eliminando archivo en servidor:", doc.name, e); }
     setDocs((prev) => prev.filter((d) => d.id !== doc.id));
   };
 
@@ -264,7 +226,7 @@ export default function Chat() {
   const handleRecover = async () => { setScreen("login"); };
 
   const handleLogout = () => {
-    clearAuth();
+    clearStoredToken();
     localStorage.removeItem("auth_user");
     setUserName(null);
     setScreen("onboard");

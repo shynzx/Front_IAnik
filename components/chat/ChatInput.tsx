@@ -196,7 +196,7 @@ export default function ChatInput({
 
                   <button
                     type="button"
-                    className="chip-remove"
+                    aria-label="Eliminar archivo adjunto"
                     onClick={() => removeAttachment(a.id)}
                     style={{
                       width: 16, height: 16, borderRadius: 4,
@@ -224,7 +224,7 @@ export default function ChatInput({
               <button
                 ref={clipRef}
                 type="button"
-                className="clip-btn"
+                aria-label="Adjuntar archivos"
                 onClick={() => setMenuOpen(v => !v)}
                 style={{
                   color: menuOpen ? "#826dd2" : "rgba(255,255,255,0.35)",
@@ -259,10 +259,9 @@ export default function ChatInput({
                     animation: "attachMenuIn .15s ease",
                   }}
                 >
-                  {/* ── Fotos ── */}
                   <button
                     type="button"
-                    className="attach-opt"
+                    aria-label="Agregar foto"
                     onClick={() => photoRef.current?.click()}
                     style={{
                       display: "flex", alignItems: "center", gap: 11,
@@ -293,10 +292,9 @@ export default function ChatInput({
 
                   <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "3px 6px" }} />
 
-                  {/* ── Archivos ── */}
                   <button
                     type="button"
-                    className="attach-opt"
+                    aria-label="Agregar archivo"
                     onClick={() => fileRef.current?.click()}
                     style={{
                       display: "flex", alignItems: "center", gap: 11,
@@ -364,10 +362,9 @@ export default function ChatInput({
               </span>
             )}
 
-            {/* Send button */}
             <button
               type="submit"
-              className="send-btn"
+              aria-label="Enviar mensaje"
               disabled={!canSend}
               style={{
                 padding: 10, borderRadius: 10, flexShrink: 0,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { pp, gradText } from "./tokens";
-import Sidebar from "./Sidebar";
-import AuthButtons from "./AuthButtons";
+import { pp, gradText, BG } from "../../types";
+import Sidebar from "../layout/Sidebar";
+import AuthButtons from "../layout/AuthButtons";
 import DragOverlay from "./DragOverlay";
 
 interface OnboardingScreenProps {
@@ -31,7 +31,7 @@ export default function OnboardingScreen({
         height: "100vh",
         width: "100vw",
         overflow: "hidden",
-        background: "linear-gradient(135deg, #000000 0%, #3c2850 100%)",
+        background: BG,
         display: "flex",
         position: "relative",
         fontFamily: "var(--font-poppins), sans-serif",
@@ -42,9 +42,8 @@ export default function OnboardingScreen({
         docsOpen={false}
         docsFullscreen={false}
         hasMessages={false}
-        onChatClick={() => {}}
-        onDocsClick={() => {}}
-      />
+        onChatClick={() => { } }
+        onDocsClick={() => { } } />
 
       {/* Main content area, offset by sidebar */}
       <div

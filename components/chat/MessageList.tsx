@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { Msg, MsgAttachment, gradText } from "./tokens";
+import { Msg, MsgAttachment, gradText } from "../../types";
 import Typewriter from "./Typewriter";
 import ChatReadyBanner from "./ChatReadyBanner";
 
@@ -99,7 +99,6 @@ function UserBubble({
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); confirmEdit(); }
     if (e.key === "Escape") onCancelEdit();
   };
-
   const pp = { fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 as const };
 
   return (
@@ -146,7 +145,7 @@ function UserBubble({
             (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.5)";
             (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)";
           }}
-          title="Editar mensaje"
+          aria-label="Editar mensaje"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
@@ -261,8 +260,8 @@ export default function MessageList({
       {displayGroups.length === 0 && <ChatReadyBanner />}
 
       {displayGroups.map((group, gi) => (
-        <div key={gi} style={{ width: "100%", display: "flex", flexDirection: "column", marginBottom: 24 }}>
-          {group.map((m, i) => {
+        <div key={group[0]?.id ?? gi} style={{ width: "100%", display: "flex", flexDirection: "column", marginBottom: 24 }}>
+          {group.map((m) => {
             flatIndex++;
             const currentFlatIndex = flatIndex;
             const isLastAi = m.role === "ai" && currentFlatIndex === lastAiIndex;
@@ -270,7 +269,7 @@ export default function MessageList({
             if (m.role === "user") {
               return (
                 <UserBubble
-                  key={i}
+                  key={m.id}
                   message={m}
                   flatIndex={currentFlatIndex}
                   isEditing={editingIndex === currentFlatIndex}
@@ -287,7 +286,7 @@ export default function MessageList({
 
             return (
               <div
-                key={i}
+                key={m.id}
                 style={{
                   marginBottom: 12,
                   padding: m.role === "sys" ? "5px 16px" : "13px 17px",

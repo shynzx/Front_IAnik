@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { BG, pp } from "../chat/tokens";
-import Sidebar from "../chat/Sidebar";
+import { BG, pp } from "../../types";
+import Sidebar from "../layout/Sidebar";
 
 
 interface RecoverScreenProps {

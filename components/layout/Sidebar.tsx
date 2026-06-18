@@ -37,8 +37,8 @@ export default function Sidebar({
         zIndex: 50,
       }}
     >
-      {/* Logo */}
       <button
+        aria-label="Inicio"
         style={{
           color: "#826dd2",
           padding: 8,
@@ -73,8 +73,8 @@ export default function Sidebar({
         }}
       />
 
-      {/* Chat */}
       <button
+        aria-label="Chat"
         onClick={onChatClick}
         style={{
           color:
@@ -120,8 +120,8 @@ export default function Sidebar({
         )}
       </button>
 
-      {/* Docs */}
       <button
+        aria-label="Documentos"
         onClick={onDocsClick}
         style={{
           color: docsOpen ? "#826dd2" : "rgba(255,255,255,0.4)",

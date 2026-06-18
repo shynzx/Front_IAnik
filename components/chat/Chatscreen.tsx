@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent } from "react";
-import { Msg, Doc, BG } from "./tokens";
+import { Msg, Doc, BG } from "../../types";
 import { Attachment } from "./ChatInput";
-import Sidebar from "./Sidebar";
-import AuthButtons from "./AuthButtons";
+import Sidebar from "../layout/Sidebar";
+import AuthButtons from "../layout/AuthButtons";
 import DocsPanel from "./DocsPanel";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
@@ -38,9 +38,6 @@ interface ChatScreenProps {
 
 const SIDEBAR_W  = 64;
 const DOCPANEL_W = 264;
-// Auth buttons are ~220px wide at right:24 — reserve that from the right
-// so bubbles never reach them.
-const AUTH_BTN_RESERVED = 230;
 
 export default function ChatScreen({
   messages,
@@ -120,9 +117,8 @@ export default function ChatScreen({
           docsOpen={docsOpen}
           docsFullscreen={docsFullscreen}
           hasMessages={messages.length > 0}
-          onChatClick={() => { onDocsOpen(false); onDocsFullscreen(false); }}
-          onDocsClick={() => onDocsOpen(!docsOpen)}
-        />
+          onChatClick={() => { onDocsOpen(false); onDocsFullscreen(false); } }
+          onDocsClick={() => onDocsOpen(!docsOpen)} />
 
         {/* ── Docs panel (beside sidebar) ────────────────────── */}
         {docsOpen && !docsFullscreen && (
