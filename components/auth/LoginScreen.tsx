@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { BG, pp } from "../chat/tokens";
-import Sidebar from "../chat/Sidebar";
+import { BG, pp } from "../../types";
+import Sidebar from "../layout/Sidebar";
 
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -308,6 +308,7 @@ export default function LoginScreen({
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   onClick={() => setShowPassword(!showPassword)}
                   style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 2, display: "flex" }}
                 >

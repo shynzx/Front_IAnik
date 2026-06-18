@@ -12,7 +12,7 @@ const PDFJS_CDN    = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf
 const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 /* ── Ensure PDF.js is loaded and its worker is configured ── */
-async function ensurePdfJs(): Promise<typeof window.pdfjsLib> {
+async function ensurePdfJs(): Promise<any> {
   // Already loaded?
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let pdfjsLib = (window as any).pdfjsLib;
@@ -89,7 +89,7 @@ async function extractDocxText(file: File): Promise<string> {
       const xml = await zip.file("word/document.xml")?.async("string");
       if (xml) return xmlToPlainText(xml);
     }
-  } catch { /* fall through */ }
+  } catch { console.warn("JSZip no disponible, usando fallback XML manual"); }
 
   // Fallback: decode as UTF-8 and strip XML tags
   const decoder  = new TextDecoder("utf-8");

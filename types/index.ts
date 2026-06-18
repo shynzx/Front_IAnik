@@ -1,5 +1,10 @@
 /* ─── Types ─────────────────────────────────────────────── */
 
+export interface AuthUser {
+  name: string;
+  email: string;
+}
+
 export type MsgAttachment = {
   id: string;
   kind: "image" | "document";
@@ -8,9 +13,54 @@ export type MsgAttachment = {
 };
 
 export type Msg = {
+  id: string;
   role: "user" | "ai" | "sys";
   content: string;
   attachments?: MsgAttachment[];
+};
+
+export type ExamCard = {
+  id: string;
+  question: string;
+  answer: string;
+  status: "pending" | "learned" | "review";
+  answerOptions?: { text: string; isCorrect: boolean; rationale?: string }[];
+  hint?: string;
+};
+
+export type ExamSet = {
+  id: string;
+  title: string;
+  topic: string;
+  cards: ExamCard[];
+  loading?: boolean;
+  createdAt?: Date;
+};
+
+export type Flashcard = {
+  id: string;
+  question: string;
+  answer: string;
+  status: "pending" | "learned" | "review";
+};
+
+export type FlashcardSet = {
+  id: string;
+  title: string;
+  topic: string;
+  cards: Flashcard[];
+  loading?: boolean;
+  createdAt?: Date;
+};
+
+export type Summary = {
+  id: string;
+  title?: string;
+  docName: string;
+  createdAt: Date;
+  content?: string;
+  keyPoints?: string[];
+  loading?: boolean;
 };
 
 export type Doc = {

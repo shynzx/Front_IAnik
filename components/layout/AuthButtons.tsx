@@ -1,6 +1,6 @@
 "use client";
 
-import { pp } from "./tokens";
+import { pp } from "../../types";
 
 interface AuthButtonsProps {
   onGoLogin: () => void;
@@ -17,6 +17,7 @@ export default function AuthButtons({ onGoLogin, onGoRegister, userName, onLogou
   return (
     <>
       <button
+        aria-label={userName ? undefined : "Iniciar sesión"}
         onClick={userName ? undefined : onGoLogin}
         style={{
           ...pp,
@@ -33,6 +34,7 @@ export default function AuthButtons({ onGoLogin, onGoRegister, userName, onLogou
         {userName || "Iniciar sesión"}
       </button>
       <button
+        aria-label={userName ? "Cerrar sesión" : "Registrarse"}
         onClick={userName ? onLogout : onGoRegister}
         style={{
           ...pp,
