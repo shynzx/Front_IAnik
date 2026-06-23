@@ -16,6 +16,17 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
 
   useEffect(() => { setCards(set.cards); setFlipped(false); }, [set, set.cards]);
 
+  if (cards.length === 0) {
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(16px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "rgba(10,6,24,0.97)", border: "1px solid rgba(130,109,210,0.3)", borderRadius: 24, padding: "40px 32px", textAlign: "center" }}>
+          <p style={{ ...pp, fontSize: 15, color: "rgba(255,255,255,0.6)", margin: 0 }}>Este mazo no tiene tarjetas.</p>
+          <button onClick={onClose} style={{ ...pp, marginTop: 16, fontSize: 13, padding: "8px 18px", borderRadius: 9, border: "1px solid rgba(130,109,210,0.3)", background: "rgba(130,109,210,0.1)", color: "#c4b5fd", cursor: "pointer" }}>Cerrar</button>
+        </div>
+      </div>
+    );
+  }
+
   const card    = cards[index];
   const total   = cards.length;
   const learned = cards.filter(c => c.status === "learned").length;
@@ -40,7 +51,7 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, []);
 
   const allDone  = cards.every(c => c.status !== "pending");
   const progress = total > 0 ? Math.round((learned / total) * 100) : 0;

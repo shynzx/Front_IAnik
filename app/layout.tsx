@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "@/app/globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 const poppins = Poppins({
   weight: ["300", "400", "600"],
@@ -41,7 +42,7 @@ export default function RootLayout({
             }
           `
         }} />
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <ErrorBoundary><AuthProvider>{children}</AuthProvider></ErrorBoundary>
       </body>
     </html>
   );

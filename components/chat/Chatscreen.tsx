@@ -2,7 +2,7 @@
 
 import { FormEvent } from "react";
 import { Msg, Doc, BG } from "../../types";
-import { Attachment } from "./ChatInput";
+import type { Attachment } from "./ChatInput";
 import Sidebar from "../layout/Sidebar";
 import AuthButtons from "../layout/AuthButtons";
 import DocsPanel from "./DocsPanel";

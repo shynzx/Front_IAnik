@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { pp, Summary } from "../../types";
 import KeyPoint from "./KeyPoint";

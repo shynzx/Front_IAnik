@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { pp, Doc } from "../../types";
 
@@ -20,11 +22,11 @@ export default function GenerateSummaryModal({ docs, onGenerate, onClose }: { do
     try {
       const selectedDocsData = availableDocs.filter(d => selectedDocIds.includes(d.id));
       await onGenerate(selectedDocsData, title.trim(), prompt.trim());
-      onClose();
     } finally {
       setGenerating(false);
       setTitle("");
       setPrompt("");
+      onClose();
     }
   };
 

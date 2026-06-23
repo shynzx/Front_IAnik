@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Doc } from "../../../types";
 import DocIcon from "../DocIcon";
