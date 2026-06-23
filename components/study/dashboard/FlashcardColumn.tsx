@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { pp, FlashcardSet, Flashcard } from "../../../types";
 import FlashcardModal from "../FlashcardModal";

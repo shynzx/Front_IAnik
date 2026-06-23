@@ -69,7 +69,7 @@ export default function RegisterScreen({
 
   const handleGoogle = () => {
     // TODO: conecta tu proveedor OAuth (NextAuth, Supabase, Firebase, etc.)
-    console.log("Registro con Google");
+    // TODO: Google OAuth
   };
 
   return (

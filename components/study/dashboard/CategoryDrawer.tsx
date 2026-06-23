@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { pp, ExamSet, FlashcardSet } from "../../../types";
 import Ring from "./Ring";

@@ -51,8 +51,10 @@ export default function ChatInput({
   }, [menuOpen]);
 
   /* Revoke preview URLs on unmount */
+  const attachmentsRef = useRef(attachments);
+  attachmentsRef.current = attachments;
   useEffect(() => {
-    return () => attachments.forEach(a => a.preview && URL.revokeObjectURL(a.preview));
+    return () => attachmentsRef.current.forEach(a => a.preview && URL.revokeObjectURL(a.preview));
   }, []);
 
   /* ── Add files — SOLO adjunta al mensaje, NO toca el panel de documentos ── */
