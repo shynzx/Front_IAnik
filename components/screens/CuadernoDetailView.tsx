@@ -107,9 +107,19 @@ export default function CuadernoDetailView({
 
     try {
       const replies = await sendChatMessage(String(chatId), content);
-      // La API devuelve TODOS los mensajes (usuario + asistente), usar esos directamente
+      // La API devuelve los mensajes nuevos (usuario + asistente)
       const mappedReplies = replies.map(toMsg);
-      setMessages(mappedReplies);
+      
+      if (mappedReplies.length === 0) {
+        throw new Error("No se recibió respuesta del servidor");
+      }
+      
+      // ELIMINAR mensaje temporal del usuario y AGREGAR los nuevos de la API
+      setMessages((prev) => {
+        const withoutTemp = prev.filter(m => m.id !== userMsg.id);
+        return [...withoutTemp, ...mappedReplies];
+      });
+      
       // Activar typing solo para el último mensaje si es de la IA
       const lastMsg = mappedReplies[mappedReplies.length - 1];
       if (lastMsg?.role === "ai") {
@@ -120,7 +130,10 @@ export default function CuadernoDetailView({
           setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: lastMsg.content } : m));
         }, 0);
       }
-    } catch {}
+    } catch {
+      // En caso de error, revertir el mensaje temporal del usuario
+      setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+    }
     sendingRef.current = false;
     setSending(false);
   };
