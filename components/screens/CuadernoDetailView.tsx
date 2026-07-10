@@ -111,15 +111,16 @@ export default function CuadernoDetailView({
       if (aiMsg) {
         // 1. Activar typing primero
         setTyping(true);
-        // 2. Agregar mensaje IA vacío
+        // 2. Agregar mensaje IA vacío (mantener historial, solo quitar mensaje temporal)
         const emptyAiMsg: Msg = { ...toMsg(aiMsg), content: "" };
-        setMessages((prev) => [...prev.filter(m => !m.id.startsWith("tmp-")), emptyAiMsg]);
+        setMessages((prev) => [...prev.filter(m => m.id !== userMsg.id), emptyAiMsg]);
         // 3. En siguiente tick, actualizar contenido para que Typewriter anime
         setTimeout(() => {
           setMessages((prev) => prev.map(m => m.id === emptyAiMsg.id ? { ...m, content: toMsg(aiMsg).content } : m));
         }, 0);
       } else {
-        setMessages((prev) => prev.filter(m => !m.id.startsWith("tmp-")));
+        // Solo quitar mensaje temporal si no hay respuesta IA
+        setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
       }
     } catch {}
     sendingRef.current = false;
