@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, FormEvent } from "react";
 import { BG, pp } from "../../types";
@@ -33,7 +33,7 @@ export default function LoginScreen({
     try {
       await onLogin(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Correo o contrase├▒a incorrectos. Int├®ntalo de nuevo.");
+      setError(err instanceof Error ? err.message : "Correo o contraseña incorrectos. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export default function LoginScreen({
         onSummariesClick={() => {}}
       />
 
-      {/* Bot├│n de regreso ÔÇö esquina superior izquierda (sobre el sidebar) */}
+      {/* Botón de regreso — esquina superior izquierda (sobre el sidebar) */}
       <button
         onClick={onGoHome}
         className="back-btn"
@@ -136,7 +136,7 @@ export default function LoginScreen({
             animation: "fadeUp .38s ease both",
           }}
         >
-          {/* Logo + t├¡tulo ÔÇö clic lleva al inicio */}
+          {/* Logo + título — clic lleva al inicio */}
           <div
             style={{
               display: "flex",
@@ -174,7 +174,7 @@ export default function LoginScreen({
                 Bienvenido a IAnik
               </h1>
               <p style={{ ...pp, fontSize: 13, color: "rgba(255,255,255,0.38)", margin: "4px 0 0" }}>
-                Inicia sesi├│n para continuar
+                Inicia sesión para continuar
               </p>
             </div>
           </div>
@@ -240,7 +240,7 @@ export default function LoginScreen({
             {/* Email */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                Correo electr├│nico
+                Correo electrónico
               </label>
               <div style={{ position: "relative" }}>
                 <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
@@ -277,7 +277,7 @@ export default function LoginScreen({
             {/* Password */}
             <div style={{ marginBottom: 10 }}>
               <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                Contrase├▒a
+                Contraseña
               </label>
               <div style={{ position: "relative" }}>
                 <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
@@ -291,7 +291,7 @@ export default function LoginScreen({
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                  placeholder="••••••••"
                   autoComplete="current-password"
                   style={{
                     width: "100%",
@@ -310,7 +310,7 @@ export default function LoginScreen({
                 />
                 <button
                   type="button"
-                  aria-label={showPassword ? "Ocultar contrase├▒a" : "Mostrar contrase├▒a"}
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   onClick={() => setShowPassword(!showPassword)}
                   style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 2, display: "flex" }}
                 >
@@ -338,7 +338,7 @@ export default function LoginScreen({
                 style={{ ...pp, color: "rgba(255,255,255,0.45)", cursor: "pointer", background: "none", border: "none", fontSize: 13, padding: 0, transition: "color .15s" }}
                 className="auth-link"
               >
-                ┬┐Olvidaste tu contrase├▒a?
+                ¿Olvidaste tu contraseña?
               </button>
             </div>
 
@@ -370,7 +370,7 @@ export default function LoginScreen({
                   <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} />
                   Entrando...
                 </>
-              ) : "Iniciar sesi├│n"}
+              ) : "Iniciar sesión"}
             </button>
           </form>
 
@@ -383,13 +383,13 @@ export default function LoginScreen({
 
           {/* Register link */}
           <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.4)", textAlign: "center", margin: 0 }}>
-            ┬┐No tienes cuenta?{" "}
+            ¿No tienes cuenta?{" "}
             <button
               type="button"
               onClick={onGoRegister}
               style={{ ...pp, fontSize: 14, fontWeight: 500, color: "#826dd2", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
-              Reg├¡strate gratis
+              Regístrate gratis
             </button>
           </p>
         </div>

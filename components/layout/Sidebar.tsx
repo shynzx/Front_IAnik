@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 interface SidebarProps {
   phase: "onboard" | "chat" | "study" | "summaries";
@@ -173,7 +173,7 @@ export default function Sidebar({
       </button>
 
       <button
-        aria-label="Res├║menes"
+        aria-label="Resúmenes"
         onClick={onSummariesClick}
         style={{
           color: phase === "summaries" ? "#826dd2" : "rgba(255,255,255,0.4)",

@@ -1,4 +1,4 @@
-﻿export { useAuth } from "./useAuth";
+export { useAuth } from "./useAuth";
 export { useRag } from "./useRag";
 export { useFlashcards } from "./useFlashcards";
 export { useQuizzes } from "./useQuizzes";

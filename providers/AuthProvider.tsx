@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { setStoredToken, clearStoredToken, loginUser, registerUser, getMe } from "@/lib/api";

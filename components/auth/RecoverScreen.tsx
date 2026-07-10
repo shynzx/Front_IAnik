@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, FormEvent } from "react";
 import { BG, pp } from "../../types";
@@ -29,7 +29,7 @@ export default function RecoverScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* ÔöÇÔöÇ Step 1: Send email ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+  /* ── Step 1: Send email ─────────────────────────────── */
   const handleSendEmail = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || loading) return;
@@ -39,13 +39,13 @@ export default function RecoverScreen({
       await onRecover(email);
       setStep("code");
     } catch {
-      setError("No encontramos esa direcci├│n. Verifica e intenta de nuevo.");
+      setError("No encontramos esa dirección. Verifica e intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ÔöÇÔöÇ Step 2: Verify code ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+  /* ── Step 2: Verify code ────────────────────────────── */
   const handleVerifyCode = async (e: FormEvent) => {
     e.preventDefault();
     const full = code.join("");
@@ -56,7 +56,7 @@ export default function RecoverScreen({
       await onVerifyCode(full);
       setStep("newpass");
     } catch {
-      setError("C├│digo incorrecto o expirado. Int├®ntalo de nuevo.");
+      setError("Código incorrecto o expirado. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function RecoverScreen({
     (document.getElementById(`code-${lastFilled}`) as HTMLInputElement)?.focus();
   };
 
-  /* ÔöÇÔöÇ Step 3: New password ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+  /* ── Step 3: New password ───────────────────────────── */
   const handleNewPassword = async (e: FormEvent) => {
     e.preventDefault();
     if (newPass.length < 6 || newPass !== confirmPass || loading) return;
@@ -100,13 +100,13 @@ export default function RecoverScreen({
       await onNewPassword(newPass);
       setStep("done");
     } catch {
-      setError("No se pudo actualizar la contrase├▒a. Intenta de nuevo.");
+      setError("No se pudo actualizar la contraseña. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ÔöÇÔöÇ Shared styles ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+  /* ── Shared styles ──────────────────────────────────── */
   const inputStyle = {
     width: "100%",
     boxSizing: "border-box" as const,
@@ -165,7 +165,7 @@ export default function RecoverScreen({
           minHeight: "100vh",
         }}
       >
-        {/* ÔöÇÔöÇ Back button ÔöÇÔöÇ */}
+        {/* ── Back button ── */}
         {step !== "done" && (
           <button
             onClick={step === "email" ? onGoLogin : () => { setStep("email"); setError(""); }}
@@ -190,7 +190,7 @@ export default function RecoverScreen({
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
-            {step === "email" ? "Iniciar sesi├│n" : "Volver"}
+            {step === "email" ? "Iniciar sesión" : "Volver"}
           </button>
         )}
 
@@ -231,7 +231,7 @@ export default function RecoverScreen({
             animation: "fadeUp .35s ease both",
           }}
         >
-          {/* ÔöÇÔöÇ STEP 1: Email ÔöÇÔöÇ */}
+          {/* ── STEP 1: Email ── */}
           {step === "email" && (
             <>
               <div
@@ -253,17 +253,17 @@ export default function RecoverScreen({
                 </svg>
               </div>
               <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 8px" }}>
-                Recuperar contrase├▒a
+                Recuperar contraseña
               </h1>
               <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.38)", margin: "0 0 28px", lineHeight: "22px" }}>
-                Ingresa tu correo y te enviaremos un c├│digo de verificaci├│n.
+                Ingresa tu correo y te enviaremos un código de verificación.
               </p>
 
               {error && <ErrorBanner message={error} />}
 
               <form onSubmit={handleSendEmail}>
                 <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                  Correo electr├│nico
+                  Correo electrónico
                 </label>
                 <div style={{ position: "relative", marginBottom: 24 }}>
                   <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
@@ -284,13 +284,13 @@ export default function RecoverScreen({
                 </div>
 
                 <PrimaryButton loading={loading} disabled={!email.trim() || loading}>
-                  Enviar c├│digo
+                  Enviar código
                 </PrimaryButton>
               </form>
             </>
           )}
 
-          {/* ÔöÇÔöÇ STEP 2: Code ÔöÇÔöÇ */}
+          {/* ── STEP 2: Code ── */}
           {step === "code" && (
             <>
               <div
@@ -315,7 +315,7 @@ export default function RecoverScreen({
                 Revisa tu correo
               </h1>
               <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.38)", margin: "0 0 28px", lineHeight: "22px" }}>
-                Enviamos un c├│digo de 6 d├¡gitos a{" "}
+                Enviamos un código de 6 dígitos a{" "}
                 <span style={{ color: "rgba(255,255,255,0.7)" }}>{email}</span>
               </p>
 
@@ -357,7 +357,7 @@ export default function RecoverScreen({
                 </div>
 
                 <PrimaryButton loading={loading} disabled={code.join("").length < 6 || loading}>
-                  Verificar c├│digo
+                  Verificar código
                 </PrimaryButton>
 
                 <div style={{ textAlign: "center", marginTop: 20 }}>
@@ -368,14 +368,14 @@ export default function RecoverScreen({
                     onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#826dd2")}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.35)")}
                   >
-                    ┬┐No lo recibiste? Reenviar c├│digo
+                    ¿No lo recibiste? Reenviar código
                   </button>
                 </div>
               </form>
             </>
           )}
 
-          {/* ÔöÇÔöÇ STEP 3: New password ÔöÇÔöÇ */}
+          {/* ── STEP 3: New password ── */}
           {step === "newpass" && (
             <>
               <div
@@ -396,10 +396,10 @@ export default function RecoverScreen({
                 </svg>
               </div>
               <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 8px" }}>
-                Nueva contrase├▒a
+                Nueva contraseña
               </h1>
               <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.38)", margin: "0 0 28px", lineHeight: "22px" }}>
-                Elige una contrase├▒a segura para tu cuenta.
+                Elige una contraseña segura para tu cuenta.
               </p>
 
               {error && <ErrorBanner message={error} />}
@@ -407,7 +407,7 @@ export default function RecoverScreen({
               <form onSubmit={handleNewPassword}>
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                    Nueva contrase├▒a
+                    Nueva contraseña
                   </label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
@@ -421,7 +421,7 @@ export default function RecoverScreen({
                       type={showPass ? "text" : "password"}
                       value={newPass}
                       onChange={(e) => setNewPass(e.target.value)}
-                      placeholder="M├¡nimo 6 caracteres"
+                      placeholder="Mínimo 6 caracteres"
                       autoComplete="new-password"
                       style={{ ...inputStyle, paddingRight: 44 }}
                     />
@@ -448,7 +448,7 @@ export default function RecoverScreen({
 
                 <div style={{ marginBottom: 24 }}>
                   <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                    Confirmar contrase├▒a
+                    Confirmar contraseña
                   </label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
@@ -462,7 +462,7 @@ export default function RecoverScreen({
                       type="password"
                       value={confirmPass}
                       onChange={(e) => setConfirmPass(e.target.value)}
-                      placeholder="Repite tu contrase├▒a"
+                      placeholder="Repite tu contraseña"
                       autoComplete="new-password"
                       style={{
                         ...inputStyle,
@@ -474,19 +474,19 @@ export default function RecoverScreen({
                   </div>
                   {confirmPass.length > 0 && confirmPass !== newPass && (
                     <p style={{ ...pp, fontSize: 11, color: "#ef9a9a", margin: "5px 0 0" }}>
-                      Las contrase├▒as no coinciden
+                      Las contraseñas no coinciden
                     </p>
                   )}
                 </div>
 
                 <PrimaryButton loading={loading} disabled={newPass.length < 6 || newPass !== confirmPass || loading}>
-                  Guardar contrase├▒a
+                  Guardar contraseña
                 </PrimaryButton>
               </form>
             </>
           )}
 
-          {/* ÔöÇÔöÇ STEP 4: Done ÔöÇÔöÇ */}
+          {/* ── STEP 4: Done ── */}
           {step === "done" && (
             <div style={{ textAlign: "center", animation: "scaleIn .35s ease both" }}>
               <div
@@ -507,10 +507,10 @@ export default function RecoverScreen({
                 </svg>
               </div>
               <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 10px" }}>
-                ┬íListo!
+                ¡Listo!
               </h1>
               <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.45)", margin: "0 0 32px", lineHeight: "22px" }}>
-                Tu contrase├▒a fue actualizada correctamente. Ya puedes iniciar sesi├│n.
+                Tu contraseña fue actualizada correctamente. Ya puedes iniciar sesión.
               </p>
               <button
                 onClick={onGoLogin}
@@ -529,7 +529,7 @@ export default function RecoverScreen({
                   transition: "background .15s",
                 }}
               >
-                Ir a iniciar sesi├│n
+                Ir a iniciar sesión
               </button>
             </div>
           )}
@@ -539,7 +539,7 @@ export default function RecoverScreen({
   );
 }
 
-/* ÔöÇÔöÇ Shared mini-components ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ── Shared mini-components ─────────────────────────────── */
 
 function ErrorBanner({ message }: { message: string }) {
   return (

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import { Msg, MsgAttachment, gradText } from "../../types";
@@ -12,7 +12,7 @@ interface MessageListProps {
   onEditMessage: (index: number, newContent: string) => void;
 }
 
-/* ÔöÇÔöÇ Attachment preview inside a user bubble ÔöÇÔöÇ */
+/* ── Attachment preview inside a user bubble ── */
 function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
   if (!attachments.length) return null;
   const images = attachments.filter(a => a.kind === "image");
@@ -46,12 +46,12 @@ function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
   );
 }
 
-/* ÔöÇÔöÇ Burbuja de usuario ÔöÇÔöÇ */
+/* ── Burbuja de usuario ── */
 function UserBubble({
   message,
   flatIndex,
   isEditing,       // controlado desde el padre
-  anyEditing,      // true si CUALQUIER burbuja est├í en modo edici├│n
+  anyEditing,      // true si CUALQUIER burbuja está en modo edición
   onStartEdit,
   onCancelEdit,
   onEditMessage,
@@ -75,7 +75,7 @@ function UserBubble({
   // Sincronizar draft cuando el mensaje cambia desde afuera
   useEffect(() => { setDraft(message.content); }, [message.content]);
 
-  // Focus y resize al entrar en modo edici├│n
+  // Focus y resize al entrar en modo edición
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -110,11 +110,11 @@ function UserBubble({
         maxWidth: "85%",
         paddingLeft: 44,
       }}
-      // Solo activar hover si ning├║n mensaje est├í siendo editado
+      // Solo activar hover si ningún mensaje está siendo editado
       onMouseEnter={() => { if (!anyEditing) setHovered(true); }}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Bot├│n editar ÔÇö visible solo con hover y sin ninguna edici├│n activa */}
+      {/* Botón editar — visible solo con hover y sin ninguna edición activa */}
       {hovered && !anyEditing && canEdit && (
         <button
           onClick={() => { setHovered(false); onStartEdit(flatIndex); }}
@@ -220,7 +220,7 @@ function UserBubble({
   );
 }
 
-/* ÔöÇÔöÇ Main component ÔöÇÔöÇ */
+/* ── Main component ── */
 export default function MessageList({
   messages,
   loading,
@@ -229,7 +229,7 @@ export default function MessageList({
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Un solo ├¡ndice controla qu├® mensaje est├í en edici├│n; null = ninguno
+  // Un solo índice controla qué mensaje está en edición; null = ninguno
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const scrollToBottom = useCallback(
@@ -239,7 +239,7 @@ export default function MessageList({
 
   useEffect(() => { scrollToBottom(); }, [messages, loading, scrollToBottom]);
 
-  // Cerrar edici├│n si llegan mensajes nuevos (p.ej. despu├®s de enviar)
+  // Cerrar edición si llegan mensajes nuevos (p.ej. después de enviar)
   useEffect(() => { setEditingIndex(null); }, [messages.length]);
 
   const lastAiIndex = messages.reduce(

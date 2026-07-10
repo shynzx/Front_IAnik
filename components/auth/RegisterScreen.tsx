@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, FormEvent } from "react";
 import { BG, pp } from "../../types";
@@ -24,7 +24,7 @@ export default function RegisterScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ÔöÇÔöÇ Fortaleza de contrase├▒a (m├¡nimo 8 caracteres) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Fortaleza de contraseña (mínimo 8 caracteres) ───────────
   const passwordStrength = (p: string) => {
     if (!p) return 0;
     let score = 0;
@@ -36,7 +36,7 @@ export default function RegisterScreen({
   };
 
   const strength = passwordStrength(password);
-  const strengthLabel = ["", "D├®bil", "Regular", "Buena", "Fuerte"][strength];
+  const strengthLabel = ["", "Débil", "Regular", "Buena", "Fuerte"][strength];
   const strengthColor = ["", "#ef5350", "#ffa726", "#66bb6a", "#26c6da"][strength];
 
   const passwordTooShort = password.length > 0 && password.length < 8;
@@ -45,7 +45,7 @@ export default function RegisterScreen({
   const canSubmit =
     name.trim() &&
     email.trim() &&
-    password.length >= 8 &&       // m├¡nimo 8 caracteres
+    password.length >= 8 &&       // mínimo 8 caracteres
     password === confirm &&
     !loading;
 
@@ -53,7 +53,7 @@ export default function RegisterScreen({
     e.preventDefault();
     if (!canSubmit) return;
     if (password !== confirm) {
-      setError("Las contrase├▒as no coinciden.");
+      setError("Las contraseñas no coinciden.");
       return;
     }
     setError("");
@@ -61,7 +61,7 @@ export default function RegisterScreen({
     try {
       await onRegister(name, email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear la cuenta. Int├®ntalo de nuevo.");
+      setError(err instanceof Error ? err.message : "No se pudo crear la cuenta. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ export default function RegisterScreen({
         onSummariesClick={() => {}}
       />
 
-      {/* Bot├│n de regreso */}
+      {/* Botón de regreso */}
       <button
         onClick={onGoHome}
         className="back-btn"
@@ -165,7 +165,7 @@ export default function RegisterScreen({
             animation: "fadeUp .38s ease both",
           }}
         >
-          {/* Logo + t├¡tulo */}
+          {/* Logo + título */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
             <button
               onClick={onGoHome}
@@ -196,7 +196,7 @@ export default function RegisterScreen({
                 Crea tu cuenta
               </h1>
               <p style={{ ...pp, fontSize: 13, color: "rgba(255,255,255,0.38)", margin: 0 }}>
-                ├Ünete a IAnik y empieza a organizar tu conocimiento
+                Únete a IAnik y empieza a organizar tu conocimiento
               </p>
             </div>
           </div>
@@ -270,7 +270,7 @@ export default function RegisterScreen({
             </Field>
 
             {/* Email */}
-            <Field label="Correo electr├│nico">
+            <Field label="Correo electrónico">
               <IconInput
                 icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>}
                 type="email"
@@ -282,13 +282,13 @@ export default function RegisterScreen({
             </Field>
 
             {/* Password */}
-            <Field label="Contrase├▒a">
+            <Field label="Contraseña">
               <IconInput
                 icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={setPassword}
-                placeholder="M├¡nimo 8 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 autoComplete="new-password"
                 hasError={passwordTooShort}
                 endAdornment={
@@ -303,7 +303,7 @@ export default function RegisterScreen({
               {/* Mensaje si es muy corta */}
               {passwordTooShort && (
                 <p style={{ ...pp, fontSize: 11, color: "#ef9a9a", margin: "5px 0 0" }}>
-                  La contrase├▒a debe tener al menos 8 caracteres
+                  La contraseña debe tener al menos 8 caracteres
                 </p>
               )}
               {/* Barra de fortaleza */}
@@ -322,13 +322,13 @@ export default function RegisterScreen({
             </Field>
 
             {/* Confirm password */}
-            <Field label="Confirmar contrase├▒a">
+            <Field label="Confirmar contraseña">
               <IconInput
                 icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
                 type={showConfirm ? "text" : "password"}
                 value={confirm}
                 onChange={setConfirm}
-                placeholder="Repite tu contrase├▒a"
+                placeholder="Repite tu contraseña"
                 autoComplete="new-password"
                 hasError={confirmMismatch}
                 endAdornment={
@@ -342,7 +342,7 @@ export default function RegisterScreen({
               />
               {confirmMismatch && (
                 <p style={{ ...pp, fontSize: 11, color: "#ef9a9a", margin: "5px 0 0" }}>
-                  Las contrase├▒as no coinciden
+                  Las contraseñas no coinciden
                 </p>
               )}
             </Field>
@@ -389,13 +389,13 @@ export default function RegisterScreen({
 
           {/* Login link */}
           <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.4)", textAlign: "center", margin: 0 }}>
-            ┬┐Ya tienes cuenta?{" "}
+            ¿Ya tienes cuenta?{" "}
             <button
               type="button"
               onClick={onGoLogin}
               style={{ ...pp, fontSize: 14, fontWeight: 500, color: "#826dd2", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
-              Inicia sesi├│n
+              Inicia sesión
             </button>
           </p>
         </div>
@@ -404,7 +404,7 @@ export default function RegisterScreen({
   );
 }
 
-/* ÔöÇÔöÇ Helpers ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ── Helpers ─────────────────────────────────────────────── */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   const pp = { fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 };
   return (

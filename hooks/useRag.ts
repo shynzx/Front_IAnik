@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { uploadNotebookFile, listNotebookFiles, deleteNotebookFile, sendChatMessage, getChatMessages } from "@/lib/api";
 import type { RAGFileResponse } from "@/lib/api";
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRef } from "react";
 import { pp, gradText, BG } from "../../types";
@@ -59,7 +59,7 @@ export default function OnboardingScreen({
           position: "relative",
         }}
       >
-        {/* Auth buttons ÔÇö inside main area so they never overlap sidebar */}
+        {/* Auth buttons — inside main area so they never overlap sidebar */}
         <div
           style={{
             position: "absolute",
@@ -117,9 +117,9 @@ export default function OnboardingScreen({
                 Hola, soy IAnik
               </p>
               <p style={{ ...pp, fontSize: 17, lineHeight: "30px", ...gradText }}>
-                Estoy aqu├¡ para acompa├▒arte. Tus apuntes y documentos estar├ín
-                guardados de manera segura, y con ellos te dar├® respuestas
-                claras y ├║tiles para lo que necesites.
+                Estoy aquí para acompañarte. Tus apuntes y documentos estarán
+                guardados de manera segura, y con ellos te daré respuestas
+                claras y útiles para lo que necesites.
               </p>
             </div>
           </div>

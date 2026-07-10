@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { getClassStats, getUserAuditLogs, getUserStorage } from "@/lib/api";
 import type { AdminClassStats, AdminUserAuditLog, AdminUserStorage } from "@/types";
 
@@ -12,7 +12,7 @@ export function useAdmin() {
     try {
       return await getClassStats(classId);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al obtener estad├¡sticas";
+      const msg = e instanceof Error ? e.message : "Error al obtener estadísticas";
       setError(msg);
       throw e;
     } finally {
@@ -26,7 +26,7 @@ export function useAdmin() {
     try {
       return await getUserAuditLogs(userId);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al obtener auditor├¡a";
+      const msg = e instanceof Error ? e.message : "Error al obtener auditoría";
       setError(msg);
       throw e;
     } finally {

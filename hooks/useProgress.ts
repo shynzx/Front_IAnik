@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { getProgressMetrics, getPendingCards, getDailyActivity } from "@/lib/api";
 import type { ProgressMetrics, AssessmentFlashcard, DailyActivity } from "@/types";
 

@@ -1,4 +1,4 @@
-﻿export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /* Compat: maps to NotebookFile shape used by existing UI */
 export type RAGFileResponse = {
@@ -111,7 +111,7 @@ function withAuthHeader(headers: HeadersInit = {}, authHeader?: string | null): 
   };
 }
 
-/* ÔöÇÔöÇÔöÇ Auth / Users ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Auth / Users ──────────────────────────────────────── */
 
 export async function registerUser(email: string, password: string, full_name: string) {
   return fetchAPI<{ message: string }>("/users/register", {
@@ -148,7 +148,7 @@ export async function deleteMe(email: string, password: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Notebooks ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Notebooks ─────────────────────────────────────────── */
 
 export async function createNotebook(title: string, description: string, apiKey: string) {
   return fetchAPI<{ id: number; message: string }>("/notebooks", {
@@ -248,7 +248,7 @@ export async function sendChatMessage(chatId: string, content: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Study Rooms ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Study Rooms ───────────────────────────────────────── */
 
 export async function createStudyRoom(title: string, notebookId: string) {
   return fetchAPI<{ id: number; codigo: string; message: string }>("/study-rooms", {
@@ -362,7 +362,7 @@ export async function listRoomExams(roomId: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Assessments ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Assessments ───────────────────────────────────────── */
 
 export async function generateFlashcards(notebookId: string, prompt: string, cantidad?: number) {
   return fetchAPI<AssessmentFlashcard[]>("/assessments/flashcards", {
@@ -431,7 +431,7 @@ export async function getExamAttempts(examId: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Summaries ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Summaries ────────────────────────────────────────── */
 
 export async function generateSummary(data: { doc_ids: string[]; title: string; prompt: string }) {
   return fetchAPI<{ id: string; content: string; keyPoints: string[] }>("/summaries/generate", {
@@ -454,7 +454,7 @@ export async function deleteSummary(summaryId: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Progress ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Progress ──────────────────────────────────────────── */
 
 export async function getProgressMetrics() {
   return fetchAPI<ProgressMetrics>("/progress/metrics", {
@@ -474,7 +474,7 @@ export async function getDailyActivity() {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ API Keys ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── API Keys ──────────────────────────────────────────── */
 
 export async function createApiKey(title: string) {
   return fetchAPI<ApiKeyCreateResponse>("/api-keys", {
@@ -497,7 +497,7 @@ export async function deleteApiKey(keyId: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Webhooks ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Webhooks ──────────────────────────────────────────── */
 
 export async function createWebhookSubscription(data: { org_id: number; url: string }) {
   return fetchAPI<WebhookSubscription>("/webhooks/subscriptions", {
@@ -526,7 +526,7 @@ export async function retryWebhookAttempt(attemptId: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Admin ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Admin ─────────────────────────────────────────────── */
 
 export async function getClassStats(roomId: string) {
   return fetchAPI<AdminClassStats>(`/admin/classes/${encodeURIComponent(roomId)}/stats`, {
@@ -546,7 +546,7 @@ export async function getUserStorage(userId: string) {
   });
 }
 
-/* ÔöÇÔöÇÔöÇ Health ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Health ────────────────────────────────────────────── */
 
 export async function healthRoot() {
   return fetchAPI<{ status: string }>("/");

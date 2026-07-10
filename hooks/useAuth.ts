@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { loginUser, registerUser, setStoredToken, clearStoredToken } from "@/lib/api";
 
 export function useAuth() {
@@ -13,7 +13,7 @@ export function useAuth() {
       setStoredToken(res.access_token, res.token_type);
       return res;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al iniciar sesi├│n";
+      const msg = e instanceof Error ? e.message : "Error al iniciar sesión";
       setError(msg);
       throw e;
     } finally {

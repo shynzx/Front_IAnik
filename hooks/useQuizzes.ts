@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   generateExam, getExam, getNotebookExams, getRoomExams,
   submitExam, listAttempts, getAttempt, getExamAttempts,
@@ -43,7 +43,7 @@ export function useQuizzes() {
     try {
       return await getNotebookExams(notebookId);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al obtener ex├ímenes";
+      const msg = e instanceof Error ? e.message : "Error al obtener exámenes";
       setError(msg);
       throw e;
     } finally {
@@ -57,7 +57,7 @@ export function useQuizzes() {
     try {
       return await getRoomExams(roomId);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al obtener ex├ímenes";
+      const msg = e instanceof Error ? e.message : "Error al obtener exámenes";
       setError(msg);
       throw e;
     } finally {

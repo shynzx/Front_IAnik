@@ -1,4 +1,4 @@
-﻿/* ÔöÇÔöÇÔöÇ UI Types ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── UI Types ──────────────────────────────────────────── */
 
 export interface AuthUser {
   name: string;
@@ -75,7 +75,7 @@ export type Doc = {
   loading?: boolean;
 };
 
-/* ÔöÇÔöÇÔöÇ API Response Types ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── API Response Types ───────────────────────────────── */
 
 /* Auth */
 export interface LoginResponse {
@@ -276,7 +276,7 @@ export interface HealthMetadata {
   author: string;
 }
 
-/* ÔöÇÔöÇÔöÇ Design tokens ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+/* ─── Design tokens ──────────────────────────────────────── */
 export const BG = "linear-gradient(135deg, #000000 0%, #3c2850 100%)";
 
 export const gradText: React.CSSProperties = {

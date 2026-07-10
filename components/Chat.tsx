@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, FormEvent, useEffect, useCallback } from "react";
 import type { Msg, Doc, Summary, ExamSet, FlashcardSet, Flashcard, ExamCard } from "../types";

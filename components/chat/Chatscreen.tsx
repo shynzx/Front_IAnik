@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent } from "react";
 import { Msg, Doc, BG } from "../../types";
@@ -115,7 +115,7 @@ export default function ChatScreen({
           position: "relative",
         }}
       >
-        {/* ÔöÇÔöÇ Fixed sidebar ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+        {/* ── Fixed sidebar ─────────────────────────────────── */}
         <Sidebar
           phase="chat"
           docsOpen={docsOpen}
@@ -126,7 +126,7 @@ export default function ChatScreen({
           onStudyClick={onStudyClick}
           onSummariesClick={onSummariesClick} />
 
-        {/* ÔöÇÔöÇ Docs panel (beside sidebar) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+        {/* ── Docs panel (beside sidebar) ────────────────────── */}
         {docsOpen && !docsFullscreen && (
           <aside
             className="docs-panel-aside"
@@ -166,7 +166,7 @@ export default function ChatScreen({
           />
         )}
 
-        {/* ÔöÇÔöÇ Main column ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+        {/* ── Main column ───────────────────────────────────── */}
         <main
           className="chat-main"
           style={{
@@ -179,7 +179,7 @@ export default function ChatScreen({
             position: "relative",
           }}
         >
-          {/* Auth buttons ÔÇö floats at top-right, never scrolls */}
+          {/* Auth buttons — floats at top-right, never scrolls */}
           <div
             style={{
               position: "absolute",
@@ -193,7 +193,7 @@ export default function ChatScreen({
             <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} onLogout={onLogout} userName={userName} />
           </div>
 
-          {/* ÔöÇÔöÇ Scrollable messages ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+          {/* ── Scrollable messages ─────────────────────────── */}
           <div
             className="chat-scroll"
             style={{
@@ -223,7 +223,7 @@ export default function ChatScreen({
             </div>
           </div>
 
-          {/* ÔöÇÔöÇ Pinned input bar ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+          {/* ── Pinned input bar ────────────────────────────── */}
           <div
             style={{
               flexShrink: 0,

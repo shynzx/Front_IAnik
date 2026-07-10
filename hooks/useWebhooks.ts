@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { createWebhookSubscription, listWebhookSubscriptions, getWebhookAttempts, retryWebhookAttempt } from "@/lib/api";
 import type { WebhookSubscription, WebhookAttempt } from "@/types";
 
@@ -12,7 +12,7 @@ export function useWebhooks() {
     try {
       return await createWebhookSubscription(data);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al crear suscripci├│n";
+      const msg = e instanceof Error ? e.message : "Error al crear suscripción";
       setError(msg);
       throw e;
     } finally {
