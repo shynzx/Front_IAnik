@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { pp, ExamSet, FlashcardSet } from "../../../types";
+import { pp } from "@/lib/constants";
+import type { ExamSet, FlashcardSet } from "@/types";
 import Ring from "./Ring";
 import { FilterCat, pct, formatDate, categorizeExam, categorizeFc } from "./types";
 
@@ -69,7 +70,6 @@ export default function CategoryDrawer({ title, accentColor, category, kind, exa
     <div
       onClick={e => e.target === e.currentTarget && onClose()}
       style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <style>{`@keyframes drawerIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}`}</style>
       <div style={{ width: "100%", maxWidth: 560, maxHeight: "80vh", background: "rgba(10,6,24,0.98)", border: "1px solid rgba(130,109,210,0.25)", borderRadius: 20, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.8)", animation: "drawerIn .2s ease" }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
           <div style={{ width: 34, height: 34, borderRadius: 10, background: `${accentColor}22`, border: `1px solid ${accentColor}44`, display: "flex", alignItems: "center", justifyContent: "center", color: accentColor, flexShrink: 0 }}>

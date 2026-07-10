@@ -1,201 +1,105 @@
 "use client";
 
 interface SidebarProps {
-  phase: "onboard" | "chat" | "study" | "summaries";
-  docsOpen: boolean;
-  docsFullscreen: boolean;
+  phase: "onboard" | "chat" | "study" | "summaries" | "study-rooms" | "study-room";
   hasMessages: boolean;
   onChatClick: () => void;
-  onDocsClick: () => void;
   onStudyClick: () => void;
   onSummariesClick: () => void;
+  onStudyRoomsClick: () => void;
 }
 
 export default function Sidebar({
   phase,
-  docsOpen,
-  docsFullscreen,
   hasMessages,
   onChatClick,
-  onDocsClick,
   onStudyClick,
   onSummariesClick,
+  onStudyRoomsClick,
 }: SidebarProps) {
+  const chatActive = phase === "chat";
   return (
-    <aside
-      style={{
-        position: "fixed",
-        left: 0,
-        top: 0,
-        height: "100vh",
-        width: 64,
-        background: "rgba(0,0,0,0.3)",
-        backdropFilter: "blur(12px)",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        paddingTop: 24,
-        paddingBottom: 24,
-        gap: 10,
-        zIndex: 50,
-      }}
-    >
+    <aside className="fixed left-0 top-0 h-screen w-16 bg-[rgba(0,0,0,0.3)] backdrop-blur-md border-r border-[rgba(255,255,255,0.06)] flex-col items-center pt-6 pb-6 gap-2.5 z-50 max-md:hidden max-md:w-0 max-md:border-none hidden md:flex">
       <button
         aria-label="Inicio"
-        style={{
-          color: "#826dd2",
-          padding: 8,
-          borderRadius: 12,
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-        }}
+        className="text-[#826dd2] p-2 rounded-xl bg-transparent border-none cursor-pointer"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 3c4.97 0 9 3.582 9 8s-4.03 8-9 8-9-3.582-9-8 4.03-8 9-8" />
-          <path d="M3 12c0-1.333.536-2.583 1.5-3.5" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
       </button>
 
-      <div
-        style={{
-          width: 32,
-          height: 1,
-          background: "rgba(255,255,255,0.07)",
-        }}
-      />
+      <div className="w-8 h-px bg-[rgba(255,255,255,0.07)]" />
 
       <button
         aria-label="Chat"
         onClick={onChatClick}
-        style={{
-          color:
-            phase === "chat" && !docsOpen
-              ? "#826dd2"
-              : "rgba(255,255,255,0.4)",
-          padding: 8,
-          borderRadius: 12,
-          background:
-            phase === "chat" && !docsOpen
-              ? "rgba(130,109,210,0.12)"
-              : "transparent",
-          border: "none",
-          cursor: "pointer",
-          position: "relative",
-        }}
+        className={`p-2 rounded-xl border-none cursor-pointer relative ${
+          chatActive
+            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
+            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+        }`}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 20l1.3-3.9c-2.324-3.437-1.426-7.872 2.1-10.374C9.928 3.227 14.842 3.586 17.967 6.699 21.09 9.812 21.429 14.787 18.754 18.3 16.08 21.813 11.19 22.93 7.4 21L3 20" />
         </svg>
         {hasMessages && (
-          <span
-            style={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#826dd2",
-            }}
-          />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#826dd2]" />
         )}
-      </button>
-
-      <button
-        aria-label="Documentos"
-        onClick={onDocsClick}
-        style={{
-          color: docsOpen ? "#826dd2" : "rgba(255,255,255,0.4)",
-          padding: 8,
-          borderRadius: 12,
-          background: docsOpen ? "rgba(130,109,210,0.12)" : "transparent",
-          border: "none",
-          cursor: phase === "chat" ? "pointer" : "default",
-          opacity: phase === "onboard" ? 0.35 : 1,
-        }}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M14 3v4a1 1 0 001 1h4" />
-          <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
-          <line x1="9" y1="13" x2="15" y2="13" />
-          <line x1="9" y1="17" x2="13" y2="17" />
-        </svg>
       </button>
 
       <button
         aria-label="Progreso"
         onClick={onStudyClick}
-        style={{
-          color: phase === "study" ? "#826dd2" : "rgba(255,255,255,0.4)",
-          padding: 8,
-          borderRadius: 12,
-          background: phase === "study" ? "rgba(130,109,210,0.12)" : "transparent",
-          border: "none",
-          cursor: "pointer",
-        }}
+        className={`p-2 rounded-xl border-none cursor-pointer ${
+          phase === "study"
+            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
+            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+        }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          <path d="M3 3v18h18" />
+          <path d="M18 17V9" />
+          <path d="M13 17V5" />
+          <path d="M8 17v-3" />
         </svg>
       </button>
 
       <button
         aria-label="Resúmenes"
         onClick={onSummariesClick}
-        style={{
-          color: phase === "summaries" ? "#826dd2" : "rgba(255,255,255,0.4)",
-          padding: 8,
-          borderRadius: 12,
-          background: phase === "summaries" ? "rgba(130,109,210,0.12)" : "transparent",
-          border: "none",
-          cursor: "pointer",
-        }}
+        className={`p-2 rounded-xl border-none cursor-pointer ${
+          phase === "summaries"
+            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
+            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+        }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 3v4a1 1 0 001 1h4" /><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="13" y2="17" />
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          <path d="M9 14l2 2 4-4" />
         </svg>
       </button>
 
-      <div
-        style={{
-          width: 32,
-          height: 1,
-          background: "rgba(255,255,255,0.07)",
-        }}
-      />
+      <button
+        aria-label="Salas de Estudio"
+        onClick={onStudyRoomsClick}
+        className={`p-2 rounded-xl border-none cursor-pointer ${
+          phase === "study-rooms" || phase === "study-room"
+            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
+            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+        }`}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      </button>
+
+      <div className="w-8 h-px bg-[rgba(255,255,255,0.07)]" />
 
     </aside>
   );

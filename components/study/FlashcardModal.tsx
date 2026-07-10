@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { pp, Flashcard, FlashcardSet } from "../../types";
+import { pp } from "@/lib/constants";
+import type { Flashcard, FlashcardSet } from "@/types";
 
 interface FlashcardModalProps {
   set: FlashcardSet;
@@ -59,7 +60,6 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
         .fcard.flipped { transform: rotateY(180deg); }
         .fcard-front { backface-visibility: hidden; transform: rotateY(0deg); }
         .fcard-back  { backface-visibility: hidden; transform: rotateY(180deg); }
-        @keyframes fcIn { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:none; } }
       `}</style>
 
       <div style={{

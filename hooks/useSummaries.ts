@@ -25,26 +25,25 @@ export function useSummaries() {
       return res;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al generar resumen";
-      setError(msg);
+      if (msg.includes("404") || msg.includes("Not Found")) {
+        setError("Resúmenes no disponibles en el servidor");
+      } else {
+        setError(msg);
+      }
       throw e;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const list = useCallback(async () => {
+  const list = useCallback(async (): Promise<Summary[]> => {
     setLoading(true);
     setError(null);
     try {
       const raw = await listSummaries();
       return raw.map(toSummary);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al obtener resúmenes";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.warn("Error listando resúmenes:", e); return []; }
+    finally { setLoading(false); }
   }, []);
 
   const remove = useCallback(async (summaryId: string) => {
@@ -52,13 +51,8 @@ export function useSummaries() {
     setError(null);
     try {
       await deleteSummary(summaryId);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error al eliminar resumen";
-      setError(msg);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.warn("Error eliminando resumen:", e); }
+    finally { setLoading(false); }
   }, []);
 
   return { generate, list, remove, loading, error };

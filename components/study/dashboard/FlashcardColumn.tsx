@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { pp, FlashcardSet, Flashcard } from "../../../types";
-import FlashcardModal from "../FlashcardModal";
+import type { FlashcardSet, Flashcard } from "@/types";
+import FlashcardModal from "@/components/study/FlashcardModal";
 import CategoryButton from "./CategoryButton";
 import CategoryDrawer from "./CategoryDrawer";
 import { FilterCat, categorizeFc } from "./types";
 
 export default function FlashcardColumn({ flashcardSets, onUpdateFlashcard }: { flashcardSets: FlashcardSet[]; onUpdateFlashcard: (setId: string, cardId: string, status: Flashcard["status"]) => void }) {
-  const [drawerCat, setDrawerCat]     = useState<FilterCat | null>(null);
-  const [openFcId, setOpenFcId]       = useState<string | null>(null);
+  const [drawerCat, setDrawerCat] = useState<FilterCat | null>(null);
+  const [openFcId, setOpenFcId] = useState<string | null>(null);
   const activeFc = openFcId ? flashcardSets.find(s => s.id === openFcId) ?? null : null;
 
   const counts = {
-    pending:   flashcardSets.filter(s => !s.loading && categorizeFc(s) === "pending").length,
-    review:    flashcardSets.filter(s => !s.loading && categorizeFc(s) === "review").length,
+    pending: flashcardSets.filter(s => !s.loading && categorizeFc(s) === "pending").length,
+    review: flashcardSets.filter(s => !s.loading && categorizeFc(s) === "review").length,
     completed: flashcardSets.filter(s => !s.loading && categorizeFc(s) === "completed").length,
   };
 
@@ -27,23 +27,23 @@ export default function FlashcardColumn({ flashcardSets, onUpdateFlashcard }: { 
         />
       )}
 
-      <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "16px", boxSizing: "border-box", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(167,139,250,0.18)", border: "1px solid rgba(167,139,250,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div className="flex-1 min-w-[16rem] flex flex-col bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4 gap-2.5">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 rounded-lg bg-[rgba(167,139,250,0.18)] border border-[rgba(167,139,250,0.3)] flex items-center justify-center shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>
+              <rect x="4" y="6" width="14" height="14" rx="2"/><rect x="6" y="4" width="14" height="14" rx="2"/>
             </svg>
           </div>
-          <p style={{ ...pp, fontWeight: 500, fontSize: 14, color: "rgba(255,255,255,0.85)", margin: 0 }}>Flashcards</p>
-          <span style={{ ...pp, fontSize: 11, padding: "1px 7px", borderRadius: 99, background: "rgba(167,139,250,0.18)", color: "#c4b5fd", border: "1px solid rgba(167,139,250,0.25)" }}>
+          <p className="font-medium text-sm text-white/85 m-0">Flashcards</p>
+          <span className="text-[0.7rem] px-1.5 py-0.5 rounded-full bg-[rgba(167,139,250,0.18)] text-[#c4b5fd] border border-[rgba(167,139,250,0.25)]">
             {flashcardSets.filter(s => !s.loading).length}
           </span>
         </div>
 
         {flashcardSets.some(s => s.loading) && (
-          <div style={{ padding: "10px 12px", borderRadius: 11, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-            <p style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", margin: 0 }}>Generando…</p>
+          <div className="px-3 py-2.5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" className="animate-spin"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <p className="text-xs text-white/45 m-0">Generando…</p>
           </div>
         )}
 

@@ -1,4 +1,3 @@
-export { useAuth } from "./useAuth";
 export { useRag } from "./useRag";
 export { useFlashcards } from "./useFlashcards";
 export { useQuizzes } from "./useQuizzes";
@@ -8,3 +7,6 @@ export { useApiKeys } from "./useApiKeys";
 export { useWebhooks } from "./useWebhooks";
 export { useAdmin } from "./useAdmin";
 export { useHealth } from "./useHealth";
+export { useNotebook } from "./useNotebook";
+export { useStudyRooms } from "./useStudyRooms";
+export { useSummaries } from "./useSummaries";

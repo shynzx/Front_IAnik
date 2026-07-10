@@ -1,26 +1,24 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-poppins), sans-serif;
+}
+
 :root {
   --color-brand-purple: #826dd2;
   --color-brand-gray: #d7d7d7;
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
 }
 
 body {
-  font-family: var(--font-poppins), sans-serif;
   font-weight: 300;
   font-size: 16px;
-  line-height: 32px; /* 24pts */
-  background-color: #ffffff;
-  color: #000;
+  line-height: 32px;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
   font-size: 24px;
-  line-height: 32px; 
+  line-height: 32px;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }

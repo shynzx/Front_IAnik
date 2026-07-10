@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { pp } from "../../../types";
+import { pp } from "@/lib/constants";
 
 export default function CategoryButton({ label, icon, count, color, description, onClick, disabled }: { label: string; icon: React.ReactNode; count: number; color: string; description: string; onClick: () => void; disabled?: boolean }) {
   const [hover, setHover] = useState(false);

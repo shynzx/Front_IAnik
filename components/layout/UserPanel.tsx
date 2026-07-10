@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { pp, AuthUser } from "../../types";
+import { pp } from "@/lib/constants";
+import type { AuthUser } from "@/types";
 
 interface UserPanelProps {
   user: AuthUser;
@@ -40,8 +41,6 @@ export default function UserPanel({ user, expanded, onLogout }: UserPanelProps) 
             overflow: "hidden",
             animation: "userPopIn .18s ease",
           }}>
-            <style>{`@keyframes userPopIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
-
             <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#826dd2,#4f3fa0)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                 <span style={{ ...pp, fontSize: 16, fontWeight: 600, color: "#fff" }}>{initials(user.name)}</span>

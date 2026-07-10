@@ -9,7 +9,7 @@ interface AuthContextValue {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<User>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -25,8 +25,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedType = localStorage.getItem("auth_token_type") || "bearer";
     if (saved) {
       setToken(`${savedType} ${saved}`);
+      setStoredToken(saved, savedType);
+      getMe()
+        .then((me) => { if (me) setUser(me); })
+        .catch((e) => console.warn("Error verificando sesión:", e))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -40,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await getMe();
       if (me) setUser(me);
     } catch {
-      // best-effort
+      console.warn("No se pudo obtener el perfil del usuario");
     }
   }, []);
 
@@ -54,15 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const me = await getMe();
       if (me) setUser(me);
-    } catch {}
-    return {} as User;
+    } catch {
+      console.warn("No se pudo obtener el perfil después del registro");
+    }
   }, []);
 
   const logout = useCallback(() => {
     clearStoredToken();
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_token_type");
-    localStorage.removeItem("user_name");
+    localStorage.clear();
     setToken(null);
     setUser(null);
   }, []);

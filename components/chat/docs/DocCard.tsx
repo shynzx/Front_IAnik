@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Doc } from "../../../types";
-import DocIcon from "../DocIcon";
-import { formatFileSize } from "../../../lib/fileReader";
+import { Doc } from "@/types";
+import DocIcon from "@/components/chat/DocIcon";
+import { formatFileSize } from "@/lib/fileReader";
 import { highlightMatch } from "./highlightMatch";
 
 export default function DocCard({

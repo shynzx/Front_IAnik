@@ -1,6 +1,7 @@
-import { Doc, pp } from "../../../types";
-import DocIcon from "../DocIcon";
-import { formatFileSize } from "../../../lib/fileReader";
+import { pp } from "@/lib/constants";
+import type { Doc } from "@/types";
+import DocIcon from "@/components/chat/DocIcon";
+import { formatFileSize } from "@/lib/fileReader";
 
 export default function DocViewer({
   doc,

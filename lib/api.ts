@@ -25,7 +25,7 @@ import type {
   WebhookSubscription, WebhookAttempt,
   AdminClassStats, AdminUserAuditLog, AdminUserStorage,
   HealthStatus, HealthProcess, HealthMetadata,
-} from "../types";
+} from "@/types";
 
 type APIRequestOptions = RequestInit & {
   params?: Record<string, string>;

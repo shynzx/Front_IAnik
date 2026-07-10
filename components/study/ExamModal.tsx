@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { pp, ExamCard, ExamSet } from "../../types";
+import { pp } from "@/lib/constants";
+import type { ExamCard, ExamSet } from "@/types";
 
 interface ExamModalProps {
   set: ExamSet;
