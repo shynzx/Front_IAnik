@@ -109,8 +109,15 @@ export default function CuadernoDetailView({
       const replies = await sendChatMessage(String(chatId), content);
       const aiMsg = replies.find(r => r.role === "assistant");
       if (aiMsg) {
+        // 1. Activar typing primero
         setTyping(true);
-        setMessages((prev) => [...prev.filter(m => !m.id.startsWith("tmp-")), toMsg(aiMsg)]);
+        // 2. Agregar mensaje IA vacío
+        const emptyAiMsg: Msg = { ...toMsg(aiMsg), content: "" };
+        setMessages((prev) => [...prev.filter(m => !m.id.startsWith("tmp-")), emptyAiMsg]);
+        // 3. En siguiente tick, actualizar contenido para que Typewriter anime
+        setTimeout(() => {
+          setMessages((prev) => prev.map(m => m.id === emptyAiMsg.id ? { ...m, content: toMsg(aiMsg).content } : m));
+        }, 0);
       } else {
         setMessages((prev) => prev.filter(m => !m.id.startsWith("tmp-")));
       }
