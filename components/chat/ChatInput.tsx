@@ -93,19 +93,19 @@ export default function ChatInput({
 
       <form onSubmit={handleSubmit}>
         <div
-          className={`flex flex-col bg-[rgba(255,255,255,0.04)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-2xl relative gap-0 ${attachments.length ? 'py-2 pr-2 pl-1.5 pb-1.5' : 'p-2 pl-1.5'}`}
+          className={`flex flex-col bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border border-white/10 rounded-2xl relative gap-0 ${attachments.length ? 'py-2 pr-2 pl-1.5 pb-1.5' : 'p-2 pl-1.5'}`}
           style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
         >
 
           {/* ── Chips row ── */}
           {attachments.length > 0 && (
             <div
-              className="flex flex-wrap gap-1.5 py-0.5 px-1.5 pl-10.5 pb-0.5 border-b border-[rgba(255,255,255,0.06)] mb-1"
+              className="flex flex-wrap gap-1.5 py-0.5 px-1.5 pl-10.5 pb-0.5 border-b border-white/5 mb-1"
             >
               {attachments.map(a => (
                 <div
                   key={a.id}
-                  className="flex items-center gap-1.5 bg-[rgba(130,109,210,0.14)] border border-[rgba(130,109,210,0.3)] rounded-lg py-0.75 pr-2 pl-1 animate-[chipIn_0.15s_ease] max-w-[200px] min-w-0"
+                  className="flex items-center gap-1.5 bg-[rgba(130,109,210,0.14)] border border-[rgba(130,109,210,0.3)] rounded-lg py-0.75 pr-2 pl-1 animate-[chipIn_0.15s_ease] max-w-50 min-w-0"
                 >
                   {/* Image thumbnail */}
                   {a.kind === "image" && a.preview && (
@@ -131,7 +131,7 @@ export default function ChatInput({
                   )}
 
                   <span
-                    className="font-light text-xs text-[rgba(255,255,255,0.8)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[110px]"
+                    className="font-light text-xs text-white/80 overflow-hidden text-ellipsis whitespace-nowrap max-w-27"
                   >
                     {a.name}
                   </span>
@@ -162,7 +162,7 @@ export default function ChatInput({
                 type="button"
                 aria-label="Adjuntar archivos"
                 onClick={() => setMenuOpen(v => !v)}
-                className={`${menuOpen ? 'text-[#826dd2] bg-[rgba(130,109,210,0.12)]' : 'text-[rgba(255,255,255,0.35)] bg-transparent'} border-none cursor-pointer p-2 rounded-[10px] flex items-center justify-center transition-[color,background] duration-150`}
+                className={`${menuOpen ? 'text-[#826dd2] bg-[rgba(130,109,210,0.12)]' : 'text-white/35 bg-transparent'} border-none cursor-pointer p-2 rounded-lg flex items-center justify-center transition-[color,background] duration-150`}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
@@ -173,13 +173,13 @@ export default function ChatInput({
               {menuOpen && (
                 <div
                   ref={menuRef}
-                  className="absolute bottom-full left-0 mb-2.5 bg-[rgba(14,8,30,0.97)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-xl p-1.5 min-w-[300px] shadow-[0_12px_400px_rgba(0,0,0,0.6),0_0_0_1px_rgba(130,109,210,0.15)] z-[100] animate-[attachMenuIn_0.15s_ease]"
+                  className="absolute bottom-full left-0 mb-2.5 bg-[rgba(14,8,30,0.97)] backdrop-blur-xl border border-white/10 rounded-xl p-1.5 min-w-75 shadow-[0_12px_400px_rgba(0,0,0,0.6),0_0_0_1px_rgba(130,109,210,0.15)] z-[100] animate-[attachMenuIn_0.15s_ease]"
                 >
                   <button
                     type="button"
                     aria-label="Agregar foto"
                     onClick={() => photoRef.current?.click()}
-                    className="flex items-center gap-[11px] w-full py-[9px] px-3 rounded-[9px] bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.75)] font-light text-sm text-left transition-[background,color] duration-[120ms]"
+                    className="flex items-center gap-3 w-full py-2.5 px-3 rounded-lg bg-transparent border-none cursor-pointer text-white/75 font-light text-sm text-left transition-[background,color] duration-150"
                   >
                     <span className="w-8 h-8 rounded-lg shrink-0 bg-[rgba(130,109,210,0.12)] border border-[rgba(130,109,210,0.25)] flex items-center justify-center">
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -200,7 +200,7 @@ export default function ChatInput({
                     type="button"
                     aria-label="Agregar archivo"
                     onClick={() => fileRef.current?.click()}
-                    className="flex items-center gap-[11px] w-full py-[9px] px-3 rounded-[9px] bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.75)] font-light text-sm text-left transition-[background,color] duration-[120ms]"
+                    className="flex items-center gap-3 w-full py-2.5 px-3 rounded-lg bg-transparent border-none cursor-pointer text-white/75 font-light text-sm text-left transition-[background,color] duration-150"
                   >
                     <span className="w-8 h-8 rounded-lg shrink-0 bg-[rgba(130,109,210,0.12)] border border-[rgba(130,109,210,0.25)] flex items-center justify-center">
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -236,7 +236,7 @@ export default function ChatInput({
 
             {/* Count badge */}
             {attachments.length > 0 && (
-              <span className="shrink-0 bg-[#826dd2] text-white rounded-[20px] text-[11px] font-medium py-[2px] px-[7px] tracking-[0.2px]">
+              <span className="shrink-0 bg-[#826dd2] text-white rounded-full text-xs font-medium py-0.5 px-2 tracking-tight">
                 {attachments.length}
               </span>
             )}

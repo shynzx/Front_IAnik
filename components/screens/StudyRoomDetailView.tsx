@@ -97,13 +97,14 @@ export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick,
           onSendMessage={async (chatId, content) => {
             const userMsg: ChatMessage = { id: Date.now(), chat_id: Number(chatId), role: "user", content, created_at: new Date().toISOString() };
             setMessages((prev) => [...prev, userMsg]);
-            const msg = await studyRooms.sendMessage(String(roomId), chatId, content);
-            if (msg) {
-              setMessages((prev) => [...prev.filter(m => m.id !== userMsg.id), userMsg, msg]);
-            } else {
-              setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
-            }
-            return msg;
+            try {
+              await studyRooms.sendMessage(String(roomId), chatId, content);
+            } catch {}
+            try {
+              const msgs = await studyRooms.getChatMessages(String(roomId), chatId);
+              setMessages(msgs);
+            } catch {}
+            return null;
           }}
           onGenerateFlashcards={async (prompt) => {
             const fcs = await studyRooms.generateFlashcards(String(roomId), prompt);

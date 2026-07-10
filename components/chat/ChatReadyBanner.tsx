@@ -22,7 +22,7 @@ export default function ChatReadyBanner() {
         </h1>
       </div>
       <p
-        className="text-[17px] leading-[30px] max-w-[520px] font-[family-name:var(--font-poppins)] font-light"
+        className="text-base leading-8 max-w-[520px] font-[family-name:var(--font-poppins)] font-light"
         style={gradText}
       >
         Tus apuntes y documentos están guardados de manera segura. Ahora

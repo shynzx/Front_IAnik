@@ -241,7 +241,7 @@ export async function getChatMessages(chatId: string, params?: { page?: number; 
 }
 
 export async function sendChatMessage(chatId: string, content: string) {
-  return fetchAPI<ChatMessage>(`/notebooks/chats/${encodeURIComponent(chatId)}/messages`, {
+  return fetchAPI<ChatMessage[]>(`/notebooks/chats/${encodeURIComponent(chatId)}/messages`, {
     method: "POST",
     body: JSON.stringify({ content }),
     headers: withAuthHeader(),

@@ -25,7 +25,7 @@ function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
       {images.length > 0 && (
         <div className={`grid ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-0.5 rounded-lg overflow-hidden`}>
           {images.map(img => (
-            <img key={img.id} src={img.preview} alt={img.name} className={`w-full ${images.length === 1 ? 'max-w-[260px] h-45' : 'max-w-[120px] h-22'} object-cover rounded-lg block`} />
+            <img key={img.id} src={img.preview} alt={img.name} className={`w-full ${images.length === 1 ? 'max-w-65 h-45' : 'max-w-30 h-22'} object-cover rounded-lg block`} />
           ))}
         </div>
       )}
@@ -36,7 +36,7 @@ function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
               <span className="w-6 h-6 rounded-sm bg-white/20 flex items-center justify-center text-xs font-bold text-white tracking-tight shrink-0">
                 {fileExt(doc.name)}
               </span>
-              <span className="font-light text-xs text-white/90 max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap">
+              <span className="font-light text-xs text-white/90 max-w-35 overflow-hidden text-ellipsis whitespace-nowrap">
                 {doc.name}
               </span>
             </div>
@@ -134,7 +134,7 @@ function UserBubble({
 
       {/* Burbuja */}
 <div
-        className={`${hasAttachments && !hasText ? 'py-2.5 px-3.25' : 'p-[13px_17px]'} rounded-[18px_18px_4px_18px] bg-[#826dd2] font-light text-base leading-7`}
+        className={`${hasAttachments && !hasText ? 'py-2.5 px-3.25' : 'p-3.25'} rounded-[18px_18px_4px_18px] bg-[#826dd2] font-light text-base leading-7`}
       >
         {hasAttachments && <AttachmentList attachments={message.attachments!} />}
 
@@ -150,7 +150,7 @@ function UserBubble({
               }}
               onKeyDown={handleKeyDown}
               rows={1}
-              className="font-light text-base leading-7 text-white bg-white/[0.12] border border-white/30 rounded-lg py-1.5 px-2.5 outline-none resize-none w-full min-w-[180px] box-border overflow-y-hidden"
+              className="font-light text-base leading-7 text-white bg-white/[0.12] border border-white/30 rounded-lg py-1.5 px-2.5 outline-none resize-none w-full min-w-45 box-border overflow-y-hidden"
             />
             <div className="flex gap-1.5 justify-end">
               <button
@@ -245,7 +245,7 @@ export default function MessageList({
                 key={m.id}
                 className={`mb-3 ${m.role === 'sys'
                   ? 'py-1.25 px-4 rounded-full ml-auto mr-0 text-sm leading-6 bg-white/[0.06] border border-white/[0.08]'
-                  : 'p-[13px_17px] rounded-[18px_18px_18px_4px] text-base leading-7 bg-white/[0.06] border border-white/[0.08] max-w-[85%] w-fit font-light'
+                  : 'p-3.25 rounded-[18px_18px_18px_4px] text-base leading-7 bg-white/[0.06] border border-white/[0.08] max-w-[85%] w-fit font-light'
                 }`}
               >
                 {m.role === "sys" && <span className="text-white/38">{m.content}</span>}

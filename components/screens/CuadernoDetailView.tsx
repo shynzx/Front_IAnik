@@ -106,9 +106,14 @@ export default function CuadernoDetailView({
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const reply = await sendChatMessage(String(chatId), content);
-      setTyping(true);
-      setMessages((prev) => [...prev.filter(m => !m.id.startsWith("tmp-")), toMsg(reply)]);
+      const replies = await sendChatMessage(String(chatId), content);
+      const aiMsg = replies.find(r => r.role === "assistant");
+      if (aiMsg) {
+        setTyping(true);
+        setMessages((prev) => [...prev.filter(m => !m.id.startsWith("tmp-")), toMsg(aiMsg)]);
+      } else {
+        setMessages((prev) => prev.filter(m => !m.id.startsWith("tmp-")));
+      }
     } catch {}
     sendingRef.current = false;
     setSending(false);
