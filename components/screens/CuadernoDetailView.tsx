@@ -107,20 +107,18 @@ export default function CuadernoDetailView({
 
     try {
       const replies = await sendChatMessage(String(chatId), content);
-      const aiMsg = replies.find(r => r.role === "assistant");
-      if (aiMsg) {
-        // 1. Activar typing primero
+      // La API devuelve TODOS los mensajes (usuario + asistente), usar esos directamente
+      const mappedReplies = replies.map(toMsg);
+      setMessages(mappedReplies);
+      // Activar typing solo para el último mensaje si es de la IA
+      const lastMsg = mappedReplies[mappedReplies.length - 1];
+      if (lastMsg?.role === "ai") {
         setTyping(true);
-        // 2. Agregar mensaje IA vacío (mantener historial, solo quitar mensaje temporal)
-        const emptyAiMsg: Msg = { ...toMsg(aiMsg), content: "" };
-        setMessages((prev) => [...prev.filter(m => m.id !== userMsg.id), emptyAiMsg]);
-        // 3. En siguiente tick, actualizar contenido para que Typewriter anime
+        // Forzar re-render con contenido vacío para que Typewriter anime
+        setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: "" } : m));
         setTimeout(() => {
-          setMessages((prev) => prev.map(m => m.id === emptyAiMsg.id ? { ...m, content: toMsg(aiMsg).content } : m));
+          setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: lastMsg.content } : m));
         }, 0);
-      } else {
-        // Solo quitar mensaje temporal si no hay respuesta IA
-        setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
       }
     } catch {}
     sendingRef.current = false;
