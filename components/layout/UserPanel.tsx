@@ -56,6 +56,7 @@ export default function UserPanel({ user, expanded, onLogout }: UserPanelProps) 
                 ...pp, width: "100%", padding: "12px 16px", background: "transparent",
                 border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
                 color: "#f87171", fontSize: 13, textAlign: "left", transition: "background .15s",
+                borderRadius: 10,
               }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(248,113,113,0.08)")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
