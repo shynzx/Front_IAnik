@@ -244,7 +244,7 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
                     {card.hint && currentSelected === null && (
                       <div style={{ marginTop: 6 }}>
                         {showHint
-                          ? <p style={{ ...pp, fontSize: 12.5, color: "#c4b5fd", fontStyle: "italic", margin: 0 }}>💡 Pista: {card.hint}</p>
+                          ? <p style={{ ...pp, fontSize: 12.5, color: "#c4b5fd", fontStyle: "italic", margin: 0 }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "-2px", marginRight: 4 }}><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 008.91 14"/></svg>Pista: {card.hint}</p>
                           : <button onClick={e => { e.stopPropagation(); setShowHint(true); }} style={{ background: "transparent", border: "none", color: "rgba(130,109,210,0.8)", cursor: "pointer", ...pp, fontSize: 11.5, textDecoration: "underline", padding: 0 }}>Ver pista</button>
                         }
                       </div>

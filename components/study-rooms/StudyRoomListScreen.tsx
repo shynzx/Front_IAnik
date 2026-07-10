@@ -56,7 +56,9 @@ export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCrea
         <div className="text-center py-12 text-white/40">Cargando salas...</div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-white/40">
-          <div className="text-5xl mb-4">🏠</div>
+          <div className="text-5xl mb-4">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16"/><path d="M9 21v-4a2 2 0 012-2h2a2 2 0 012 2v4"/><line x1="9" y1="7" x2="9.01" y2="7"/><line x1="15" y1="7" x2="15.01" y2="7"/><line x1="9" y1="11" x2="9.01" y2="11"/><line x1="15" y1="11" x2="15.01" y2="11"/></svg>
+          </div>
           <div className="text-base font-medium text-white/60 mb-1">No hay salas</div>
           <div className="text-sm">Crea una sala o únete a una con un código</div>
         </div>

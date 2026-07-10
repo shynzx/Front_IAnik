@@ -177,7 +177,9 @@ export default function StudyRoomScreen({
               <div className="flex-1 overflow-auto p-2">
                 {filteredChats.length === 0 ? (
                   <div className="text-center py-10 px-4">
-                    <div className="text-3xl mb-3 opacity-30">💬</div>
+                    <div className="text-3xl mb-3 opacity-30">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    </div>
                     <div className="text-white/35 text-xs leading-relaxed">
                       {chats.length === 0 ? "No hay chats aún" : "Sin resultados"}
                     </div>
@@ -212,7 +214,9 @@ export default function StudyRoomScreen({
               {!activeChatId ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-5xl mb-4 opacity-30">💬</div>
+                    <div className="text-5xl mb-4 opacity-30">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    </div>
                     <div className="text-white/40 text-sm mb-2">Selecciona un chat o crea uno nuevo</div>
                     <button onClick={handleCreateChat} className="px-5 py-2.5 rounded-xl border-none bg-[#826dd2] text-white text-sm font-medium cursor-pointer hover:bg-[#7059be] transition-colors mt-2 disabled:opacity-40" disabled={chatCreating}>
                       {chatCreating ? "..." : "+ Nuevo chat"}

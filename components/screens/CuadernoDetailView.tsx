@@ -217,7 +217,9 @@ export default function CuadernoDetailView({
           {activeTab === "chats" ? (
             filteredChats.length === 0 ? (
               <div className="text-center py-10 px-4">
-                <div className="text-3xl mb-3 opacity-30">💬</div>
+                <div className="text-3xl mb-3 opacity-30">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                </div>
                 <div className="text-white/35 text-xs leading-relaxed">
                   {chats.length === 0 ? "No hay chats aún" : "Sin resultados"}
                 </div>
@@ -247,7 +249,9 @@ export default function CuadernoDetailView({
           ) : (
             filteredFiles.length === 0 ? (
               <div className="text-center py-10 px-4">
-                <div className="text-3xl mb-3 opacity-30">📄</div>
+                <div className="text-3xl mb-3 opacity-30">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                </div>
                 <div className="text-white/35 text-xs leading-relaxed">
                   {files.length === 0 ? "No hay documentos" : "Sin resultados"}
                 </div>
@@ -302,7 +306,9 @@ export default function CuadernoDetailView({
         {!activeChatId ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center">
-              <div className="text-5xl mb-4 opacity-30">💬</div>
+              <div className="text-5xl mb-4 opacity-30">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              </div>
               <div className="text-white/40 text-sm mb-4">Selecciona un chat o crea uno nuevo</div>
               <button onClick={handleCreateChat} className="px-5 py-2.5 rounded-xl border-none bg-[#826dd2] text-white text-sm font-medium cursor-pointer hover:bg-[#7059be] transition-colors">
                 + Nuevo chat

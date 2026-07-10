@@ -74,7 +74,9 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
         <div className="text-center py-16 text-white/40">Cargando...</div>
       ) : notebooks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-white/40">
-          <div className="text-5xl mb-4">📓</div>
+          <div className="text-5xl mb-4">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </div>
           <div className="text-base font-medium text-white/60 mb-1">No hay cuadernos</div>
           <div className="text-sm">Crea uno para empezar</div>
         </div>
