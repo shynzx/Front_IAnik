@@ -43,7 +43,7 @@ export default function SummariesView({ docs, onChatClick, onStudyClick, onStudy
   };
 
   return (
-    <div className="min-h-full p-6 pb-12 md:p-8 md:pb-16">
+    <div className="page-shell min-h-full">
       <SummaryScreen docs={docs} summaries={summaries} onGenerateSummary={handleGenerateSummary} onDeleteSummary={handleDeleteSummary} />
     </div>
   );

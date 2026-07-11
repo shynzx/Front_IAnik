@@ -26,7 +26,7 @@ export default function JoinStudyRoomModal({ loading, onJoin, onClose, onJoined 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-[1000]" onClick={onClose}>
       <div className="bg-[#1a1a2e] rounded-2xl border border-white/10 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center px-6 pt-5 pb-4">
           <h2 className="m-0 text-lg font-semibold text-white">Unirse a Sala</h2>

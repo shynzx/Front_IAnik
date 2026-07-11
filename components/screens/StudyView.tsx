@@ -100,7 +100,7 @@ export default function StudyView({ notebookId, onChatClick, onSummariesClick, o
   };
 
   return (
-    <div className="h-full p-6 md:p-8 overflow-hidden">
+    <div className="page-shell h-full overflow-hidden">
       <DashboardScreen
         examSets={examSets}
         flashcardSets={flashcardSets}

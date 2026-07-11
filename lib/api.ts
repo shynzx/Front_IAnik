@@ -209,6 +209,44 @@ export async function deleteNotebookFile(fileId: string) {
   });
 }
 
+export async function downloadNotebookFile(fileId: string, fallbackName = "archivo") {
+  const token = getStoredToken();
+  const headers: HeadersInit = {};
+  if (token) headers.Authorization = token;
+  const res = await fetch(`${API_URL}/notebooks/files/${encodeURIComponent(fileId)}`, { headers });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res));
+  }
+  const blob = await res.blob();
+  let filename = fallbackName;
+  const disposition = res.headers.get("Content-Disposition");
+  if (disposition) {
+    const star = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    const plain = disposition.match(/filename="?([^";]+)"?/i);
+    if (star) filename = decodeURIComponent(star[1]);
+    else if (plain) filename = plain[1];
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function getNotebookFileContent(fileId: string): Promise<string> {
+  const token = getStoredToken();
+  const headers: HeadersInit = {};
+  if (token) headers.Authorization = token;
+  const res = await fetch(`${API_URL}/notebooks/files/${encodeURIComponent(fileId)}`, { headers });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res));
+  }
+  return await res.text();
+}
+
 export async function createNotebookChat(notebookId: string, title: string) {
   return fetchAPI<{ id: number; message: string }>(`/notebooks/${encodeURIComponent(notebookId)}/chats`, {
     method: "POST",

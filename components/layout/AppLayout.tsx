@@ -34,7 +34,8 @@ export default function AppLayout({
   children,
 }: AppLayoutProps) {
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-black to-[#3c2850]">
+    <div className="app-background h-screen w-screen overflow-hidden relative">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.025] bg-[linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] bg-[size:56px_56px]" />
       <Sidebar
         phase={phase}
         hasMessages={hasMessages}
@@ -44,7 +45,7 @@ export default function AppLayout({
         onStudyRoomsClick={onStudyRoomsClick}
       />
       <Header {...headerProps} />
-      <main className="absolute inset-0 ml-16 pt-18 max-md:ml-0 overflow-y-auto overflow-x-hidden">
+      <main className="absolute inset-0 ml-[76px] pt-[84px] max-md:ml-0 max-md:pb-20 overflow-y-auto overflow-x-hidden">
         {children}
       </main>
     </div>

@@ -31,7 +31,7 @@ const PHASE_MAP: Record<string, "onboard" | "chat" | "study" | "summaries" | "st
 };
 
 export default function Home() {
-  const { user, login, signup, logout } = useAuthContext();
+  const { user, login, signup, logout, loginWithGoogle } = useAuthContext();
   const [screen, setScreen] = useState<Screen>("onboard");
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
@@ -39,8 +39,40 @@ export default function Home() {
   const [docs] = useState<Doc[]>([]);
 
   useEffect(() => {
-    if (user && screen === "onboard") setScreen("chat");
+    if (user && AUTH_SCREENS.includes(screen)) setScreen("chat");
+  }, [user, screen]);
+
+  // ── Persistir la sesión de navegación para que sobreviva a recargas ──
+  // Al recargar, el backend ya tiene las flashcards/exámenes guardados; solo
+  // necesitamos restaurar el cuaderno y la pantalla activa para volver a
+  // consultarlos.
+  useEffect(() => {
+    if (!user) return;
+    const savedScreen = localStorage.getItem("ia_screen") as Screen | null;
+    const savedCuaderno = localStorage.getItem("ia_cuaderno");
+    const savedRoom = localStorage.getItem("ia_room");
+    if (savedCuaderno) setActiveCuadernoId(savedCuaderno);
+    if (savedRoom) setActiveRoomId(Number(savedRoom));
+    if (savedScreen && !AUTH_SCREENS.includes(savedScreen)) setScreen(savedScreen);
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (AUTH_SCREENS.includes(screen)) localStorage.removeItem("ia_screen");
+    else localStorage.setItem("ia_screen", screen);
+  }, [screen, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (activeCuadernoId) localStorage.setItem("ia_cuaderno", activeCuadernoId);
+    else localStorage.removeItem("ia_cuaderno");
+  }, [activeCuadernoId, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (activeRoomId != null) localStorage.setItem("ia_room", String(activeRoomId));
+    else localStorage.removeItem("ia_room");
+  }, [activeRoomId, user]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
@@ -73,10 +105,10 @@ export default function Home() {
   const showHeader = !AUTH_SCREENS.includes(screen);
 
   const screenContent = (() => {
-    if (screen === "login") return <LoginScreen onLogin={handleLogin} onGoRegister={() => setScreen("register")} onGoRecover={() => setScreen("recover")} onGoHome={() => setScreen("onboard")} />;
-    if (screen === "register") return <RegisterScreen onRegister={handleRegister} onGoLogin={() => setScreen("login")} onGoHome={() => setScreen("onboard")} />;
+    if (screen === "login") return <LoginScreen onLogin={handleLogin} onGoogle={loginWithGoogle} onGoRegister={() => setScreen("register")} onGoRecover={() => setScreen("recover")} onGoHome={() => setScreen("onboard")} />;
+    if (screen === "register") return <RegisterScreen onRegister={handleRegister} onGoogle={loginWithGoogle} onGoLogin={() => setScreen("login")} onGoHome={() => setScreen("onboard")} />;
     if (screen === "recover") return <RecoverScreen onRecover={handleRecover} onGoLogin={() => setScreen("login")} onVerifyCode={async () => {}} onNewPassword={async () => {}} />;
-    if (screen === "onboard") return <OnboardingScreen dragActive={false} onFiles={() => {}} onDragLeave={() => {}} onGoLogin={() => setScreen("login")} onGoRegister={() => setScreen("register")} />;
+    if (screen === "onboard") return <OnboardingScreen dragActive={false} onFiles={() => setScreen("login")} onDragLeave={() => {}} onGoLogin={() => setScreen("login")} onGoRegister={() => setScreen("register")} />;
 
     if (screen === "study") return <StudyView notebookId={activeCuadernoId ?? ""} {...nav} />;
     if (screen === "summaries") return <SummariesView docs={docs} {...nav} />;

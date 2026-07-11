@@ -19,10 +19,10 @@ export default function Sidebar({
 }: SidebarProps) {
   const chatActive = phase === "chat";
   return (
-    <aside className="fixed left-0 top-0 h-screen w-16 bg-[rgba(0,0,0,0.3)] backdrop-blur-md border-r border-[rgba(255,255,255,0.06)] flex-col items-center pt-6 pb-6 gap-2.5 z-50 max-md:hidden max-md:w-0 max-md:border-none hidden md:flex">
+    <aside className="fixed left-0 top-0 h-screen w-[76px] bg-[#09080f]/70 backdrop-blur-2xl border-r border-white/[0.08] flex flex-col items-center py-5 gap-2 z-50 max-md:top-auto max-md:bottom-0 max-md:w-full max-md:h-[68px] max-md:flex-row max-md:justify-around max-md:px-3 max-md:py-2 max-md:border-r-0 max-md:border-t max-md:border-white/[0.1]">
       <button
         aria-label="Inicio"
-        className="text-[#826dd2] p-2 rounded-xl bg-transparent border-none cursor-pointer"
+        className="text-white p-2.5 rounded-2xl bg-gradient-to-br from-[#9b8cf8] to-[#6f57d7] border border-white/10 cursor-pointer shadow-[0_8px_25px_rgba(130,109,210,.3)] mb-2 max-md:hidden"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -30,15 +30,16 @@ export default function Sidebar({
         </svg>
       </button>
 
-      <div className="w-8 h-px bg-[rgba(255,255,255,0.07)]" />
+      <div className="w-8 h-px bg-white/[0.08] mb-2 max-md:hidden" />
 
       <button
         aria-label="Chat"
         onClick={onChatClick}
-        className={`p-2 rounded-xl border-none cursor-pointer relative ${
+        title="Cuadernos"
+        className={`p-3 rounded-2xl border border-transparent cursor-pointer relative transition-all duration-200 [&_svg]:w-6 [&_svg]:h-6 ${
           chatActive
-            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
-            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+            ? "text-[#b5a9ff] bg-[#8b7cf6]/15 border-[#8b7cf6]/20"
+            : "text-white/40 bg-transparent hover:text-white/80 hover:bg-white/[0.06]"
         }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,10 +53,11 @@ export default function Sidebar({
       <button
         aria-label="Progreso"
         onClick={onStudyClick}
-        className={`p-2 rounded-xl border-none cursor-pointer ${
+        title="Progreso"
+        className={`p-3 rounded-2xl border border-transparent cursor-pointer transition-all duration-200 [&_svg]:w-6 [&_svg]:h-6 ${
           phase === "study"
-            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
-            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+            ? "text-[#b5a9ff] bg-[#8b7cf6]/15 border-[#8b7cf6]/20"
+            : "text-white/40 bg-transparent hover:text-white/80 hover:bg-white/[0.06]"
         }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,10 +71,11 @@ export default function Sidebar({
       <button
         aria-label="Resúmenes"
         onClick={onSummariesClick}
-        className={`p-2 rounded-xl border-none cursor-pointer ${
+        title="Resúmenes"
+        className={`p-3 rounded-2xl border border-transparent cursor-pointer transition-all duration-200 [&_svg]:w-6 [&_svg]:h-6 ${
           phase === "summaries"
-            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
-            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+            ? "text-[#b5a9ff] bg-[#8b7cf6]/15 border-[#8b7cf6]/20"
+            : "text-white/40 bg-transparent hover:text-white/80 hover:bg-white/[0.06]"
         }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -85,10 +88,11 @@ export default function Sidebar({
       <button
         aria-label="Salas de Estudio"
         onClick={onStudyRoomsClick}
-        className={`p-2 rounded-xl border-none cursor-pointer ${
+        title="Salas de estudio"
+        className={`p-3 rounded-2xl border border-transparent cursor-pointer transition-all duration-200 [&_svg]:w-6 [&_svg]:h-6 ${
           phase === "study-rooms" || phase === "study-room"
-            ? "text-[#826dd2] bg-[rgba(130,109,210,0.12)]"
-            : "text-[rgba(255,255,255,0.4)] bg-transparent"
+            ? "text-[#b5a9ff] bg-[#8b7cf6]/15 border-[#8b7cf6]/20"
+            : "text-white/40 bg-transparent hover:text-white/80 hover:bg-white/[0.06]"
         }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -99,7 +103,7 @@ export default function Sidebar({
         </svg>
       </button>
 
-      <div className="w-8 h-px bg-[rgba(255,255,255,0.07)]" />
+      <div className="w-8 h-px bg-white/[0.08] max-md:hidden" />
 
     </aside>
   );

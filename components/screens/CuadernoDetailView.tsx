@@ -7,7 +7,7 @@ import MessageList from "@/components/chat/MessageList";
 import ChatInput from "@/components/chat/ChatInput";
 import type { Attachment } from "@/components/chat/ChatInput";
 import {
-  listNotebookFiles, uploadNotebookFile, deleteNotebookFile,
+  listNotebookFiles, uploadNotebookFile, deleteNotebookFile, downloadNotebookFile, getNotebookFileContent,
   listNotebookChats, createNotebookChat, deleteNotebookChat,
   getChatMessages, sendChatMessage,
 } from "@/lib/api";
@@ -41,6 +41,10 @@ export default function CuadernoDetailView({
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"chats" | "docs">("chats");
   const [deletingFileId, setDeletingFileId] = useState<number | null>(null);
+  const [downloadingFileId, setDownloadingFileId] = useState<number | null>(null);
+  const [viewingFile, setViewingFile] = useState<NotebookFile | null>(null);
+  const [viewContent, setViewContent] = useState<string>("");
+  const [loadingView, setLoadingView] = useState(false);
   const sendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,6 +168,22 @@ export default function CuadernoDetailView({
     setDeletingFileId(null);
   };
 
+  const handleDownloadFile = async (file: NotebookFile) => {
+    if (downloadingFileId === file.id) return;
+    setDownloadingFileId(file.id);
+    try { await downloadNotebookFile(String(file.id), file.filename); } catch {}
+    setDownloadingFileId(null);
+  };
+
+  const handleViewFile = async (file: NotebookFile) => {
+    if (viewingFile?.id === file.id) return;
+    setViewingFile(file);
+    setViewContent("");
+    setLoadingView(true);
+    try { setViewContent(await getNotebookFileContent(String(file.id))); } catch {}
+    setLoadingView(false);
+  };
+
   const filteredChats = chats.filter(c => c.title.toLowerCase().includes(search.toLowerCase()));
   const filteredFiles = files.filter(f => f.filename.toLowerCase().includes(search.toLowerCase()));
   const activeChatTitle = chats.find(c => c.id === activeChatId)?.title || "Chat";
@@ -261,7 +281,8 @@ export default function CuadernoDetailView({
                 {filteredFiles.map((file) => (
                   <div
                     key={file.id}
-                    className="group flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-transparent hover:bg-white/[0.05] transition-all duration-150"
+                    onClick={() => handleViewFile(file)}
+                    className="group flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-transparent hover:bg-white/[0.05] transition-all duration-150 cursor-pointer"
                   >
                     <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
                       <span className="text-[0.55rem] font-bold text-[#826dd2]">{fileExt(file.filename)}</span>
@@ -271,7 +292,15 @@ export default function CuadernoDetailView({
                       <div className="text-[0.65rem] text-white/25 mt-0.5">{new Date(file.created_at).toLocaleDateString()}</div>
                     </div>
                     <button
-                      onClick={() => handleDeleteFile(file)}
+                      onClick={(e) => { e.stopPropagation(); handleDownloadFile(file); }}
+                      disabled={downloadingFileId === file.id}
+                      title="Descargar"
+                      className={`opacity-0 group-hover:opacity-100 text-[#826dd2] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5 ${downloadingFileId === file.id ? 'opacity-100' : ''}`}
+                    >
+                      {downloadingFileId === file.id ? "..." : "↓"}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteFile(file); }}
                       disabled={deletingFileId === file.id}
                       className={`opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5 ${deletingFileId === file.id ? 'opacity-100' : ''}`}
                     >
@@ -338,6 +367,35 @@ export default function CuadernoDetailView({
             <svg className="mx-auto mb-5 block" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <h3 className="text-xl bg-gradient-to-r from-white to-[#a5a5a5] bg-clip-text text-transparent mb-2 m-0">Suelta tus archivos aquí</h3>
             <p className="text-sm text-white/40 m-0">PDF, Word y más</p>
+          </div>
+        </div>
+      )}
+
+      {viewingFile && (
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-[1000] p-4" onClick={() => setViewingFile(null)}>
+          <div className="bg-[#1a1a2e] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center px-6 pt-5 pb-3 border-b border-white/[0.06]">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-white m-0 truncate">{viewingFile.filename}</h2>
+                <p className="text-xs text-white/40 mt-0.5 m-0">Contenido extraído del documento</p>
+              </div>
+              <button onClick={() => setViewingFile(null)} className="text-white/40 hover:text-white/70 bg-transparent border-none text-lg cursor-pointer transition-colors ml-3">✕</button>
+            </div>
+            <div className="flex-1 overflow-auto px-6 py-4">
+              {loadingView ? (
+                <div className="text-center py-10 text-white/40 text-sm">Cargando contenido...</div>
+              ) : (
+                <pre className="text-sm text-white/80 whitespace-pre-wrap break-words font-[inherit] m-0 leading-relaxed">{viewContent || "Sin contenido"}</pre>
+              )}
+            </div>
+            <div className="flex justify-end px-6 py-4 border-t border-white/[0.06]">
+              <button
+                onClick={() => handleDownloadFile(viewingFile)}
+                className="px-5 py-2.5 rounded-lg border-none bg-[#826dd2] text-white text-sm font-medium cursor-pointer hover:bg-[#7059be] transition-colors"
+              >
+                Descargar
+              </button>
+            </div>
           </div>
         </div>
       )}

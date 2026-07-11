@@ -106,7 +106,7 @@ export default function RecoverScreen({
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#000000_0%,#3c2850_100%)] flex relative">
+    <div className="app-background min-h-screen flex relative">
 
       <Sidebar
         phase="onboard"
@@ -117,7 +117,7 @@ export default function RecoverScreen({
         onStudyRoomsClick={() => {}}
       />
 
-      <main className="flex-1 ml-16 flex flex-col items-center justify-center px-12 py-[4.5rem] pb-12 min-h-screen">
+      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen max-md:pb-24">
         {step !== "done" && (
           <button
             onClick={step === "email" ? onGoLogin : () => { setStep("email"); setError(""); }}
@@ -148,7 +148,7 @@ export default function RecoverScreen({
 
         <div
           key={step}
-          className="w-full max-w-[27.5rem] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-3xl px-10 pt-[2.75rem] pb-10 backdrop-blur-[1.25rem] animate-[fadeUp_.35s_ease_both]"
+          className="glass-panel w-full max-w-[28rem] rounded-[28px] px-6 sm:px-10 pt-9 sm:pt-11 pb-9 animate-[fadeUp_.35s_ease_both]"
         >
           {step === "email" && (
             <>

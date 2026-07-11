@@ -35,7 +35,7 @@ export default function DashboardScreen({ examSets, flashcardSets, onUpdateFlash
   return (
     <div className="w-full flex flex-col gap-5 box-border">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="page-header">
         <div>
           <h1 className="text-2xl font-semibold text-white m-0">Dashboard de progreso</h1>
           <p className="text-sm text-white/40 mt-1 m-0">Seguimiento de tu actividad con exámenes y flashcards.</p>
@@ -55,7 +55,7 @@ export default function DashboardScreen({ examSets, flashcardSets, onUpdateFlash
       </div>
 
       {!hasContent && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 opacity-50">
+        <div className="ui-empty gap-3 text-white/60">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
           </svg>

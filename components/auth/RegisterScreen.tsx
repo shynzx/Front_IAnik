@@ -1,16 +1,21 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
+import { loadGoogleScript, initGoogleSignIn, triggerGoogleSignIn } from "@/lib/googleAuth";
 
 interface RegisterScreenProps {
   onRegister: (name: string, email: string, password: string) => Promise<void>;
+  onGoogle: (credential: string) => Promise<void>;
   onGoLogin: () => void;
   onGoHome: () => void;
 }
 
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
 export default function RegisterScreen({
   onRegister,
+  onGoogle,
   onGoLogin,
   onGoHome,
 }: RegisterScreenProps) {
@@ -21,7 +26,26 @@ export default function RegisterScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    const onCredential = async (credential: string) => {
+      setGoogleLoading(true);
+      setError("");
+      try {
+        await onGoogle(credential);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo iniciar sesión con Google");
+      } finally {
+        setGoogleLoading(false);
+      }
+    };
+    loadGoogleScript()
+      .then(() => initGoogleSignIn(GOOGLE_CLIENT_ID!, onCredential))
+      .catch(() => {});
+  }, [onGoogle]);
 
   // ── Fortaleza de contraseña (mínimo 8 caracteres) ───────────
   const passwordStrength = (p: string) => {
@@ -67,12 +91,22 @@ export default function RegisterScreen({
   };
 
   const handleGoogle = () => {
-    // TODO: conecta tu proveedor OAuth (NextAuth, Supabase, Firebase, etc.)
-    // TODO: Google OAuth
+    if (!GOOGLE_CLIENT_ID) {
+      setError("Google Sign-In no está configurado. Falta NEXT_PUBLIC_GOOGLE_CLIENT_ID.");
+      return;
+    }
+    setError("");
+    setGoogleLoading(true);
+    loadGoogleScript()
+      .then(() => triggerGoogleSignIn())
+      .catch(() => {
+        setError("No se pudo cargar Google Sign-In");
+        setGoogleLoading(false);
+      });
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#000000_0%,#3c2850_100%)] flex relative">
+    <div className="app-background min-h-screen flex relative">
 
       <Sidebar
         phase="onboard"
@@ -86,7 +120,7 @@ export default function RegisterScreen({
       {/* Botón de regreso */}
       <button
         onClick={onGoHome}
-        className="fixed top-4.5 left-[4.75rem] z-[60] flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.45)] text-[0.8125rem] px-2.5 py-1.5 rounded-lg hover:text-[#826dd2] hover:bg-[rgba(130,109,210,0.08)]"
+        className="fixed top-5 left-[92px] max-md:left-4 z-[60] flex items-center gap-1.5 bg-white/[0.035] border border-white/[0.08] cursor-pointer text-white/55 text-sm px-3 py-2 rounded-xl hover:text-white hover:bg-white/[0.08] transition-all"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
@@ -94,8 +128,8 @@ export default function RegisterScreen({
         Volver
       </button>
 
-      <main className="flex-1 ml-16 flex flex-col items-center justify-center px-12 py-[4.5rem] pb-12 min-h-screen overflow-y-auto">
-        <div className="w-full max-w-[27.5rem] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-3xl px-10 pt-[2.75rem] pb-10 backdrop-blur-5 animate-[fadeUp_.38s_ease_both]">
+      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen overflow-y-auto max-md:pb-24">
+        <div className="glass-panel w-full max-w-[28rem] rounded-[28px] px-6 sm:px-10 pt-9 sm:pt-11 pb-9 animate-[fadeUp_.38s_ease_both]">
           {/* Logo + título */}
           <div className="flex items-center gap-3 mb-8">
             <button
@@ -129,7 +163,8 @@ export default function RegisterScreen({
           <button
             type="button"
             onClick={handleGoogle}
-            className="w-full py-[0.6875rem] rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.13)] text-[rgba(255,255,255,0.85)] text-sm cursor-pointer flex items-center justify-center gap-2.5 mb-5 hover:bg-[rgba(255,255,255,0.09)] hover:border-[rgba(255,255,255,0.2)]"
+            disabled={googleLoading}
+            className="w-full py-[0.6875rem] rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.13)] text-[rgba(255,255,255,0.85)] text-sm cursor-pointer flex items-center justify-center gap-2.5 mb-5 hover:bg-[rgba(255,255,255,0.09)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>

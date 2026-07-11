@@ -13,8 +13,6 @@ interface OnboardingScreenProps {
   onGoRegister: () => void;
 }
 
-const SIDEBAR_W = 64;
-
 export default function OnboardingScreen({
   dragActive,
   onFiles,
@@ -26,19 +24,19 @@ export default function OnboardingScreen({
 
   return (
     <div
-      className="h-screen w-screen overflow-hidden bg-gradient-to-br from-black to-[#3c2850] flex relative"
+      className="app-background h-screen w-screen overflow-hidden flex relative"
     >
       <Sidebar
         phase="onboard"
         hasMessages={false}
-        onChatClick={() => { } }
-        onStudyClick={() => {}}
-        onSummariesClick={() => {}}
-        onStudyRoomsClick={() => {}}
+        onChatClick={onGoLogin}
+        onStudyClick={onGoLogin}
+        onSummariesClick={onGoLogin}
+        onStudyRoomsClick={onGoLogin}
       />
       {/* Main content area, offset by sidebar */}
       <div
-        className="ml-[64px] w-[calc(100%-64px)] h-screen flex flex-col overflow-hidden relative"
+        className="ml-[76px] w-[calc(100%-76px)] h-screen flex flex-col overflow-hidden relative max-md:ml-0 max-md:w-full max-md:pb-[68px]"
       >
         {/* Auth buttons — inside main area so they never overlap sidebar */}
         <div
@@ -53,7 +51,7 @@ export default function OnboardingScreen({
         >
           {/* Greeting */}
           <div
-            className="flex items-start gap-[14px] mb-10 max-w-[620px] w-full"
+            className="flex items-start gap-4 mb-8 max-w-[680px] w-full animate-[fadeUp_.5s_ease-out]"
           >
             <div className="mt-[2px] text-[#826dd2] shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -64,7 +62,7 @@ export default function OnboardingScreen({
             </div>
             <div>
               <p
-                className="font-semibold text-xl text-white mb-3 leading-7"
+                className="font-semibold text-3xl text-white mb-3 leading-tight tracking-tight"
               >
                 Hola, soy IAnik
               </p>
@@ -78,10 +76,10 @@ export default function OnboardingScreen({
 
           {/* Upload zone */}
           <div
-            onClick={() => fileRef.current?.click()}
+            onClick={onGoLogin}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}
-            className="w-full max-w-[620px] bg-[rgba(255,255,255,0.03)] border-[1.5px] border-[rgba(255,255,255,0.1)] rounded-[22px] py-16 px-12 flex flex-col items-center gap-[22px] cursor-pointer transition-[border-color,background] duration-200"
+            className="glass-panel w-full max-w-[680px] rounded-[28px] py-16 px-8 flex flex-col items-center gap-[22px] cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:border-[#9b8cf8]/50 hover:bg-[#8b7cf6]/[0.08] animate-[fadeUp_.6s_ease-out]"
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(130,109,210,0.5)";
               (e.currentTarget as HTMLDivElement).style.background  = "rgba(130,109,210,0.06)";

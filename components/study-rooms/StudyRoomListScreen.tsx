@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { StudyRoom } from "@/types";
 
 interface StudyRoomListScreenProps {
@@ -22,7 +22,7 @@ export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCrea
 
   return (
     <div className="flex-1 flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="page-header">
         <div>
           <h1 className="text-2xl font-semibold text-white m-0">Salas de Estudio</h1>
           <p className="text-sm text-white/40 mt-1 m-0">Crea o únete a salas para estudiar en grupo</p>
@@ -49,13 +49,13 @@ export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCrea
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Buscar por nombre o código..."
-        className="px-4 py-2.5 rounded-lg border border-white/[0.1] bg-white/[0.05] text-white text-sm outline-none focus:border-[rgba(130,109,210,0.5)] transition-colors placeholder:text-white/25"
+        className="ui-input"
       />
 
       {loading ? (
         <div className="text-center py-12 text-white/40">Cargando salas...</div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-white/40">
+        <div className="ui-empty text-white/40">
           <div className="text-5xl mb-4">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16"/><path d="M9 21v-4a2 2 0 012-2h2a2 2 0 012 2v4"/><line x1="9" y1="7" x2="9.01" y2="7"/><line x1="15" y1="7" x2="15.01" y2="7"/><line x1="9" y1="11" x2="9.01" y2="11"/><line x1="15" y1="11" x2="15.01" y2="11"/></svg>
           </div>
@@ -68,7 +68,7 @@ export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCrea
             <div
               key={room.id}
               onClick={() => onOpenRoom(room.id)}
-              className="group p-5 rounded-xl border border-white/[0.08] bg-white/[0.03] cursor-pointer hover:border-[rgba(130,109,210,0.4)] hover:bg-[rgba(130,109,210,0.05)] transition-all duration-200"
+              className="ui-card ui-card-interactive group p-5 cursor-pointer"
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-base font-semibold text-white m-0 truncate">{room.title}</h3>

@@ -42,7 +42,7 @@ export default function SummaryScreen({
       
       <div className="w-full mx-auto flex flex-col gap-5 box-border">
         
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="page-header">
           <div>
             <h1 className="text-2xl font-semibold text-white m-0">Resúmenes</h1>
             <p className="text-sm text-white/40 mt-1 m-0">Gestiona y crea las síntesis guiadas por inteligencia artificial.</p>
@@ -59,7 +59,7 @@ export default function SummaryScreen({
         </div>
 
         {(!summaries || summaries.length === 0) ? (
-          <div className="flex flex-col items-center justify-center py-16 text-white/40">
+          <div className="ui-empty text-white/40">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 001 1h4" /><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="13" y2="17" /></svg>
             <p className="text-sm text-white/50 text-center m-0 mt-3">
               Aún no tienes resúmenes. ¡Haz clic en "Generar resúmenes" para empezar!

@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { setStoredToken, clearStoredToken, loginUser, registerUser, getMe } from "@/lib/api";
-import type { User } from "@/types";
+import { parseGoogleCredential, googleSyntheticPassword } from "@/lib/googleAuth";
+import type { User, LoginResponse } from "@/types";
 
 interface AuthContextValue {
   user: User | null;
@@ -10,6 +11,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -35,13 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await loginUser(email, password);
+  const _setSession = useCallback(async (res: LoginResponse) => {
     setStoredToken(res.access_token, res.token_type);
     localStorage.setItem("auth_token", res.access_token);
     localStorage.setItem("auth_token_type", res.token_type);
     setToken(`${res.token_type} ${res.access_token}`);
-
     try {
       const me = await getMe();
       if (me) setUser(me);
@@ -50,20 +50,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const login = useCallback(async (email: string, password: string) => {
+    const res = await loginUser(email, password);
+    await _setSession(res);
+  }, [_setSession]);
+
   const signup = useCallback(async (name: string, email: string, password: string) => {
     await registerUser(email, password, name);
     const res = await loginUser(email, password);
-    setStoredToken(res.access_token, res.token_type);
-    localStorage.setItem("auth_token", res.access_token);
-    localStorage.setItem("auth_token_type", res.token_type);
-    setToken(`${res.token_type} ${res.access_token}`);
+    await _setSession(res);
+  }, [_setSession]);
+
+  // Adapta el id_token de Google al flujo email/password del back. Si el
+  // usuario no existe (login falla) lo registramos (upsert) y reintentamos.
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    const { email, name, sub } = parseGoogleCredential(credential);
+    const password = googleSyntheticPassword(sub);
     try {
-      const me = await getMe();
-      if (me) setUser(me);
+      const res = await loginUser(email, password);
+      await _setSession(res);
+      return;
     } catch {
-      console.warn("No se pudo obtener el perfil después del registro");
+      // usuario ausente o contraseña distinta -> intentamos registrar
     }
-  }, []);
+    let registerErr: unknown = null;
+    try {
+      await registerUser(email, password, name);
+    } catch (err) {
+      registerErr = err;
+      console.error("Google register failed:", err);
+    }
+    try {
+      const res = await loginUser(email, password);
+      await _setSession(res);
+    } catch (loginErr) {
+      if (registerErr) {
+        throw new Error(
+          "No se pudo completar el registro con Google: " +
+            (registerErr instanceof Error ? registerErr.message : String(registerErr))
+        );
+      }
+      throw loginErr;
+    }
+  }, [_setSession]);
 
   const logout = useCallback(() => {
     clearStoredToken();
@@ -73,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
