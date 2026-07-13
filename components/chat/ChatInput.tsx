@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- previews use local blob URLs */
 
 import { useRef, useState, useEffect, FormEvent } from "react";
 
@@ -16,7 +17,6 @@ interface ChatInputProps {
   typing: boolean;
   onChange: (value: string) => void;
   onSubmit: (e: FormEvent, attachments: Attachment[]) => void;
-  onFiles?: (files: FileList | null) => void; // solo para el panel de docs, NO se llama desde aquí
 }
 
 export default function ChatInput({
@@ -25,7 +25,6 @@ export default function ChatInput({
   typing,
   onChange,
   onSubmit,
-  onFiles,
 }: ChatInputProps) {
   const fileRef  = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
@@ -34,6 +33,8 @@ export default function ChatInput({
 
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const attachmentsRef = useRef(attachments);
+  useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
 
   const canSend = !loading && !typing && (value.trim() || attachments.length > 0);
 
@@ -52,7 +53,7 @@ export default function ChatInput({
 
   /* Revoke preview URLs on unmount */
   useEffect(() => {
-    return () => attachments.forEach(a => a.preview && URL.revokeObjectURL(a.preview));
+    return () => attachmentsRef.current.forEach(a => a.preview && URL.revokeObjectURL(a.preview));
   }, []);
 
   /* ── Add files — SOLO adjunta al mensaje, NO toca el panel de documentos ── */
@@ -84,9 +85,6 @@ export default function ChatInput({
     onSubmit(e, attachments);
     setAttachments([]);
   };
-
-  const fileExt = (name: string) =>
-    name.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
 
   return (
     <div className="w-full">
@@ -121,7 +119,7 @@ export default function ChatInput({
                     <span
                       className="w-7 h-7 rounded-md bg-[rgba(130,109,210,0.12)] border border-[rgba(130,109,210,0.25)] flex items-center justify-center shrink-0"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 3v4a1 1 0 001 1h4" />
                         <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
                         <line x1="9" y1="13" x2="15" y2="13" />
@@ -182,7 +180,7 @@ export default function ChatInput({
                     className="flex items-center gap-3 w-full py-2.5 px-3 rounded-lg bg-transparent border-none cursor-pointer text-white/75 font-light text-sm text-left transition-[background,color] duration-150"
                   >
                     <span className="w-8 h-8 rounded-lg shrink-0 bg-[rgba(130,109,210,0.12)] border border-[rgba(130,109,210,0.25)] flex items-center justify-center">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                         <circle cx="8.5" cy="8.5" r="1.5" />
                         <polyline points="21 15 16 10 5 21" />
@@ -203,7 +201,7 @@ export default function ChatInput({
                     className="flex items-center gap-3 w-full py-2.5 px-3 rounded-lg bg-transparent border-none cursor-pointer text-white/75 font-light text-sm text-left transition-[background,color] duration-150"
                   >
                     <span className="w-8 h-8 rounded-lg shrink-0 bg-[rgba(130,109,210,0.12)] border border-[rgba(130,109,210,0.25)] flex items-center justify-center">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 3v4a1 1 0 001 1h4" />
                         <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
                         <line x1="9" y1="13" x2="15" y2="13" />
@@ -245,7 +243,7 @@ export default function ChatInput({
               type="submit"
               aria-label="Enviar mensaje"
               disabled={!canSend}
-              className={`p-2.5 rounded-lg shrink-0 border-none ${canSend ? 'cursor-pointer bg-[#826dd2] text-white' : 'cursor-not-allowed bg-white/[0.05] text-white/20'} transition-all duration-150 send-btn`}
+              className={`flex items-center justify-center p-2.5 rounded-lg shrink-0 border-none ${canSend ? 'cursor-pointer bg-[#826dd2] text-white' : 'cursor-not-allowed bg-white/[0.05] text-white/20'} transition-all duration-150 send-btn`}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="10" y1="14" x2="21" y2="3" />

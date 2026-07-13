@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- previews use local attachment URLs */
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import { Msg, MsgAttachment } from "@/types";
@@ -72,9 +73,6 @@ function UserBubble({
   const hasAttachments = message.attachments && message.attachments.length > 0;
   const hasText        = message.content.trim().length > 0;
   const canEdit        = hasText || hasAttachments;
-
-  // Sincronizar draft cuando el mensaje cambia desde afuera
-  useEffect(() => { setDraft(message.content); }, [message.content]);
 
   // Focus y resize al entrar en modo edición
   useEffect(() => {
@@ -225,7 +223,7 @@ export default function MessageList({
             if (m.role === "user") {
               return (
                 <UserBubble
-                  key={m.id}
+                  key={`${m.id}-${m.content}`}
                   message={m}
                   flatIndex={currentFlatIndex}
                   isEditing={editingIndex === currentFlatIndex}

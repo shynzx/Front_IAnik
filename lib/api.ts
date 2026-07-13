@@ -19,7 +19,7 @@ import type {
   LoginResponse, User,
   Notebook, NotebookFile, NotebookChat, ChatMessage,
   StudyRoom, StudyRoomAccess,
-  AssessmentFlashcard, AssessmentExam, AssessmentQuestion, ExamSubmitResponse, ExamAttempt,
+  AssessmentFlashcard, AssessmentExam, ExamSubmitResponse, ExamAttempt,
   ProgressMetrics, DailyActivity,
   ApiKey, ApiKeyCreateResponse,
   WebhookSubscription, WebhookAttempt,
@@ -170,7 +170,7 @@ export async function getNotebook(notebookId: string) {
   });
 }
 
-export async function updateNotebook(notebookId: string, data: { title?: string; description?: string }) {
+export async function updateNotebook(notebookId: string, data: { title: string; description?: string }) {
   return fetchAPI<{ message: string }>(`/notebooks/${encodeURIComponent(notebookId)}`, {
     method: "PUT",
     body: JSON.stringify(data),
@@ -207,44 +207,6 @@ export async function deleteNotebookFile(fileId: string) {
     method: "DELETE",
     headers: withAuthHeader(),
   });
-}
-
-export async function downloadNotebookFile(fileId: string, fallbackName = "archivo") {
-  const token = getStoredToken();
-  const headers: HeadersInit = {};
-  if (token) headers.Authorization = token;
-  const res = await fetch(`${API_URL}/notebooks/files/${encodeURIComponent(fileId)}`, { headers });
-  if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
-  }
-  const blob = await res.blob();
-  let filename = fallbackName;
-  const disposition = res.headers.get("Content-Disposition");
-  if (disposition) {
-    const star = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-    const plain = disposition.match(/filename="?([^";]+)"?/i);
-    if (star) filename = decodeURIComponent(star[1]);
-    else if (plain) filename = plain[1];
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-export async function getNotebookFileContent(fileId: string): Promise<string> {
-  const token = getStoredToken();
-  const headers: HeadersInit = {};
-  if (token) headers.Authorization = token;
-  const res = await fetch(`${API_URL}/notebooks/files/${encodeURIComponent(fileId)}`, { headers });
-  if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
-  }
-  return await res.text();
 }
 
 export async function createNotebookChat(notebookId: string, title: string) {
@@ -300,6 +262,13 @@ export async function joinStudyRoom(codigo: string) {
   return fetchAPI<{ id: number; message: string }>("/study-rooms/join", {
     method: "POST",
     body: JSON.stringify({ codigo }),
+    headers: withAuthHeader(),
+  });
+}
+
+export async function leaveStudyRoom(roomId: string) {
+  return fetchAPI<{ message: string }>(`/study-rooms/${encodeURIComponent(roomId)}/leave`, {
+    method: "DELETE",
     headers: withAuthHeader(),
   });
 }
@@ -365,11 +334,15 @@ export async function getRoomChatMessages(roomId: string, chatId: string) {
 }
 
 export async function sendRoomChatMessage(roomId: string, chatId: string, content: string) {
-  return fetchAPI<ChatMessage>(`/study-rooms/${encodeURIComponent(roomId)}/chats/${encodeURIComponent(chatId)}/messages`, {
+  return fetchAPI<ChatMessage[]>(`/study-rooms/${encodeURIComponent(roomId)}/chats/${encodeURIComponent(chatId)}/messages`, {
     method: "POST",
     body: JSON.stringify({ content }),
     headers: withAuthHeader(),
   });
+}
+
+export async function listRoomSummaries(roomId: string) {
+  return fetchAPI<NotebookSummaryResponse[]>(`/study-rooms/${encodeURIComponent(roomId)}/summaries`, { headers: withAuthHeader() });
 }
 
 export async function createRoomFlashcard(roomId: string, data: { prompt: string; cantidad?: number }) {
@@ -471,22 +444,28 @@ export async function getExamAttempts(examId: string) {
 
 /* ─── Summaries ────────────────────────────────────────── */
 
-export async function generateSummary(data: { doc_ids: string[]; title: string; prompt: string }) {
-  return fetchAPI<{ id: string; content: string; keyPoints: string[] }>("/summaries/generate", {
+export interface NotebookSummaryResponse {
+  id: number;
+  content: string;
+  notebook_id: number;
+  archivo_id: number | null;
+  created_at: string;
+}
+
+export async function generateNotebookSummary(notebookId: string, fileId?: string) {
+  return fetchAPI<{ id: number; message: string }>(`/notebooks/${encodeURIComponent(notebookId)}/summaries`, {
     method: "POST",
-    body: JSON.stringify(data),
+    params: fileId ? { archivo_id: fileId } : undefined,
     headers: withAuthHeader(),
   });
 }
 
-export async function listSummaries() {
-  return fetchAPI<{ id: string; title: string; doc_names: string; content: string; key_points: string[]; created_at: string }[]>("/summaries", {
-    headers: withAuthHeader(),
-  });
+export async function listNotebookSummaries(notebookId: string) {
+  return fetchAPI<NotebookSummaryResponse[]>(`/notebooks/${encodeURIComponent(notebookId)}/summaries`, { headers: withAuthHeader() });
 }
 
-export async function deleteSummary(summaryId: string) {
-  return fetchAPI<void>(`/summaries/${encodeURIComponent(summaryId)}`, {
+export async function deleteNotebookSummary(summaryId: string) {
+  return fetchAPI<{ message: string }>(`/notebooks/summaries/${encodeURIComponent(summaryId)}`, {
     method: "DELETE",
     headers: withAuthHeader(),
   });

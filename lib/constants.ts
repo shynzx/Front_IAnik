@@ -13,3 +13,10 @@ export const pp: CSSProperties = {
   fontFamily: "var(--font-poppins), sans-serif",
   fontWeight: 300,
 };
+
+export function visiblePaginationIndexes(total: number, active: number, limit = 9): number[] {
+  if (total <= limit) return Array.from({ length: total }, (_, index) => index);
+  const half = Math.floor(limit / 2);
+  const start = Math.max(0, Math.min(active - half, total - limit));
+  return Array.from({ length: limit }, (_, offset) => start + offset);
+}

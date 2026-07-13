@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import type { NotebookFile, NotebookChat, ChatMessage } from "@/types";
 import type { Msg } from "@/types";
 import MessageList from "@/components/chat/MessageList";
 import ChatInput from "@/components/chat/ChatInput";
 import type { Attachment } from "@/components/chat/ChatInput";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
-  listNotebookFiles, uploadNotebookFile, deleteNotebookFile, downloadNotebookFile, getNotebookFileContent,
+  listNotebookFiles, uploadNotebookFile, deleteNotebookFile,
   listNotebookChats, createNotebookChat, deleteNotebookChat,
   getChatMessages, sendChatMessage,
 } from "@/lib/api";
@@ -28,7 +29,7 @@ function toMsg(m: ChatMessage): Msg {
 const fileExt = (name: string) => name.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
 
 export default function CuadernoDetailView({
-  notebookId, onBack, onChatClick, onStudyClick, onSummariesClick, onStudyRoomsClick,
+  notebookId, onBack,
 }: CuadernoDetailViewProps) {
   const [chats, setChats] = useState<NotebookChat[]>([]);
   const [files, setFiles] = useState<NotebookFile[]>([]);
@@ -36,22 +37,20 @@ export default function CuadernoDetailView({
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [typing, setTyping] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"chats" | "docs">("chats");
   const [deletingFileId, setDeletingFileId] = useState<number | null>(null);
-  const [downloadingFileId, setDownloadingFileId] = useState<number | null>(null);
-  const [viewingFile, setViewingFile] = useState<NotebookFile | null>(null);
-  const [viewContent, setViewContent] = useState<string>("");
-  const [loadingView, setLoadingView] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: "chat"; id: number; name: string } | { type: "file"; file: NotebookFile } | null>(null);
   const sendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadChats = async () => { try { setChats(await listNotebookChats(notebookId)); } catch {} };
-  const loadFiles = async () => { try { setFiles(await listNotebookFiles(notebookId)); } catch {} };
+  const loadChats = useCallback(async () => { try { setChats(await listNotebookChats(notebookId)); } catch {} }, [notebookId]);
+  const loadFiles = useCallback(async () => { try { setFiles(await listNotebookFiles(notebookId)); } catch {} }, [notebookId]);
 
-  useEffect(() => { loadChats(); loadFiles(); }, [notebookId]);
+  useEffect(() => { void loadChats(); void loadFiles(); }, [loadChats, loadFiles]);
 
   useEffect(() => {
     if (!activeChatId) { setMessages([]); return; }
@@ -78,8 +77,7 @@ export default function CuadernoDetailView({
     } catch {}
   };
 
-  const handleDeleteChat = async (chatId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteChat = async (chatId: number) => {
     try {
       await deleteNotebookChat(String(chatId));
       setChats((prev) => prev.filter((c) => c.id !== chatId));
@@ -105,6 +103,7 @@ export default function CuadernoDetailView({
     const content = input.trim();
     setInput("");
     setSending(true);
+    setChatError(null);
 
     const userMsg: Msg = { id: `tmp-${Date.now()}`, role: "user", content, attachments: attachments.map(a => ({ id: a.id, kind: a.kind, name: a.name, preview: a.preview })) };
     setMessages((prev) => [...prev, userMsg]);
@@ -134,9 +133,11 @@ export default function CuadernoDetailView({
           setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: lastMsg.content } : m));
         }, 0);
       }
-    } catch {
+    } catch (error) {
       // En caso de error, revertir el mensaje temporal del usuario
       setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+      setInput(content);
+      setChatError(error instanceof Error ? error.message : "No se pudo enviar el mensaje. Inténtalo nuevamente.");
     }
     sendingRef.current = false;
     setSending(false);
@@ -168,30 +169,15 @@ export default function CuadernoDetailView({
     setDeletingFileId(null);
   };
 
-  const handleDownloadFile = async (file: NotebookFile) => {
-    if (downloadingFileId === file.id) return;
-    setDownloadingFileId(file.id);
-    try { await downloadNotebookFile(String(file.id), file.filename); } catch {}
-    setDownloadingFileId(null);
-  };
-
-  const handleViewFile = async (file: NotebookFile) => {
-    if (viewingFile?.id === file.id) return;
-    setViewingFile(file);
-    setViewContent("");
-    setLoadingView(true);
-    try { setViewContent(await getNotebookFileContent(String(file.id))); } catch {}
-    setLoadingView(false);
-  };
-
   const filteredChats = chats.filter(c => c.title.toLowerCase().includes(search.toLowerCase()));
   const filteredFiles = files.filter(f => f.filename.toLowerCase().includes(search.toLowerCase()));
   const activeChatTitle = chats.find(c => c.id === activeChatId)?.title || "Chat";
 
   return (
-    <div className="h-full flex overflow-hidden">
+    <div className="h-full flex overflow-hidden max-md:flex-col">
+      {confirmAction && <ConfirmDialog title={confirmAction.type === "chat" ? "Eliminar chat" : "Eliminar archivo"} description={`Se eliminará “${confirmAction.type === "chat" ? confirmAction.name : confirmAction.file.filename}”. Esta acción no se puede deshacer.`} onClose={() => setConfirmAction(null)} onConfirm={async () => { if (confirmAction.type === "chat") await handleDeleteChat(confirmAction.id); else await handleDeleteFile(confirmAction.file); }} />}
       {/* ── Left panel ── */}
-      <div className="w-72 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-0 max-md:border-none">
+      <div className="w-72 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-full max-md:max-h-60 max-md:border-r-0 max-md:border-b">
         {/* Header */}
         <div className="px-4 pt-5 pb-3 border-b border-white/[0.06]">
           <div className="flex items-center justify-between mb-3">
@@ -237,7 +223,7 @@ export default function CuadernoDetailView({
           {activeTab === "chats" ? (
             filteredChats.length === 0 ? (
               <div className="text-center py-10 px-4">
-                <div className="text-3xl mb-3 opacity-30">
+                <div className="flex items-center justify-center mb-3 opacity-30">
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 </div>
                 <div className="text-white/35 text-xs leading-relaxed">
@@ -261,7 +247,7 @@ export default function CuadernoDetailView({
                         <div className="text-[0.65rem] text-white/25 mt-0.5">{new Date(chat.created_at).toLocaleDateString()}</div>
                       </div>
                     </div>
-                    <button onClick={(e) => handleDeleteChat(chat.id, e)} className="opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5">✕</button>
+                    <button onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "chat", id: chat.id, name: chat.title }); }} className="opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5">✕</button>
                   </div>
                 ))}
               </div>
@@ -269,7 +255,7 @@ export default function CuadernoDetailView({
           ) : (
             filteredFiles.length === 0 ? (
               <div className="text-center py-10 px-4">
-                <div className="text-3xl mb-3 opacity-30">
+                <div className="flex items-center justify-center mb-3 opacity-30">
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
                 </div>
                 <div className="text-white/35 text-xs leading-relaxed">
@@ -281,8 +267,7 @@ export default function CuadernoDetailView({
                 {filteredFiles.map((file) => (
                   <div
                     key={file.id}
-                    onClick={() => handleViewFile(file)}
-                    className="group flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-transparent hover:bg-white/[0.05] transition-all duration-150 cursor-pointer"
+                    className="group flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-transparent hover:bg-white/[0.05] transition-all duration-150"
                   >
                     <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
                       <span className="text-[0.55rem] font-bold text-[#826dd2]">{fileExt(file.filename)}</span>
@@ -292,15 +277,7 @@ export default function CuadernoDetailView({
                       <div className="text-[0.65rem] text-white/25 mt-0.5">{new Date(file.created_at).toLocaleDateString()}</div>
                     </div>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDownloadFile(file); }}
-                      disabled={downloadingFileId === file.id}
-                      title="Descargar"
-                      className={`opacity-0 group-hover:opacity-100 text-[#826dd2] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5 ${downloadingFileId === file.id ? 'opacity-100' : ''}`}
-                    >
-                      {downloadingFileId === file.id ? "..." : "↓"}
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteFile(file); }}
+                      onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "file", file }); }}
                       disabled={deletingFileId === file.id}
                       className={`opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5 ${deletingFileId === file.id ? 'opacity-100' : ''}`}
                     >
@@ -335,7 +312,7 @@ export default function CuadernoDetailView({
         {!activeChatId ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center">
-              <div className="text-5xl mb-4 opacity-30">
+              <div className="flex items-center justify-center mb-4 opacity-30">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               </div>
               <div className="text-white/40 text-sm mb-4">Selecciona un chat o crea uno nuevo</div>
@@ -354,7 +331,8 @@ export default function CuadernoDetailView({
 
             <div className="shrink-0 flex justify-center px-6 md:px-8 pb-6 pt-4 bg-gradient-to-t from-black/35 to-transparent">
               <div className="w-full max-w-3xl">
-                <ChatInput value={input} loading={sending} typing={typing} onChange={setInput} onSubmit={handleSend} />
+                {chatError && <p role="alert" className="m-0 mb-2 px-1 text-sm text-red-300">{chatError}</p>}
+                <ChatInput value={input} loading={sending} typing={typing} onChange={(value) => { setInput(value); if (chatError) setChatError(null); }} onSubmit={handleSend} />
               </div>
             </div>
           </>
@@ -364,41 +342,13 @@ export default function CuadernoDetailView({
       {dragActive && (
         <div className="fixed inset-0 bg-black/72 backdrop-blur-sm flex items-center justify-center z-[70] p-4" onDragLeave={() => setDragActive(false)} onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}>
           <div className="border-2 border-dashed border-[#826dd2] rounded-3xl px-12 md:px-16 py-10 md:py-12 text-center">
-            <svg className="mx-auto mb-5 block" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <svg className="mx-auto mb-5 block" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <h3 className="text-xl bg-gradient-to-r from-white to-[#a5a5a5] bg-clip-text text-transparent mb-2 m-0">Suelta tus archivos aquí</h3>
             <p className="text-sm text-white/40 m-0">PDF, Word y más</p>
           </div>
         </div>
       )}
 
-      {viewingFile && (
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-[1000] p-4" onClick={() => setViewingFile(null)}>
-          <div className="bg-[#1a1a2e] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center px-6 pt-5 pb-3 border-b border-white/[0.06]">
-              <div className="min-w-0">
-                <h2 className="text-lg font-semibold text-white m-0 truncate">{viewingFile.filename}</h2>
-                <p className="text-xs text-white/40 mt-0.5 m-0">Contenido extraído del documento</p>
-              </div>
-              <button onClick={() => setViewingFile(null)} className="text-white/40 hover:text-white/70 bg-transparent border-none text-lg cursor-pointer transition-colors ml-3">✕</button>
-            </div>
-            <div className="flex-1 overflow-auto px-6 py-4">
-              {loadingView ? (
-                <div className="text-center py-10 text-white/40 text-sm">Cargando contenido...</div>
-              ) : (
-                <pre className="text-sm text-white/80 whitespace-pre-wrap break-words font-[inherit] m-0 leading-relaxed">{viewContent || "Sin contenido"}</pre>
-              )}
-            </div>
-            <div className="flex justify-end px-6 py-4 border-t border-white/[0.06]">
-              <button
-                onClick={() => handleDownloadFile(viewingFile)}
-                className="px-5 py-2.5 rounded-lg border-none bg-[#826dd2] text-white text-sm font-medium cursor-pointer hover:bg-[#7059be] transition-colors"
-              >
-                Descargar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -22,7 +22,7 @@ export default function DragOverlay({ onDrop, onLeave }: DragOverlayProps) {
           height="64"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#826dd2"
+          stroke="white"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"

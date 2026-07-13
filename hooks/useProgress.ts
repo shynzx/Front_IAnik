@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { getProgressMetrics, getPendingCards, getDailyActivity } from "@/lib/api";
-import type { ProgressMetrics, AssessmentFlashcard, DailyActivity } from "@/types";
+import type { ProgressMetrics } from "@/types";
 
 export function useProgress() {
   const [loading, setLoading] = useState(false);

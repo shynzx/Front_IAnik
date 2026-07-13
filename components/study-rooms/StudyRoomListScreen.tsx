@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { StudyRoom } from "@/types";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface StudyRoomListScreenProps {
   rooms: StudyRoom[];
@@ -9,19 +10,25 @@ interface StudyRoomListScreenProps {
   onOpenRoom: (roomId: number) => void;
   onCreateRoom: () => void;
   onJoinRoom: () => void;
+  createdRoomIds: Set<number>;
+  onLeaveRoom: (roomId: number) => Promise<void>;
 }
 
-export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCreateRoom, onJoinRoom }: StudyRoomListScreenProps) {
+export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCreateRoom, onJoinRoom, createdRoomIds, onLeaveRoom }: StudyRoomListScreenProps) {
   const [tab, setTab] = useState<"all" | "created" | "joined">("all");
   const [search, setSearch] = useState("");
+  const [leaveTarget, setLeaveTarget] = useState<StudyRoom | null>(null);
 
   const filtered = rooms.filter((r) => {
     if (search && !r.title.toLowerCase().includes(search.toLowerCase()) && !r.codigo.toLowerCase().includes(search.toLowerCase())) return false;
+    if (tab === "created" && !createdRoomIds.has(r.id)) return false;
+    if (tab === "joined" && createdRoomIds.has(r.id)) return false;
     return true;
   });
 
   return (
     <div className="flex-1 flex flex-col gap-6">
+      {leaveTarget && <ConfirmDialog title="Abandonar sala" description={`Dejarás de tener acceso a “${leaveTarget.title}”. Para volver necesitarás nuevamente el código de invitación.`} confirmLabel="Abandonar" busyLabel="Saliendo…" onClose={() => setLeaveTarget(null)} onConfirm={() => onLeaveRoom(leaveTarget.id)} />}
       <div className="page-header">
         <div>
           <h1 className="text-2xl font-semibold text-white m-0">Salas de Estudio</h1>
@@ -65,21 +72,26 @@ export default function StudyRoomListScreen({ rooms, loading, onOpenRoom, onCrea
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((room) => (
-            <div
+            <article
               key={room.id}
               onClick={() => onOpenRoom(room.id)}
-              className="ui-card ui-card-interactive group p-5 cursor-pointer"
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onOpenRoom(room.id); }}
+              tabIndex={0}
+              role="button"
+              className="ui-card ui-card-interactive group p-5 cursor-pointer min-h-40 flex flex-col"
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-base font-semibold text-white m-0 truncate">{room.title}</h3>
-                <span className="px-2 py-0.5 rounded-md bg-[rgba(130,109,210,0.15)] text-[#826dd2] text-[0.7rem] font-semibold font-mono ml-2 shrink-0">
-                  {room.codigo}
+                <span className={`px-2 py-1 rounded-md text-[0.68rem] font-semibold ml-2 shrink-0 ${createdRoomIds.has(room.id) ? "bg-[#8b7cf6]/15 text-[#a99cff]" : "bg-emerald-400/10 text-emerald-300"}`}>
+                  {createdRoomIds.has(room.id) ? "Administrador" : "Participante"}
                 </span>
               </div>
-              <div className="text-xs text-white/30">
-                Cuaderno #{room.notebook_id} · {new Date(room.created_at).toLocaleDateString()}
+              <div className="text-sm text-white/45 font-mono bg-black/20 rounded-lg px-3 py-2 mt-2">Código: <span className="text-white/80">{room.codigo}</span></div>
+              <div className="text-xs text-white/30 mt-auto pt-4 flex items-center justify-between gap-2">
+                <span>{new Date(room.created_at).toLocaleDateString("es-MX")}</span>
+                {!createdRoomIds.has(room.id) && <button onClick={(event) => { event.stopPropagation(); setLeaveTarget(room); }} className="border-0 bg-transparent text-red-300/60 hover:text-red-300 cursor-pointer text-xs">Abandonar</button>}
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}

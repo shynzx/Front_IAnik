@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import * as api from "@/lib/api";
-import type { StudyRoom, StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam } from "@/types";
+import type { StudyRoom, StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam, Summary } from "@/types";
 
 export function useStudyRooms() {
   const [loading, setLoading] = useState(false);
@@ -36,6 +36,16 @@ export function useStudyRooms() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const leaveRoom = useCallback(async (roomId: string) => {
+    setLoading(true);
+    setError(null);
+    try { await api.leaveStudyRoom(roomId); }
+    catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo abandonar la sala");
+      throw cause;
+    } finally { setLoading(false); }
   }, []);
 
   const listCreatedRooms = useCallback(async (): Promise<StudyRoom[]> => {
@@ -111,7 +121,7 @@ export function useStudyRooms() {
   const listFiles = useCallback(async (roomId: string): Promise<NotebookFile[]> => {
     try {
       return await api.listRoomFiles(roomId);
-    } catch (e) {
+    } catch {
       return [];
     }
   }, []);
@@ -129,7 +139,7 @@ export function useStudyRooms() {
   const listChats = useCallback(async (roomId: string): Promise<NotebookChat[]> => {
     try {
       return await api.listRoomChats(roomId);
-    } catch (e) {
+    } catch {
       return [];
     }
   }, []);
@@ -137,19 +147,33 @@ export function useStudyRooms() {
   const getChatMessages = useCallback(async (roomId: string, chatId: string): Promise<ChatMessage[]> => {
     try {
       return await api.getRoomChatMessages(roomId, chatId);
-    } catch (e) {
+    } catch {
       return [];
     }
   }, []);
 
-  const sendMessage = useCallback(async (roomId: string, chatId: string, content: string): Promise<ChatMessage | null> => {
+  const sendMessage = useCallback(async (roomId: string, chatId: string, content: string): Promise<ChatMessage[]> => {
     try {
       return await api.sendRoomChatMessage(roomId, chatId, content);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al enviar mensaje";
       setError(msg);
-      return null;
+      throw e;
     }
+  }, []);
+
+  const listSummaries = useCallback(async (roomId: string): Promise<Summary[]> => {
+    try {
+      const summaries = await api.listRoomSummaries(roomId);
+      return summaries.map((summary) => ({
+        id: String(summary.id),
+        fileId: summary.archivo_id ? String(summary.archivo_id) : undefined,
+        title: summary.archivo_id ? `Resumen del archivo #${summary.archivo_id}` : "Resumen del cuaderno",
+        docName: summary.archivo_id ? `Archivo #${summary.archivo_id}` : "Todos los archivos",
+        content: summary.content,
+        createdAt: new Date(summary.created_at),
+      }));
+    } catch { return []; }
   }, []);
 
   const createChat = useCallback(async (notebookId: string, title: string): Promise<{ id: number; message: string } | null> => {
@@ -189,7 +213,7 @@ export function useStudyRooms() {
   const listFlashcards = useCallback(async (roomId: string): Promise<AssessmentFlashcard[]> => {
     try {
       return await api.listRoomFlashcards(roomId);
-    } catch (e) {
+    } catch {
       return [];
     }
   }, []);
@@ -211,17 +235,17 @@ export function useStudyRooms() {
   const listExams = useCallback(async (roomId: string): Promise<AssessmentExam[]> => {
     try {
       return await api.listRoomExams(roomId);
-    } catch (e) {
+    } catch {
       return [];
     }
   }, []);
 
   return {
     loading, error, clearError,
-    createRoom, joinRoom,
+    createRoom, joinRoom, leaveRoom,
     listCreatedRooms, listJoinedRooms, getRoom, getRoomAccess,
     uploadFile, listFiles, deleteFile,
-    listChats, getChatMessages, sendMessage, createChat, deleteChat,
+    listChats, getChatMessages, sendMessage, createChat, deleteChat, listSummaries,
     generateFlashcards, listFlashcards,
     generateExam, listExams,
   };

@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { generateFlashcards, getNotebookFlashcards, createRoomFlashcard, listRoomFlashcards } from "@/lib/api";
-import type { AssessmentFlashcard } from "@/types";
 
 export function useFlashcards() {
   const [loading, setLoading] = useState(false);

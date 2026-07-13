@@ -54,7 +54,7 @@ export function useRag(notebookId?: string) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ensureChat]);
 
   const listFiles = useCallback(async () => {
     const nbId = notebookIdRef.current;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Notebook } from "@/types";
 import { listNotebooks, createNotebook, deleteNotebook, createApiKey } from "@/lib/api";
+import CloseButton from "@/components/ui/CloseButton";
 
 interface CuadernoListViewProps {
   onSelect: (notebookId: string) => void;
@@ -88,7 +89,7 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
                 <div className="w-10 h-10 rounded-xl bg-[#8b7cf6]/10 border border-[#8b7cf6]/20 flex items-center justify-center text-[#a99cff] shrink-0">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
                 </div>
-                <button aria-label={`Eliminar ${notebook.title}`} onClick={(event) => { event.stopPropagation(); setDeleteTarget(notebook); }} className="opacity-60 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 w-9 h-9 rounded-lg border border-transparent bg-transparent text-white/40 hover:text-red-300 hover:bg-red-400/10 hover:border-red-400/15 transition-all">×</button>
+                <button aria-label={`Eliminar ${notebook.title}`} onClick={(event) => { event.stopPropagation(); setDeleteTarget(notebook); }} className="ui-icon-button opacity-60 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-red-300"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
               </div>
               <h2 className="text-base font-semibold text-white mt-4 mb-1 truncate">{notebook.title}</h2>
               <p className="text-sm text-white/40 m-0 line-clamp-2">{notebook.description || "Sin descripción"}</p>
@@ -103,7 +104,7 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
           <section role="dialog" aria-modal="true" aria-labelledby="create-title" className="modal-panel" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between px-6 pt-6">
               <div><h2 id="create-title" className="text-lg font-semibold m-0">Nuevo cuaderno</h2><p className="text-sm text-white/40 mt-1 mb-0">Crea un espacio para un tema o proyecto.</p></div>
-              <button onClick={closeCreate} aria-label="Cerrar" className="w-9 h-9 rounded-lg border-0 bg-white/[0.04] text-white/50 hover:text-white cursor-pointer">×</button>
+              <CloseButton onClick={closeCreate} />
             </div>
             <form onSubmit={handleCreate} className="px-6 py-6">
               <label htmlFor="notebook-title" className="block text-sm text-white/60 mb-2">Título</label>
@@ -120,7 +121,7 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
       {deleteTarget && (
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setDeleteTarget(null)}>
           <section role="alertdialog" aria-modal="true" aria-labelledby="delete-title" className="modal-panel max-w-sm" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="p-6"><h2 id="delete-title" className="text-lg font-semibold m-0">Eliminar cuaderno</h2><p className="text-sm text-white/50 mt-3 mb-0">Se eliminará <strong className="text-white/80">{deleteTarget.title}</strong>. Esta acción no se puede deshacer.</p><div className="flex justify-end gap-2 mt-6"><button onClick={() => setDeleteTarget(null)} className="ui-secondary">Cancelar</button><button onClick={handleDelete} disabled={deleting} className="min-h-[42px] px-4 rounded-xl border border-red-400/20 bg-red-500/15 text-red-200 hover:bg-red-500/25 cursor-pointer disabled:opacity-50">{deleting ? "Eliminando…" : "Eliminar"}</button></div></div>
+            <div className="p-6"><h2 id="delete-title" className="text-lg font-semibold m-0">Eliminar cuaderno</h2><p className="text-sm text-white/50 mt-3 mb-0">Se eliminará <strong className="text-white/80">{deleteTarget.title}</strong>. Esta acción no se puede deshacer.</p><div className="flex justify-end gap-2 mt-6"><button onClick={() => setDeleteTarget(null)} className="ui-secondary">Cancelar</button><button onClick={handleDelete} disabled={deleting} className="ui-danger">{deleting ? "Eliminando…" : "Eliminar"}</button></div></div>
           </section>
         </div>
       )}

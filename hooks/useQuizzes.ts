@@ -3,7 +3,6 @@ import {
   generateExam, getExam, getNotebookExams, getRoomExams,
   submitExam, listAttempts, getAttempt, getExamAttempts,
 } from "@/lib/api";
-import type { AssessmentExam, ExamSubmitResponse, ExamAttempt } from "@/types";
 
 export function useQuizzes() {
   const [loading, setLoading] = useState(false);

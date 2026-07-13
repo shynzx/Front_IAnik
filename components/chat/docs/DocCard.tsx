@@ -102,6 +102,9 @@ export default function DocCard({
               cursor: deleting ? "not-allowed" : "pointer",
               padding: 2,
               lineHeight: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             title="Eliminar"
           >

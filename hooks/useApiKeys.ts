@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { createApiKey, listApiKeys, deleteApiKey } from "@/lib/api";
-import type { ApiKey, ApiKeyCreateResponse } from "@/types";
+import type { ApiKey } from "@/types";
 
 export function useApiKeys() {
   const [loading, setLoading] = useState(false);

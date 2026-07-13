@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { createWebhookSubscription, listWebhookSubscriptions, getWebhookAttempts, retryWebhookAttempt } from "@/lib/api";
-import type { WebhookSubscription, WebhookAttempt } from "@/types";
 
 export function useWebhooks() {
   const [loading, setLoading] = useState(false);

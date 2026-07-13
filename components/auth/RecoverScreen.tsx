@@ -132,7 +132,7 @@ export default function RecoverScreen({
 
         {step !== "done" && (
           <div className="flex gap-2 mb-7">
-            {(["email", "code", "newpass"] as Step[]).map((s, i) => {
+            {(["email", "code", "newpass"] as Step[]).map((s) => {
               const steps: Step[] = ["email", "code", "newpass"];
               const current = steps.indexOf(step);
               const isActive = steps.indexOf(s) <= current;

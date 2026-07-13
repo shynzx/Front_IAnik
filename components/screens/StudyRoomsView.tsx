@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { StudyRoom } from "@/types";
 import StudyRoomListScreen from "@/components/study-rooms/StudyRoomListScreen";
 import CreateStudyRoomModal from "@/components/study-rooms/CreateStudyRoomModal";
@@ -14,26 +14,29 @@ interface StudyRoomsViewProps {
   onOpenRoom: (roomId: number) => void;
 }
 
-export default function StudyRoomsView({ onChatClick, onStudyClick, onSummariesClick, onOpenRoom }: StudyRoomsViewProps) {
+export default function StudyRoomsView({ onOpenRoom }: StudyRoomsViewProps) {
   const studyRooms = useStudyRooms();
+  const { listCreatedRooms, listJoinedRooms } = studyRooms;
   const [rooms, setRooms] = useState<StudyRoom[]>([]);
+  const [createdRoomIds, setCreatedRoomIds] = useState<Set<number>>(new Set());
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
 
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     try {
       const [created, joined] = await Promise.all([
-        studyRooms.listCreatedRooms(),
-        studyRooms.listJoinedRooms(),
+        listCreatedRooms(),
+        listJoinedRooms(),
       ]);
       const merged = [...created];
       const ids = new Set(created.map((r) => r.id));
+      setCreatedRoomIds(ids);
       for (const r of joined) { if (!ids.has(r.id)) merged.push(r); }
       setRooms(merged);
     } catch (e) { console.warn("Error cargando salas de estudio:", e); }
-  };
+  }, [listCreatedRooms, listJoinedRooms]);
 
-  useEffect(() => { loadRooms(); }, []);
+  useEffect(() => { queueMicrotask(() => { void loadRooms(); }); }, [loadRooms]);
 
   return (
     <div className="page-shell min-h-full">
@@ -43,6 +46,11 @@ export default function StudyRoomsView({ onChatClick, onStudyClick, onSummariesC
         onOpenRoom={onOpenRoom}
         onCreateRoom={() => setCreateRoomOpen(true)}
         onJoinRoom={() => setJoinRoomOpen(true)}
+        createdRoomIds={createdRoomIds}
+        onLeaveRoom={async (roomId) => {
+          await studyRooms.leaveRoom(String(roomId));
+          setRooms((current) => current.filter((room) => room.id !== roomId));
+        }}
       />
       {createRoomOpen && (
         <CreateStudyRoomModal

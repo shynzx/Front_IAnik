@@ -3,7 +3,6 @@ import {
   createStudyRoom, joinStudyRoom, listCreatedRooms, listJoinedRooms,
   getStudyRoom, getRoomAccess,
 } from "@/lib/api";
-import type { StudyRoom, StudyRoomAccess } from "@/types";
 
 export function useOrganizations() {
   const [loading, setLoading] = useState(false);

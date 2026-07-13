@@ -13,9 +13,11 @@ interface StudyViewProps {
   onStudyRoomsClick: () => void;
 }
 
-export default function StudyView({ notebookId, onChatClick, onSummariesClick, onStudyRoomsClick }: StudyViewProps) {
+export default function StudyView({ notebookId }: StudyViewProps) {
   const quizzesApi = useQuizzes();
   const flashcardsApi = useFlashcards();
+  const { listByNotebook: listFlashcards, generate: generateFlashcards } = flashcardsApi;
+  const { listByNotebook: listExams, generate: generateExam } = quizzesApi;
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [examSets, setExamSets] = useState<ExamSet[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -23,8 +25,8 @@ export default function StudyView({ notebookId, onChatClick, onSummariesClick, o
   useEffect(() => {
     if (!notebookId) return;
     Promise.all([
-      flashcardsApi.listByNotebook(notebookId),
-      quizzesApi.listByNotebook(notebookId),
+      listFlashcards(notebookId),
+      listExams(notebookId),
     ]).then(([rawFlashcards, rawExams]) => {
       const fcs = rawFlashcards as unknown as AssessmentFlashcard[];
       const exs = rawExams as unknown as AssessmentExam[];
@@ -47,7 +49,7 @@ export default function StudyView({ notebookId, onChatClick, onSummariesClick, o
       setFlashcardSets(fSets);
       setExamSets(eSets);
     }).catch(() => {});
-  }, [notebookId]);
+  }, [notebookId, listFlashcards, listExams]);
 
   const handleUpdateFlashcard = async (setId: string, cardId: string, status: Flashcard["status"]) => {
     setFlashcardSets((prev) => prev.map((s) =>
@@ -65,7 +67,7 @@ export default function StudyView({ notebookId, onChatClick, onSummariesClick, o
     if (!notebookId) return;
     setGenerating(true);
     try {
-      const raw = await flashcardsApi.generate(notebookId, prompt);
+      const raw = await generateFlashcards(notebookId, prompt);
       const fcs = raw as unknown as AssessmentFlashcard[];
       if (fcs.length) {
         const newSet: FlashcardSet = {
@@ -82,7 +84,7 @@ export default function StudyView({ notebookId, onChatClick, onSummariesClick, o
     if (!notebookId) return;
     setGenerating(true);
     try {
-      const ex = await quizzesApi.generate(notebookId, prompt);
+      const ex = await generateExam(notebookId, prompt);
       const exam = ex as unknown as AssessmentExam;
       if (exam?.preguntas?.length) {
         const newSet: ExamSet = {

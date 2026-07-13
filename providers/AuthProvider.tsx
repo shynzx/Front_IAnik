@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { setStoredToken, clearStoredToken, loginUser, registerUser, getMe } from "@/lib/api";
+import { setStoredToken, clearStoredToken, loginUser, registerUser, getMe, logoutUser } from "@/lib/api";
 import { parseGoogleCredential, googleSyntheticPassword } from "@/lib/googleAuth";
 import type { User, LoginResponse } from "@/types";
 
@@ -23,21 +23,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("auth_token");
-    const savedType = localStorage.getItem("auth_token_type") || "bearer";
-    if (saved) {
-      setToken(`${savedType} ${saved}`);
+    async function restoreSession() {
+      const saved = localStorage.getItem("auth_token");
+      const savedType = localStorage.getItem("auth_token_type") || "bearer";
+      if (!saved) { setLoading(false); return; }
       setStoredToken(saved, savedType);
-      getMe()
-        .then((me) => { if (me) setUser(me); })
-        .catch((e) => console.warn("Error verificando sesión:", e))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+      setToken(`${savedType} ${saved}`);
+      try {
+        const me = await getMe();
+        if (me) setUser(me);
+      } catch (error) {
+        console.warn("Error verificando sesión:", error);
+        clearStoredToken();
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_token_type");
+        setToken(null);
+      } finally { setLoading(false); }
     }
+    void restoreSession();
   }, []);
 
-  const _setSession = useCallback(async (res: LoginResponse) => {
+  const setSession = useCallback(async (res: LoginResponse) => {
     setStoredToken(res.access_token, res.token_type);
     localStorage.setItem("auth_token", res.access_token);
     localStorage.setItem("auth_token_type", res.token_type);
@@ -52,14 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await loginUser(email, password);
-    await _setSession(res);
-  }, [_setSession]);
+    await setSession(res);
+  }, [setSession]);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
     await registerUser(email, password, name);
     const res = await loginUser(email, password);
-    await _setSession(res);
-  }, [_setSession]);
+    await setSession(res);
+  }, [setSession]);
 
   // Adapta el id_token de Google al flujo email/password del back. Si el
   // usuario no existe (login falla) lo registramos (upsert) y reintentamos.
@@ -68,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const password = googleSyntheticPassword(sub);
     try {
       const res = await loginUser(email, password);
-      await _setSession(res);
+      await setSession(res);
       return;
     } catch {
       // usuario ausente o contraseña distinta -> intentamos registrar
@@ -82,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const res = await loginUser(email, password);
-      await _setSession(res);
+      await setSession(res);
     } catch (loginErr) {
       if (registerErr) {
         throw new Error(
@@ -92,11 +98,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw loginErr;
     }
-  }, [_setSession]);
+  }, [setSession]);
 
   const logout = useCallback(() => {
+    void logoutUser().catch(() => {});
     clearStoredToken();
-    localStorage.clear();
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_token_type");
+    localStorage.removeItem("ia_screen");
+    localStorage.removeItem("ia_cuaderno");
+    localStorage.removeItem("ia_room");
     setToken(null);
     setUser(null);
   }, []);

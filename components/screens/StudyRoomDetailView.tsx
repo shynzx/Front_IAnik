@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam } from "@/types";
+import type { StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam, Summary } from "@/types";
 import StudyRoomScreen from "@/components/study-rooms/StudyRoomScreen";
 import { useStudyRooms } from "@/hooks/useStudyRooms";
-import { getNotebookExams } from "@/lib/api";
 
 interface StudyRoomDetailViewProps {
   roomId: number;
@@ -15,7 +14,7 @@ interface StudyRoomDetailViewProps {
   onBack: () => void;
 }
 
-export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick, onSummariesClick, onStudyRoomsClick, onBack }: StudyRoomDetailViewProps) {
+export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailViewProps) {
   const studyRooms = useStudyRooms();
   const [access, setAccess] = useState<StudyRoomAccess | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
@@ -23,6 +22,7 @@ export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick,
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [flashcards, setFlashcards] = useState<AssessmentFlashcard[]>([]);
   const [exams, setExams] = useState<AssessmentExam[]>([]);
+  const [summaries, setSummaries] = useState<Summary[]>([]);
   const [activeChatId, setActiveChatId] = useState<number | null>(null);
 
   const loadChats = async () => {
@@ -55,15 +55,20 @@ export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick,
           setActiveChatId(firstId);
           await loadMessages(firstId);
         }
-        const [fcs, exs] = await Promise.all([
+        const [fcs, exs, roomSummaries] = await Promise.all([
           studyRooms.listFlashcards(String(roomId)),
-          acc ? getNotebookExams(String(acc.notebook_id)) : studyRooms.listExams(String(roomId)),
+          studyRooms.listExams(String(roomId)),
+          studyRooms.listSummaries(String(roomId)),
         ]);
         setFlashcards(fcs);
         setExams(exs);
+        const names = new Map(f.map((file) => [String(file.id), file.filename]));
+        setSummaries(roomSummaries.map((summary) => summary.fileId ? { ...summary, title: `Resumen de ${names.get(summary.fileId) ?? "archivo"}`, docName: names.get(summary.fileId) ?? summary.docName } : summary));
       } catch (e) { console.warn("Error loading room:", e); }
     };
     load();
+    // The room hook exposes memoized commands; roomId is the lifecycle boundary for this initial orchestration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   return (
@@ -76,6 +81,7 @@ export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick,
           messages={messages}
           flashcards={flashcards}
           exams={exams}
+          summaries={summaries}
           activeChatId={activeChatId}
           onSelectChat={(chatId) => {
             setActiveChatId(chatId);
@@ -98,13 +104,13 @@ export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick,
             const userMsg: ChatMessage = { id: Date.now(), chat_id: Number(chatId), role: "user", content, created_at: new Date().toISOString() };
             setMessages((prev) => [...prev, userMsg]);
             try {
-              await studyRooms.sendMessage(String(roomId), chatId, content);
-            } catch {}
-            try {
-              const msgs = await studyRooms.getChatMessages(String(roomId), chatId);
-              setMessages(msgs);
-            } catch {}
-            return null;
+              const newMessages = await studyRooms.sendMessage(String(roomId), chatId, content);
+              setMessages((current) => [...current.filter((message) => message.id !== userMsg.id), ...newMessages]);
+              return newMessages.find((message) => message.role === "assistant") ?? null;
+            } catch {
+              setMessages((current) => current.filter((message) => message.id !== userMsg.id));
+              throw new Error("No se pudo enviar el mensaje");
+            }
           }}
           onGenerateFlashcards={async (prompt) => {
             const fcs = await studyRooms.generateFlashcards(String(roomId), prompt);
@@ -136,6 +142,7 @@ export default function StudyRoomDetailView({ roomId, onChatClick, onStudyClick,
             }
           }}
         onBack={onBack}
+        onLeave={async () => { await studyRooms.leaveRoom(String(roomId)); onBack(); }}
       />
     </div>
   );

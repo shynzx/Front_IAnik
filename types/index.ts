@@ -55,6 +55,7 @@ export type FlashcardSet = {
 
 export type Summary = {
   id: string;
+  fileId?: string;
   title?: string;
   docName: string;
   createdAt: Date;

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import type { StudyRoom, StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam } from "@/types";
+import { useState, useRef } from "react";
+import type { StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam, Summary } from "@/types";
 import type { Msg } from "@/types";
 import MessageList from "@/components/chat/MessageList";
 import ChatInput from "@/components/chat/ChatInput";
+import SummaryModal from "@/components/summaries/SummaryModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface StudyRoomScreenProps {
   roomId: number;
@@ -14,6 +16,7 @@ interface StudyRoomScreenProps {
   messages: ChatMessage[];
   flashcards: AssessmentFlashcard[];
   exams: AssessmentExam[];
+  summaries: Summary[];
   activeChatId: number | null;
   onSelectChat: (chatId: number | null) => void;
   loading: boolean;
@@ -26,6 +29,7 @@ interface StudyRoomScreenProps {
   onDeleteChat: (chatId: string) => Promise<void>;
   onRefreshChats: () => Promise<void>;
   onBack: () => void;
+  onLeave: () => Promise<void>;
 }
 
 function toMsg(m: ChatMessage): Msg {
@@ -33,12 +37,12 @@ function toMsg(m: ChatMessage): Msg {
 }
 
 export default function StudyRoomScreen({
-  roomId, access, files, chats, messages, flashcards, exams,
+  roomId, access, files, chats, messages, flashcards, exams, summaries,
   activeChatId, onSelectChat,
-  loading, onUploadFile, onDeleteFile, onSendMessage,
-  onGenerateFlashcards, onGenerateExam, onCreateChat, onDeleteChat, onRefreshChats, onBack,
+  onUploadFile, onDeleteFile, onSendMessage,
+  onGenerateFlashcards, onGenerateExam, onCreateChat, onDeleteChat, onRefreshChats, onBack, onLeave,
 }: StudyRoomScreenProps) {
-  const [tab, setTab] = useState<"chat" | "files" | "flashcards" | "exams">("chat");
+  const [tab, setTab] = useState<"chat" | "files" | "summaries" | "flashcards" | "exams">("chat");
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -47,11 +51,14 @@ export default function StudyRoomScreen({
   const [generating, setGenerating] = useState(false);
   const [chatSearch, setChatSearch] = useState("");
   const [chatCreating, setChatCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: "leave" } | { type: "chat"; id: number; name: string } | { type: "file"; id: string; name: string } | null>(null);
+  const [viewingSummary, setViewingSummary] = useState<Summary | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uiMessages: Msg[] = messages.map(toMsg);
 
-  const handleSend = async (_e: React.FormEvent, _attachments?: unknown[]) => {
+  const handleSend = async () => {
     if (!chatInput.trim() || !activeChatId || sending) return;
     setSending(true);
     const content = chatInput.trim();
@@ -76,17 +83,6 @@ export default function StudyRoomScreen({
     }
     setChatCreating(false);
     setChatSearch("");
-  };
-
-  const handleDeleteChat = async (chatId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await onDeleteChat(String(chatId));
-      if (activeChatId === chatId) {
-        onSelectChat(null);
-      }
-      await onRefreshChats();
-    } catch {}
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,33 +114,41 @@ export default function StudyRoomScreen({
 
   return (
     <div className="flex-1 flex flex-col h-full">
+      {viewingSummary && <SummaryModal summary={viewingSummary} onClose={() => setViewingSummary(null)} />}
+      {confirmAction && <ConfirmDialog
+        title={confirmAction.type === "leave" ? "Abandonar sala" : confirmAction.type === "chat" ? "Eliminar chat" : "Eliminar archivo"}
+        description={confirmAction.type === "leave" ? "Perderás el acceso a esta sala y necesitarás el código para volver a entrar." : `Se eliminará “${confirmAction.name}”. Esta acción no se puede deshacer.`}
+        confirmLabel={confirmAction.type === "leave" ? "Abandonar" : "Eliminar"}
+        busyLabel={confirmAction.type === "leave" ? "Saliendo…" : "Eliminando…"}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={async () => { if (confirmAction.type === "leave") await onLeave(); else if (confirmAction.type === "chat") await onDeleteChat(String(confirmAction.id)); else await onDeleteFile(confirmAction.id); }}
+      />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 py-4 border-b border-white/[0.08] shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="px-3 py-1.5 rounded-md border border-white/10 bg-transparent text-white/60 text-xs cursor-pointer hover:text-[#826dd2] hover:bg-[rgba(130,109,210,0.08)] transition-colors">← Volver</button>
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={onBack} className="ui-secondary px-3 min-h-9">← Volver</button>
           <div>
             <h2 className="text-lg font-semibold text-white m-0">{access?.title || `Sala #${roomId}`}</h2>
             <div className="flex gap-2 items-center mt-1">
               <span className={`px-2 py-0.5 rounded text-[0.7rem] font-semibold ${isAdmin ? "bg-[rgba(130,109,210,0.2)] text-[#826dd2]" : "bg-[rgba(100,200,150,0.2)] text-[#64c896]"}`}>
                 {isAdmin ? "Admin" : "Invitado"}
               </span>
-              <span className="font-mono text-xs text-white/40">
-                Código: {access?.codigo}
-              </span>
+              <button onClick={async () => { if (!access?.codigo) return; await navigator.clipboard.writeText(access.codigo); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="font-mono text-xs text-white/45 border-0 bg-transparent cursor-pointer hover:text-white transition-colors">{copied ? "Código copiado" : `Código: ${access?.codigo ?? "—"}`}</button>
             </div>
           </div>
         </div>
+        {!isAdmin && <button onClick={() => setConfirmAction({ type: "leave" })} className="px-4 py-2 rounded-xl border border-red-400/20 bg-red-400/10 text-red-200 text-xs cursor-pointer hover:bg-red-400/15">Abandonar sala</button>}
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 py-3 border-b border-white/[0.08] shrink-0 overflow-x-auto">
-        {(["chat", "files", "flashcards", "exams"] as const).map((t) => (
+        {(["chat", "files", "summaries", "flashcards", "exams"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg border-none text-[0.8rem] font-medium cursor-pointer whitespace-nowrap transition-colors ${tab === t ? "bg-[rgba(130,109,210,0.2)] text-[#826dd2]" : "bg-transparent text-white/50 hover:text-white/70 hover:bg-white/[0.05]"}`}
           >
-            {t === "chat" ? "Chat" : t === "files" ? `Archivos (${files.length})` : t === "flashcards" ? `Flashcards (${flashcards.length})` : `Exámenes (${exams.length})`}
+            {t === "chat" ? "Chat" : t === "files" ? `Archivos (${files.length})` : t === "summaries" ? `Resúmenes (${summaries.length})` : t === "flashcards" ? `Flashcards (${flashcards.length})` : `Exámenes (${exams.length})`}
           </button>
         ))}
       </div>
@@ -153,9 +157,9 @@ export default function StudyRoomScreen({
       <div className="flex-1 overflow-hidden">
         {/* ── Chat tab: split view ── */}
         {tab === "chat" && (
-          <div className="flex h-full">
+          <div className="flex h-full max-md:flex-col">
             {/* Chats list panel */}
-            <div className="w-64 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-0 max-md:border-none">
+            <div className="w-64 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-full max-md:max-h-52 max-md:border-r-0 max-md:border-b">
               <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium text-white/50 uppercase tracking-wider">Chats</span>
@@ -177,7 +181,7 @@ export default function StudyRoomScreen({
               <div className="flex-1 overflow-auto p-2">
                 {filteredChats.length === 0 ? (
                   <div className="text-center py-10 px-4">
-                    <div className="text-3xl mb-3 opacity-30">
+                    <div className="flex items-center justify-center mb-3 opacity-30">
                       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                     </div>
                     <div className="text-white/35 text-xs leading-relaxed">
@@ -201,7 +205,7 @@ export default function StudyRoomScreen({
                             <div className="text-[0.65rem] text-white/25 mt-0.5">{new Date(chat.created_at).toLocaleDateString()}</div>
                           </div>
                         </div>
-                        <button onClick={(e) => handleDeleteChat(chat.id, e)} className="opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5">✕</button>
+                        <button onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "chat", id: chat.id, name: chat.title }); }} className="opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5">✕</button>
                       </div>
                     ))}
                   </div>
@@ -214,7 +218,7 @@ export default function StudyRoomScreen({
               {!activeChatId ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-5xl mb-4 opacity-30">
+                    <div className="flex items-center justify-center mb-4 opacity-30">
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                     </div>
                     <div className="text-white/40 text-sm mb-2">Selecciona un chat o crea uno nuevo</div>
@@ -268,13 +272,24 @@ export default function StudyRoomScreen({
                       <div className="text-xs text-white/40 mt-0.5">{file.file_type.toUpperCase()} · {new Date(file.created_at).toLocaleDateString()}</div>
                     </div>
                     {isAdmin && (
-                      <button onClick={() => onDeleteFile(String(file.id))} className="px-3 py-1.5 rounded-md border border-red-400/30 bg-transparent text-red-400 text-xs cursor-pointer hover:bg-red-400/10 transition-colors">
+                      <button onClick={() => setConfirmAction({ type: "file", id: String(file.id), name: file.filename })} className="px-3 py-1.5 rounded-md border border-red-400/30 bg-transparent text-red-400 text-xs cursor-pointer hover:bg-red-400/10 transition-colors">
                         Eliminar
                       </button>
                     )}
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {tab === "summaries" && (
+          <div className="p-4 overflow-auto h-full">
+            <div className="mb-4"><h3 className="text-base font-semibold text-white m-0">Resúmenes compartidos</h3><p className="text-xs text-white/40 mt-1 mb-0">Todos los participantes pueden consultar los resúmenes del cuaderno.</p></div>
+            {summaries.length === 0 ? (
+              <div className="ui-empty min-h-52"><p className="text-sm text-white/40 m-0">Todavía no hay resúmenes disponibles en esta sala.</p></div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{summaries.map((summary) => <button key={summary.id} onClick={() => setViewingSummary(summary)} className="ui-card ui-card-interactive p-4 text-left cursor-pointer"><span className="block text-sm font-medium text-white">{summary.title}</span><span className="block text-xs text-white/35 mt-1">{summary.docName} · {summary.createdAt.toLocaleDateString("es-MX")}</span><span className="block text-sm text-white/55 mt-3 line-clamp-3">{summary.content}</span></button>)}</div>
             )}
           </div>
         )}

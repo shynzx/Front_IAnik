@@ -13,8 +13,8 @@ import StudyView from "@/components/screens/StudyView";
 import SummariesView from "@/components/screens/SummariesView";
 import StudyRoomsView from "@/components/screens/StudyRoomsView";
 import StudyRoomDetailView from "@/components/screens/StudyRoomDetailView";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useAuthContext } from "@/providers/AuthProvider";
-import type { Doc } from "@/types";
 
 type Screen = "onboard" | "chat" | "cuaderno-detail" | "login" | "register" | "recover" | "study" | "summaries" | "study-rooms" | "study-room";
 
@@ -34,12 +34,12 @@ export default function Home() {
   const { user, login, signup, logout, loginWithGoogle } = useAuthContext();
   const [screen, setScreen] = useState<Screen>("onboard");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [activeCuadernoId, setActiveCuadernoId] = useState<string | null>(null);
-  const [docs] = useState<Doc[]>([]);
 
   useEffect(() => {
-    if (user && AUTH_SCREENS.includes(screen)) setScreen("chat");
+    if (user && AUTH_SCREENS.includes(screen)) queueMicrotask(() => setScreen("chat"));
   }, [user, screen]);
 
   // ── Persistir la sesión de navegación para que sobreviva a recargas ──
@@ -51,9 +51,11 @@ export default function Home() {
     const savedScreen = localStorage.getItem("ia_screen") as Screen | null;
     const savedCuaderno = localStorage.getItem("ia_cuaderno");
     const savedRoom = localStorage.getItem("ia_room");
-    if (savedCuaderno) setActiveCuadernoId(savedCuaderno);
-    if (savedRoom) setActiveRoomId(Number(savedRoom));
-    if (savedScreen && !AUTH_SCREENS.includes(savedScreen)) setScreen(savedScreen);
+    queueMicrotask(() => {
+      if (savedCuaderno) setActiveCuadernoId(savedCuaderno);
+      if (savedRoom) setActiveRoomId(Number(savedRoom));
+      if (savedScreen && !AUTH_SCREENS.includes(savedScreen)) setScreen(savedScreen);
+    });
   }, [user]);
 
   useEffect(() => {
@@ -83,17 +85,18 @@ export default function Home() {
     }
   };
 
-  const handleRegister = async (name: string, email: string, _password: string) => {
+  const handleRegister = async (name: string, email: string, password: string) => {
     try {
-      await signup(name, email, _password);
+      await signup(name, email, password);
       setScreen("chat");
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : "No se pudo registrar el usuario");
     }
   };
 
-  const handleRecover = async (_email?: string) => {};
-  const handleLogout = () => { logout(); setScreen("onboard"); };
+  const handleRecover = async () => {};
+  const handleLogout = () => setLogoutConfirmOpen(true);
+  const confirmLogout = () => { logout(); setProfileOpen(false); setScreen("onboard"); };
 
   const nav = {
     onChatClick: () => setScreen("chat"),
@@ -111,7 +114,7 @@ export default function Home() {
     if (screen === "onboard") return <OnboardingScreen dragActive={false} onFiles={() => setScreen("login")} onDragLeave={() => {}} onGoLogin={() => setScreen("login")} onGoRegister={() => setScreen("register")} />;
 
     if (screen === "study") return <StudyView notebookId={activeCuadernoId ?? ""} {...nav} />;
-    if (screen === "summaries") return <SummariesView docs={docs} {...nav} />;
+    if (screen === "summaries") return <SummariesView notebookId={activeCuadernoId ?? ""} {...nav} />;
     if (screen === "study-rooms") return <StudyRoomsView {...nav} onOpenRoom={(id) => { setActiveRoomId(id); setScreen("study-room"); }} />;
     if (screen === "study-room" && activeRoomId) return <StudyRoomDetailView roomId={activeRoomId} {...nav} onBack={() => setScreen("study-rooms")} />;
     if (screen === "cuaderno-detail" && activeCuadernoId) return <CuadernoDetailView notebookId={activeCuadernoId} onBack={() => setScreen("chat")} {...nav} />;
@@ -139,6 +142,7 @@ export default function Home() {
         {profileOpen && user && (
           <ProfileModal user={user} onClose={() => setProfileOpen(false)} onAccountDeleted={() => { setProfileOpen(false); logout(); }} />
         )}
+        {logoutConfirmOpen && <ConfirmDialog title="Cerrar sesión" description="Tendrás que volver a iniciar sesión para acceder a tus cuadernos y salas de estudio." confirmLabel="Cerrar sesión" busyLabel="Cerrando…" onClose={() => setLogoutConfirmOpen(false)} onConfirm={confirmLogout} />}
       </>
     );
   }

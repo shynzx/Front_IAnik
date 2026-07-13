@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { getClassStats, getUserAuditLogs, getUserStorage } from "@/lib/api";
-import type { AdminClassStats, AdminUserAuditLog, AdminUserStorage } from "@/types";
 
 export function useAdmin() {
   const [loading, setLoading] = useState(false);

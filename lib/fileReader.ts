@@ -11,11 +11,25 @@
 const PDFJS_CDN    = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
 const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
+interface PdfTextItem { str?: string }
+interface PdfDocument {
+  numPages: number;
+  getPage(pageNumber: number): Promise<{ getTextContent(): Promise<{ items: PdfTextItem[] }> }>;
+}
+interface PdfJsLibrary {
+  GlobalWorkerOptions: { workerSrc: string };
+  getDocument(options: { data: ArrayBuffer }): { promise: Promise<PdfDocument> };
+}
+interface ZipArchive {
+  file(path: string): { async(type: "string"): Promise<string> } | null;
+}
+interface JsZipLibrary { loadAsync(data: ArrayBuffer): Promise<ZipArchive> }
+declare global { interface Window { pdfjsLib?: PdfJsLibrary; JSZip?: JsZipLibrary } }
+
 /* ── Ensure PDF.js is loaded and its worker is configured ── */
-async function ensurePdfJs(): Promise<any> {
+async function ensurePdfJs(): Promise<PdfJsLibrary> {
   // Already loaded?
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let pdfjsLib = (window as any).pdfjsLib;
+  let pdfjsLib = window.pdfjsLib;
 
   if (!pdfjsLib) {
     // Dynamically inject the script and wait for it
@@ -26,8 +40,7 @@ async function ensurePdfJs(): Promise<any> {
         existing.addEventListener("load", () => resolve());
         existing.addEventListener("error", () => reject(new Error("PDF.js load failed")));
         // If it already fired, pdfjsLib might be available right now
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((window as any).pdfjsLib) resolve();
+        if (window.pdfjsLib) resolve();
         return;
       }
       const script = document.createElement("script");
@@ -36,8 +49,7 @@ async function ensurePdfJs(): Promise<any> {
       script.onerror = () => reject(new Error("PDF.js load failed"));
       document.head.appendChild(script);
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pdfjsLib = (window as any).pdfjsLib;
+    pdfjsLib = window.pdfjsLib;
   }
 
   // Configure worker (safe to set multiple times)
@@ -45,6 +57,7 @@ async function ensurePdfJs(): Promise<any> {
     pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
   }
 
+  if (!pdfjsLib) throw new Error("PDF.js no está disponible");
   return pdfjsLib;
 }
 
@@ -65,8 +78,7 @@ async function extractPdfText(file: File): Promise<string> {
     for (let i = 1; i <= Math.min(pdf.numPages, 50); i++) {
       const page    = await pdf.getPage(i);
       const content = await page.getTextContent();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pageText = content.items.map((item: any) => item.str).join(" ");
+      const pageText = content.items.map((item) => item.str ?? "").join(" ");
       if (pageText.trim()) pages.push(pageText.trim());
     }
 
@@ -82,8 +94,7 @@ async function extractDocxText(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const JSZip = (window as any).JSZip;
+    const JSZip = window.JSZip;
     if (JSZip) {
       const zip = await JSZip.loadAsync(arrayBuffer);
       const xml = await zip.file("word/document.xml")?.async("string");

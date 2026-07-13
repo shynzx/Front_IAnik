@@ -5,15 +5,12 @@ import { Doc, Summary } from "@/types";
 import SummaryCard from "./SummaryCard";
 import SummaryModal from "./SummaryModal";
 import GenerateSummaryModal from "./GenerateSummaryModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface SummaryScreenProps {
   docs: Doc[];
   summaries: Summary[];
-  onGenerateSummary: (
-    selectedDocs: Doc[],
-    title: string,
-    prompt: string
-  ) => Promise<string | null>;
+  onGenerateSummary: (fileId?: string) => Promise<void>;
   onDeleteSummary: (id: string) => void;
 }
 
@@ -25,6 +22,7 @@ export default function SummaryScreen({
 }: SummaryScreenProps) {
   const [viewingSummary, setViewingSummary] = useState<Summary | null>(null);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Summary | null>(null);
 
   const handleCopy = (summary: Summary) => {
     const text = `${summary.title || "Resumen"}\nDocumentos: ${summary.docName}\n\n${summary.content}\n\nConceptos clave:\n${(summary.keyPoints || []).map((k) => `• ${k}`).join("\n")}`;
@@ -39,6 +37,7 @@ export default function SummaryScreen({
       {isGenerateOpen && (
         <GenerateSummaryModal docs={docs} onGenerate={onGenerateSummary} onClose={() => setIsGenerateOpen(false)} />
       )}
+      {deleteTarget && <ConfirmDialog title="Eliminar resumen" description={`Se eliminará “${deleteTarget.title || "Resumen"}”. Esta acción no se puede deshacer.`} onClose={() => setDeleteTarget(null)} onConfirm={() => onDeleteSummary(deleteTarget.id)} />}
       
       <div className="w-full mx-auto flex flex-col gap-5 box-border">
         
@@ -62,13 +61,13 @@ export default function SummaryScreen({
           <div className="ui-empty text-white/40">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 001 1h4" /><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="13" y2="17" /></svg>
             <p className="text-sm text-white/50 text-center m-0 mt-3">
-              Aún no tienes resúmenes. ¡Haz clic en "Generar resúmenes" para empezar!
+              Aún no tienes resúmenes. ¡Usa el botón Generar resúmenes para empezar!
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-3 box-border">
             {summaries.map((s) => (
-              <SummaryCard key={s.id} summary={s} onView={() => !s.loading && setViewingSummary(s)} onDelete={() => onDeleteSummary(s.id)} onCopy={() => handleCopy(s)} />
+              <SummaryCard key={s.id} summary={s} onView={() => !s.loading && setViewingSummary(s)} onDelete={() => setDeleteTarget(s)} onCopy={() => handleCopy(s)} />
             ))}
           </div>
         )}

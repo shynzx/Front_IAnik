@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { healthCheck, getHealthProcesses, getHealthMetadata } from "@/lib/api";
-import type { HealthStatus, HealthProcess, HealthMetadata } from "@/types";
 
 export function useHealth() {
   const [loading, setLoading] = useState(false);

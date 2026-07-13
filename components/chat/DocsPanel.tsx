@@ -123,7 +123,7 @@ export default function DocsPanel({
               {/* Minimize */}
               <button
                 onClick={() => onFullscreen(false)}
-                className="text-[rgba(255,255,255,0.5)] bg-transparent border-none cursor-pointer p-2 rounded-lg leading-none"
+                className="text-[rgba(255,255,255,0.5)] bg-transparent border-none cursor-pointer p-2 rounded-lg leading-none flex items-center justify-center"
                 title="Minimizar"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -137,7 +137,7 @@ export default function DocsPanel({
               {/* Close */}
               <button
                 onClick={onClose}
-                className="text-[rgba(255,255,255,0.5)] bg-transparent border-none cursor-pointer p-2 rounded-lg leading-none"
+                className="text-[rgba(255,255,255,0.5)] bg-transparent border-none cursor-pointer p-2 rounded-lg leading-none flex items-center justify-center"
                 title="Cerrar"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -153,7 +153,7 @@ export default function DocsPanel({
             <div
               className="flex flex-col items-center justify-center flex-1 gap-3 opacity-50"
             >
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -221,7 +221,7 @@ export default function DocsPanel({
             {/* Expand */}
             <button
               onClick={() => onFullscreen(true)}
-              className="text-[rgba(255,255,255,0.4)] bg-transparent border-none cursor-pointer p-1.5 rounded-lg leading-none"
+              className="text-[rgba(255,255,255,0.4)] bg-transparent border-none cursor-pointer p-1.5 rounded-lg leading-none flex items-center justify-center"
               title="Pantalla completa"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -283,7 +283,7 @@ export default function DocsPanel({
             <div
               className="flex flex-col items-center justify-center py-8 gap-2 opacity-40"
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -302,7 +302,7 @@ export default function DocsPanel({
                   <div className="flex items-center gap-2.5 mb-2">
                     {/* Icono animado */}
                     <div className="w-9 h-9 rounded-full bg-[rgba(130,109,210,0.2)] border border-[rgba(130,109,210,0.35)] flex items-center justify-center shrink-0 animate-[progressGlow_1.6s_ease-in-out_infinite]">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 3v4a1 1 0 001 1h4" />
                         <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
                       </svg>
@@ -346,7 +346,7 @@ export default function DocsPanel({
                 <button
                   onClick={(e) => handleDelete(doc, e)}
                   disabled={deletingId === doc.id}
-                  className={`text-[rgba(255,255,255,0.35)] bg-transparent border-none ${deletingId === doc.id ? 'cursor-not-allowed' : 'cursor-pointer'} p-1.5 rounded-lg leading-none shrink-0`}
+                  className={`text-[rgba(255,255,255,0.35)] bg-transparent border-none ${deletingId === doc.id ? 'cursor-not-allowed' : 'cursor-pointer'} p-1.5 rounded-lg leading-none shrink-0 flex items-center justify-center`}
                   title="Eliminar"
                 >
                   {deletingId === doc.id ? (
