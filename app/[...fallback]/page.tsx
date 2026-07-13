@@ -1,4 +1,6 @@
-// La aplicacion funciona como una unica experiencia cliente. Si el usuario
-// escribe o recarga una ruta que no existe, renderizamos el mismo punto de
-// entrada para restaurar su ultima pantalla guardada sin mostrar un 404.
-export { default } from "../page";
+import { redirect } from "next/navigation";
+
+// Limpia cualquier ruta inexistente y devuelve al usuario al punto de entrada.
+export default function FallbackPage() {
+  redirect("/");
+}

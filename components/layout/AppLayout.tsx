@@ -1,8 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
 
 type Phase = "onboard" | "chat" | "study" | "summaries" | "study-rooms" | "study-room";
 
@@ -33,9 +32,10 @@ export default function AppLayout({
   onStudyRoomsClick,
   children,
 }: AppLayoutProps) {
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
   return (
     <div className="app-background h-screen w-screen overflow-hidden relative">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.025] bg-[linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] bg-[size:56px_56px]" />
       <Sidebar
         phase={phase}
         hasMessages={hasMessages}
@@ -43,9 +43,13 @@ export default function AppLayout({
         onStudyClick={onStudyClick}
         onSummariesClick={onSummariesClick}
         onStudyRoomsClick={onStudyRoomsClick}
+        expanded={sidebarExpanded}
+        onToggle={() => setSidebarExpanded((value) => !value)}
+        userName={headerProps.userName}
+        onProfileClick={headerProps.onProfileClick}
+        onLogout={headerProps.onLogout}
       />
-      <Header {...headerProps} />
-      <main className="absolute inset-0 ml-[76px] pt-[84px] max-md:ml-0 max-md:pb-20 overflow-y-auto overflow-x-hidden">
+      <main className={`absolute inset-0 ${sidebarExpanded ? "ml-[200px]" : "ml-16"} pt-6 max-md:ml-0 max-md:pt-4 max-md:pb-20 overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-out`}>
         {children}
       </main>
     </div>
