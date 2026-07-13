@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import type { ExamSet, ExamCard } from "@/types";
 import ExamModal from "@/components/study/ExamModal";
