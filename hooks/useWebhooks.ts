@@ -1,12 +1,11 @@
 import { useState, useCallback } from "react";
 import { createWebhookSubscription, listWebhookSubscriptions, getWebhookAttempts, retryWebhookAttempt } from "@/lib/api";
-import type { WebhookSubscription, WebhookAttempt } from "@/types";
 
 export function useWebhooks() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const create = useCallback(async (data: { org_id: string; url: string; events: string[]; secret?: string }) => {
+  const create = useCallback(async (data: { org_id: number; url: string }) => {
     setLoading(true);
     setError(null);
     try {

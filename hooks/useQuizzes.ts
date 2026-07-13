@@ -3,17 +3,16 @@ import {
   generateExam, getExam, getNotebookExams, getRoomExams,
   submitExam, listAttempts, getAttempt, getExamAttempts,
 } from "@/lib/api";
-import type { AssessmentExam, ExamSubmitResponse, ExamAttempt } from "@/types";
 
 export function useQuizzes() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = useCallback(async (notebookId: string) => {
+  const generate = useCallback(async (notebookId: string, prompt: string) => {
     setLoading(true);
     setError(null);
     try {
-      return await generateExam(notebookId);
+      return await generateExam(notebookId, prompt);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al generar examen";
       setError(msg);
@@ -65,7 +64,7 @@ export function useQuizzes() {
     }
   }, []);
 
-  const submit = useCallback(async (examId: string, answers: { question_id: number; selected_option: number }[]) => {
+  const submit = useCallback(async (examId: string, answers: { pregunta_id: number; opcion: string }[]) => {
     setLoading(true);
     setError(null);
     try {

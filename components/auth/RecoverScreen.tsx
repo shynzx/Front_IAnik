@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, FormEvent } from "react";
-import { BG, pp } from "../../types";
-import Sidebar from "../layout/Sidebar";
+import Sidebar from "@/components/layout/Sidebar";
 
 
 interface RecoverScreenProps {
@@ -29,7 +28,7 @@ export default function RecoverScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* ── Step 1: Send email ─────────────────────────────── */
+  /* -- Step 1: Send email -- */
   const handleSendEmail = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || loading) return;
@@ -39,13 +38,13 @@ export default function RecoverScreen({
       await onRecover(email);
       setStep("code");
     } catch {
-      setError("No encontramos esa dirección. Verifica e intenta de nuevo.");
+      setError("No encontramos esa direccion. Verifica e intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ── Step 2: Verify code ────────────────────────────── */
+  /* -- Step 2: Verify code -- */
   const handleVerifyCode = async (e: FormEvent) => {
     e.preventDefault();
     const full = code.join("");
@@ -56,7 +55,7 @@ export default function RecoverScreen({
       await onVerifyCode(full);
       setStep("newpass");
     } catch {
-      setError("Código incorrecto o expirado. Inténtalo de nuevo.");
+      setError("Codigo incorrecto o expirado. Intentelo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -90,343 +89,160 @@ export default function RecoverScreen({
     (document.getElementById(`code-${lastFilled}`) as HTMLInputElement)?.focus();
   };
 
-  /* ── Step 3: New password ───────────────────────────── */
+  /* -- Step 3: New password -- */
   const handleNewPassword = async (e: FormEvent) => {
     e.preventDefault();
-    if (newPass.length < 6 || newPass !== confirmPass || loading) return;
+    if (newPass.length < 8 || newPass !== confirmPass || loading) return;
     setError("");
     setLoading(true);
     try {
       await onNewPassword(newPass);
       setStep("done");
     } catch {
-      setError("No se pudo actualizar la contraseña. Intenta de nuevo.");
+      setError("No se pudo actualizar la contrasena. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ── Shared styles ──────────────────────────────────── */
-  const inputStyle = {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 11,
-    padding: "11px 14px 11px 40px",
-    color: "#fff",
-    outline: "none",
-    ...pp,
-    fontSize: 14,
-    transition: "border-color .15s, background .15s",
-    caretColor: "#826dd2",
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: BG,
-        display: "flex",
-        position: "relative",
-        fontFamily: "var(--font-poppins), sans-serif",
-      }}
-    >
-      <style>{`
-        @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        @keyframes scaleIn { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
-        .auth-input:focus { border-color:rgba(130,109,210,0.6)!important; background:rgba(130,109,210,0.07)!important; }
-        .auth-btn-primary:hover:not(:disabled) { background:#9b85e0!important; }
-        .auth-btn-primary:disabled { opacity:.45; cursor:not-allowed; }
-        .code-box:focus { border-color:rgba(130,109,210,0.7)!important; background:rgba(130,109,210,0.1)!important; outline:none; }
-      `}</style>
+    <div className="app-background min-h-screen flex relative">
 
       <Sidebar
         phase="onboard"
-        docsOpen={false}
-        docsFullscreen={false}
         hasMessages={false}
         onChatClick={() => {}}
-        onDocsClick={() => {}}
+        onStudyClick={() => {}}
+        onSummariesClick={() => {}}
+        onStudyRoomsClick={() => {}}
       />
 
-      <main
-        style={{
-          flex: 1,
-          marginLeft: 64,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "72px 48px 48px",
-          minHeight: "100vh",
-        }}
-      >
-        {/* ── Back button ── */}
+      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen max-md:pb-24">
         {step !== "done" && (
           <button
             onClick={step === "email" ? onGoLogin : () => { setStep("email"); setError(""); }}
-            style={{
-              position: "absolute",
-              top: 28,
-              left: 84,
-              ...pp,
-              fontSize: 13,
-              color: "rgba(255,255,255,0.35)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "color .15s",
-            }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#826dd2")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.35)")}
+            className="absolute top-7 left-[5.25rem] text-[0.8125rem] text-[rgba(255,255,255,0.35)] bg-none border-none cursor-pointer flex items-center gap-1.5 hover:text-[#826dd2]"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
-            {step === "email" ? "Iniciar sesión" : "Volver"}
+            {step === "email" ? "Iniciar sesion" : "Volver"}
           </button>
         )}
 
-        {/* Progress dots */}
         {step !== "done" && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
-            {(["email", "code", "newpass"] as Step[]).map((s, i) => {
+          <div className="flex gap-2 mb-7">
+            {(["email", "code", "newpass"] as Step[]).map((s) => {
               const steps: Step[] = ["email", "code", "newpass"];
               const current = steps.indexOf(step);
               const isActive = steps.indexOf(s) <= current;
               return (
                 <div
                   key={s}
-                  style={{
-                    width: isActive ? 24 : 8,
-                    height: 8,
-                    borderRadius: 99,
-                    background: isActive ? "#826dd2" : "rgba(255,255,255,0.12)",
-                    transition: "all .3s ease",
-                  }}
+                  className={`h-2 rounded-full transition-all duration-300 ${isActive ? "w-6 bg-[#826dd2]" : "w-2 bg-[rgba(255,255,255,0.12)]"}`}
                 />
               );
             })}
           </div>
         )}
 
-        {/* Card */}
         <div
           key={step}
-          style={{
-            width: "100%",
-            maxWidth: 440,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 24,
-            padding: "44px 40px 40px",
-            backdropFilter: "blur(20px)",
-            animation: "fadeUp .35s ease both",
-          }}
+          className="glass-panel w-full max-w-[28rem] rounded-[28px] px-6 sm:px-10 pt-9 sm:pt-11 pb-9 animate-[fadeUp_.35s_ease_both]"
         >
-          {/* ── STEP 1: Email ── */}
           {step === "email" && (
             <>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: "rgba(130,109,210,0.15)",
-                  border: "1px solid rgba(130,109,210,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 20,
-                }}
-              >
+              <div className="w-[52px] h-[52px] rounded-[14px] bg-[rgba(130,109,210,0.15)] border border-[rgba(130,109,210,0.3)] flex items-center justify-center mb-5">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
               </div>
-              <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 8px" }}>
-                Recuperar contraseña
-              </h1>
-              <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.38)", margin: "0 0 28px", lineHeight: "22px" }}>
-                Ingresa tu correo y te enviaremos un código de verificación.
+              <h1 className="font-semibold text-[22px] text-white m-0 mb-2">Recuperar contrasena</h1>
+              <p className="text-sm text-[rgba(255,255,255,0.38)] m-0 mb-7 leading-[22px]">
+                Ingresa tu correo y te enviaremos un codigo de verificacion.
               </p>
-
               {error && <ErrorBanner message={error} />}
-
               <form onSubmit={handleSendEmail}>
-                <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                  Correo electrónico
-                </label>
-                <div style={{ position: "relative", marginBottom: 24 }}>
-                  <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
+                <label className="text-xs text-[rgba(255,255,255,0.45)] block mb-[7px] tracking-[0.5px] uppercase">Correo electronico</label>
+                <div className="relative mb-6">
+                  <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-[rgba(255,255,255,0.25)] pointer-events-none flex">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                       <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
                   <input
-                    className="auth-input"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@correo.com"
-                    autoComplete="email"
-                    style={inputStyle}
+                    type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@correo.com" autoComplete="email"
+                    className="w-full box-border bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-[11px] px-[14px] py-[11px] pl-10 text-white text-sm outline-none caret-[#826dd2] focus:border-[rgba(130,109,210,0.6)] focus:bg-[rgba(130,109,210,0.07)]"
                   />
                 </div>
-
-                <PrimaryButton loading={loading} disabled={!email.trim() || loading}>
-                  Enviar código
-                </PrimaryButton>
+                <PrimaryButton loading={loading} disabled={!email.trim() || loading}>Enviar codigo</PrimaryButton>
               </form>
             </>
           )}
 
-          {/* ── STEP 2: Code ── */}
           {step === "code" && (
             <>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: "rgba(130,109,210,0.15)",
-                  border: "1px solid rgba(130,109,210,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 20,
-                }}
-              >
+              <div className="w-[52px] h-[52px] rounded-[14px] bg-[rgba(130,109,210,0.15)] border border-[rgba(130,109,210,0.3)] flex items-center justify-center mb-5">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 11 12 14 22 4"/>
                   <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                 </svg>
               </div>
-              <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 8px" }}>
-                Revisa tu correo
-              </h1>
-              <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.38)", margin: "0 0 28px", lineHeight: "22px" }}>
-                Enviamos un código de 6 dígitos a{" "}
-                <span style={{ color: "rgba(255,255,255,0.7)" }}>{email}</span>
+              <h1 className="font-semibold text-[22px] text-white m-0 mb-2">Revisa tu correo</h1>
+              <p className="text-sm text-[rgba(255,255,255,0.38)] m-0 mb-7 leading-[22px]">
+                Enviamos un codigo de 6 digitos a <span className="text-[rgba(255,255,255,0.7)]">{email}</span>
               </p>
-
               {error && <ErrorBanner message={error} />}
-
               <form onSubmit={handleVerifyCode}>
-                {/* Code boxes */}
-                <div
-                  style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 28 }}
-                  onPaste={handleCodePaste}
-                >
+                <div className="flex gap-2.5 justify-center mb-7" onPaste={handleCodePaste}>
                   {code.map((digit, i) => (
                     <input
-                      key={i}
-                      id={`code-${i}`}
-                      className="code-box"
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleCodeInput(i, e.target.value)}
+                      key={i} id={`code-${i}`} type="text" inputMode="numeric" maxLength={1}
+                      value={digit} onChange={(e) => handleCodeInput(i, e.target.value)}
                       onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                      style={{
-                        width: 46,
-                        height: 54,
-                        textAlign: "center",
-                        background: "rgba(255,255,255,0.05)",
-                        border: `1px solid ${digit ? "rgba(130,109,210,0.5)" : "rgba(255,255,255,0.12)"}`,
-                        borderRadius: 12,
-                        color: "#fff",
-                        fontSize: 22,
-                        fontFamily: "var(--font-poppins), sans-serif",
-                        fontWeight: 400,
-                        caretColor: "#826dd2",
-                        transition: "border-color .15s, background .15s",
-                      }}
+                      className={`w-[2.875rem] h-[3.375rem] text-center bg-[rgba(255,255,255,0.05)] rounded-xl text-white text-[1.375rem] caret-[#826dd2] focus:border-[rgba(130,109,210,0.7)] focus:bg-[rgba(130,109,210,0.1)] focus:outline-none border border-solid ${digit ? "border-[rgba(130,109,210,0.5)]" : "border-[rgba(255,255,255,0.12)]"}`}
                     />
                   ))}
                 </div>
-
-                <PrimaryButton loading={loading} disabled={code.join("").length < 6 || loading}>
-                  Verificar código
-                </PrimaryButton>
-
-                <div style={{ textAlign: "center", marginTop: 20 }}>
-                  <button
-                    type="button"
-                    onClick={() => { setError(""); onRecover(email); }}
-                    style={{ ...pp, fontSize: 13, color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer", transition: "color .15s" }}
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#826dd2")}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.35)")}
-                  >
-                    ¿No lo recibiste? Reenviar código
-                  </button>
+                <PrimaryButton loading={loading} disabled={code.join("").length < 6 || loading}>Verificar codigo</PrimaryButton>
+                <div className="text-center mt-5">
+                  <button type="button" onClick={() => { setError(""); onRecover(email); }}
+                    className="text-[13px] text-[rgba(255,255,255,0.35)] bg-none border-none cursor-pointer hover:text-[#826dd2]"
+                  >No lo recibiste? Reenviar codigo</button>
                 </div>
               </form>
             </>
           )}
 
-          {/* ── STEP 3: New password ── */}
           {step === "newpass" && (
             <>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: "rgba(130,109,210,0.15)",
-                  border: "1px solid rgba(130,109,210,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 20,
-                }}
-              >
+              <div className="w-[52px] h-[52px] rounded-[14px] bg-[rgba(130,109,210,0.15)] border border-[rgba(130,109,210,0.3)] flex items-center justify-center mb-5">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
               </div>
-              <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 8px" }}>
-                Nueva contraseña
-              </h1>
-              <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.38)", margin: "0 0 28px", lineHeight: "22px" }}>
-                Elige una contraseña segura para tu cuenta.
-              </p>
-
+              <h1 className="font-semibold text-[22px] text-white m-0 mb-2">Nueva contrasena</h1>
+              <p className="text-sm text-[rgba(255,255,255,0.38)] m-0 mb-7 leading-[22px]">Elige una contrasena segura para tu cuenta.</p>
               {error && <ErrorBanner message={error} />}
-
               <form onSubmit={handleNewPassword}>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                    Nueva contraseña
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
+                <div className="mb-4">
+                  <label className="text-xs text-[rgba(255,255,255,0.45)] block mb-[7px] tracking-[0.5px] uppercase">Nueva contrasena</label>
+                  <div className="relative">
+                    <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-[rgba(255,255,255,0.25)] pointer-events-none flex">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0110 0v4"/>
                       </svg>
                     </span>
-                    <input
-                      className="auth-input"
-                      type={showPass ? "text" : "password"}
-                      value={newPass}
-                      onChange={(e) => setNewPass(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
-                      autoComplete="new-password"
-                      style={{ ...inputStyle, paddingRight: 44 }}
+                    <input type={showPass ? "text" : "password"} value={newPass} onChange={(e) => setNewPass(e.target.value)}
+                      placeholder="Minimo 8 caracteres" autoComplete="new-password"
+                      className="w-full box-border bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-[11px] px-[14px] py-[11px] pl-10 pr-[2.75rem] text-white text-sm outline-none caret-[#826dd2] focus:border-[rgba(130,109,210,0.6)] focus:bg-[rgba(130,109,210,0.07)]"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass(!showPass)}
-                      style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 2, display: "flex" }}
+                    <button type="button" onClick={() => setShowPass(!showPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-[rgba(255,255,255,0.3)] p-0.5 flex"
                     >
                       {showPass ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -443,91 +259,45 @@ export default function RecoverScreen({
                     </button>
                   </div>
                 </div>
-
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                    Confirmar contraseña
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
+                <div className="mb-6">
+                  <label className="text-xs text-[rgba(255,255,255,0.45)] block mb-[7px] tracking-[0.5px] uppercase">Confirmar contrasena</label>
+                  <div className="relative">
+                    <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-[rgba(255,255,255,0.25)] pointer-events-none flex">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0110 0v4"/>
                       </svg>
                     </span>
-                    <input
-                      className="auth-input"
-                      type="password"
-                      value={confirmPass}
-                      onChange={(e) => setConfirmPass(e.target.value)}
-                      placeholder="Repite tu contraseña"
-                      autoComplete="new-password"
-                      style={{
-                        ...inputStyle,
-                        borderColor: confirmPass.length > 0 && confirmPass !== newPass
-                          ? "rgba(229,57,53,0.5)"
-                          : "rgba(255,255,255,0.1)",
-                      }}
+                    <input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
+                      placeholder="Repite tu contrasena" autoComplete="new-password"
+                      className={`w-full box-border bg-[rgba(255,255,255,0.05)] rounded-[0.6875rem] px-[0.875rem] py-[0.6875rem] pl-10 text-white text-sm outline-none caret-[#826dd2] focus:border-[rgba(130,109,210,0.6)] focus:bg-[rgba(130,109,210,0.07)] border border-solid ${confirmPass.length > 0 && confirmPass !== newPass ? "border-[rgba(229,57,53,0.5)]" : "border-[rgba(255,255,255,0.1)"}`}
                     />
                   </div>
                   {confirmPass.length > 0 && confirmPass !== newPass && (
-                    <p style={{ ...pp, fontSize: 11, color: "#ef9a9a", margin: "5px 0 0" }}>
-                      Las contraseñas no coinciden
-                    </p>
+                    <p className="text-[0.6875rem] text-[#ef9a9a] mt-[0.3125rem] mb-0">Las contrasenas no coinciden</p>
                   )}
                 </div>
-
-                <PrimaryButton loading={loading} disabled={newPass.length < 6 || newPass !== confirmPass || loading}>
-                  Guardar contraseña
-                </PrimaryButton>
+                <PrimaryButton loading={loading} disabled={newPass.length < 8 || newPass !== confirmPass || loading}>Guardar contrasena</PrimaryButton>
               </form>
             </>
           )}
 
-          {/* ── STEP 4: Done ── */}
           {step === "done" && (
-            <div style={{ textAlign: "center", animation: "scaleIn .35s ease both" }}>
-              <div
-                style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: "50%",
-                  background: "rgba(38,198,218,0.12)",
-                  border: "1px solid rgba(38,198,218,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 24px",
-                }}
-              >
+            <div className="text-center animate-[scaleIn_.35s_ease_both]">
+              <div className="w-[4.25rem] h-[4.25rem] rounded-full bg-[rgba(38,198,218,0.12)] border border-[rgba(38,198,218,0.3)] flex items-center justify-center mx-auto mb-6">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#26c6da" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
-              <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 10px" }}>
-                ¡Listo!
-              </h1>
-              <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.45)", margin: "0 0 32px", lineHeight: "22px" }}>
-                Tu contraseña fue actualizada correctamente. Ya puedes iniciar sesión.
+              <h1 className="font-semibold text-[22px] text-white m-0 mb-2.5">Listo!</h1>
+              <p className="text-sm text-[rgba(255,255,255,0.45)] m-0 mb-8 leading-[22px]">
+                Tu contrasena fue actualizada correctamente. Ya puedes iniciar sesion.
               </p>
               <button
                 onClick={onGoLogin}
-                className="auth-btn-primary"
-                style={{
-                  ...pp,
-                  fontWeight: 400,
-                  width: "100%",
-                  padding: "12px 0",
-                  borderRadius: 12,
-                  background: "#826dd2",
-                  color: "#fff",
-                  border: "none",
-                  fontSize: 15,
-                  cursor: "pointer",
-                  transition: "background .15s",
-                }}
+                className="w-full py-3 rounded-xl bg-[#826dd2] text-white border-none text-[15px] cursor-pointer font-[400] enabled:hover:bg-[#9b85e0]"
               >
-                Ir a iniciar sesión
+                Ir a iniciar sesion
               </button>
             </div>
           )}
@@ -537,69 +307,27 @@ export default function RecoverScreen({
   );
 }
 
-/* ── Shared mini-components ─────────────────────────────── */
-
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div
-      style={{
-        background: "rgba(229,57,53,0.12)",
-        border: "1px solid rgba(229,57,53,0.3)",
-        borderRadius: 10,
-        padding: "10px 14px",
-        marginBottom: 20,
-        fontFamily: "var(--font-poppins), sans-serif",
-        fontWeight: 300,
-        fontSize: 13,
-        color: "#ef9a9a",
-      }}
-    >
+    <div className="bg-[rgba(229,57,53,0.12)] border border-[rgba(229,57,53,0.3)] rounded-[0.625rem] px-[0.875rem] py-2.5 mb-5 text-[0.8125rem] text-[#ef9a9a]">
       {message}
     </div>
   );
 }
 
-function PrimaryButton({
-  loading,
-  disabled,
-  children,
-}: {
-  loading: boolean;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  const pp = { fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 };
+function PrimaryButton({ loading, disabled, children }: { loading: boolean; disabled: boolean; children: React.ReactNode }) {
   return (
     <button
       type="submit"
       disabled={disabled}
-      className="auth-btn-primary"
-      style={{
-        ...pp,
-        fontWeight: 400,
-        width: "100%",
-        padding: "12px 0",
-        borderRadius: 12,
-        background: "#826dd2",
-        color: "#fff",
-        border: "none",
-        fontSize: 15,
-        cursor: "pointer",
-        transition: "background .15s, opacity .15s",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-      }}
+      className="w-full py-3 rounded-xl bg-[#826dd2] text-white border-none text-[15px] cursor-pointer flex items-center justify-center gap-2 font-[400] enabled:hover:bg-[#9b85e0] disabled:opacity-45 disabled:cursor-not-allowed"
     >
       {loading ? (
         <>
-          <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} />
+          <span className="w-4 h-4 border-2 border-[rgba(255,255,255,0.3)] border-t-white rounded-full inline-block animate-[spin_.7s_linear_infinite]" />
           Cargando...
         </>
-      ) : (
-        children
-      )}
+      ) : children}
     </button>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Doc } from "../../../types";
-import DocIcon from "../DocIcon";
-import { formatFileSize } from "../../../lib/fileReader";
+import { Doc } from "@/types";
+import DocIcon from "@/components/chat/DocIcon";
+import { formatFileSize } from "@/lib/fileReader";
 import { highlightMatch } from "./highlightMatch";
 
 export default function DocCard({
@@ -104,6 +104,9 @@ export default function DocCard({
               cursor: deleting ? "not-allowed" : "pointer",
               padding: 2,
               lineHeight: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             title="Eliminar"
           >

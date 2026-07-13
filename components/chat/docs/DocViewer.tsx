@@ -1,6 +1,8 @@
-import { Doc, pp } from "../../../types";
-import DocIcon from "../DocIcon";
-import { formatFileSize } from "../../../lib/fileReader";
+import { pp } from "@/lib/constants";
+import type { Doc } from "@/types";
+import DocIcon from "@/components/chat/DocIcon";
+import { formatFileSize } from "@/lib/fileReader";
+import CloseButton from "@/components/ui/CloseButton";
 
 export default function DocViewer({
   doc,
@@ -12,7 +14,7 @@ export default function DocViewer({
   const hasContent = doc.content && doc.content.trim().length > 0;
 
   return (
-    <div
+    <div className="immersive-modal"
       style={{
         position: "fixed",
         inset: 0,
@@ -26,7 +28,7 @@ export default function DocViewer({
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
+      <div className="immersive-panel" role="dialog" aria-modal="true"
         style={{
           width: "100%",
           maxWidth: 760,
@@ -85,25 +87,7 @@ export default function DocViewer({
               </p>
             )}
           </div>
-          <button
-            aria-label="Cerrar"
-            onClick={onClose}
-            style={{
-              color: "rgba(255,255,255,0.45)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: 8,
-              borderRadius: 8,
-              flexShrink: 0,
-              lineHeight: 0,
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div
@@ -140,7 +124,7 @@ export default function DocViewer({
                 opacity: 0.45,
               }}
             >
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 3v4a1 1 0 001 1h4" />
                 <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
                 <line x1="9" y1="13" x2="15" y2="13" />

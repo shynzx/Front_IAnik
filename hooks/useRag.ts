@@ -1,19 +1,32 @@
-import { useState, useCallback } from "react";
-import { uploadNotebookFile, listNotebookFiles, deleteNotebookFile, sendChatMessage, getChatMessages } from "@/lib/api";
+import { useState, useCallback, useRef } from "react";
+import { uploadNotebookFile, listNotebookFiles, deleteNotebookFile, sendChatMessage, getChatMessages, createNotebookChat } from "@/lib/api";
 import type { RAGFileResponse } from "@/lib/api";
 
 export function useRag(notebookId?: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<RAGFileResponse[]>([]);
+  const chatIdRef = useRef<string | null>(null);
+  const notebookIdRef = useRef(notebookId);
+  notebookIdRef.current = notebookId;
 
-  const uploadFile = useCallback(async (file: File) => {
-    if (!notebookId) throw new Error("Se requiere un notebook_id");
+  const ensureChat = useCallback(async (): Promise<string> => {
+    if (chatIdRef.current) return chatIdRef.current;
+    const nbId = notebookIdRef.current;
+    if (!nbId) throw new Error("Se requiere un notebook_id para crear chat");
+    const res = await createNotebookChat(nbId, "Chat");
+    chatIdRef.current = String(res.id);
+    return chatIdRef.current;
+  }, []);
+
+  const uploadFile = useCallback(async (file: File, nbIdOverride?: string) => {
+    const nbId = nbIdOverride || notebookIdRef.current;
+    if (!nbId) throw new Error("Se requiere un notebook_id");
     setLoading(true);
     setError(null);
     try {
-      const res = await uploadNotebookFile(notebookId, file);
-      const mapped: RAGFileResponse = { id: res.id, filename: res.filename, name: res.filename, size: res.size, uploaded_at: res.uploaded_at, content: res.content };
+      const res = await uploadNotebookFile(nbId, file);
+      const mapped: RAGFileResponse = { id: res.id, filename: res.filename, name: res.filename, uploaded_at: new Date().toISOString() };
       setFiles((prev) => [...prev, mapped]);
       return mapped;
     } catch (e) {
@@ -23,15 +36,15 @@ export function useRag(notebookId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [notebookId]);
+  }, []);
 
   const ask = useCallback(async (question: string, _filenames?: string[], chatId?: string) => {
-    if (!chatId) return question;
+    const activeChatId = chatId || await ensureChat();
     setLoading(true);
     setError(null);
     try {
-      await sendChatMessage(chatId, question);
-      const messages = await getChatMessages(chatId);
+      await sendChatMessage(activeChatId, question);
+      const messages = await getChatMessages(activeChatId);
       const reply = messages.filter((m) => m.role === "assistant");
       return reply.length > 0 ? reply[reply.length - 1].content : "No se obtuvo respuesta.";
     } catch (e) {
@@ -41,15 +54,16 @@ export function useRag(notebookId?: string) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ensureChat]);
 
   const listFiles = useCallback(async () => {
-    if (!notebookId) return [];
+    const nbId = notebookIdRef.current;
+    if (!nbId) return [];
     setLoading(true);
     setError(null);
     try {
-      const res = await listNotebookFiles(notebookId);
-      const mapped: RAGFileResponse[] = res.map((f) => ({ id: f.id, filename: f.filename, name: f.filename, size: f.size, uploaded_at: f.uploaded_at, content: f.content }));
+      const res = await listNotebookFiles(nbId);
+      const mapped: RAGFileResponse[] = res.map((f) => ({ id: f.id, filename: f.filename, name: f.filename, uploaded_at: f.created_at }));
       setFiles(mapped);
       return mapped;
     } catch (e) {
@@ -59,7 +73,7 @@ export function useRag(notebookId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [notebookId]);
+  }, []);
 
   const deleteFile = useCallback(async (fileId: string) => {
     setLoading(true);
@@ -76,5 +90,5 @@ export function useRag(notebookId?: string) {
     }
   }, []);
 
-  return { uploadFile, ask, listFiles, deleteFile, files, loading, error };
+  return { uploadFile, ask, listFiles, deleteFile, files, loading, error, ensureChat };
 }

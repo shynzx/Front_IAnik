@@ -1,13 +1,15 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- previews use local attachment URLs */
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { Msg, MsgAttachment, gradText } from "../../types";
+import { Msg, MsgAttachment } from "@/types";
 import Typewriter from "./Typewriter";
 import ChatReadyBanner from "./ChatReadyBanner";
 
 interface MessageListProps {
   messages: Msg[];
   loading: boolean;
+  typing: boolean;
   onTypingComplete: () => void;
   onEditMessage: (index: number, newContent: string) => void;
 }
@@ -20,22 +22,22 @@ function AttachmentList({ attachments }: { attachments: MsgAttachment[] }) {
   const fileExt = (name: string) => name.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 6 }}>
+    <div className="flex flex-col gap-2 mb-1.5">
       {images.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: images.length === 1 ? "1fr" : "repeat(2, 1fr)", gap: 4, borderRadius: 10, overflow: "hidden" }}>
+        <div className={`grid ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-0.5 rounded-lg overflow-hidden`}>
           {images.map(img => (
-            <img key={img.id} src={img.preview} alt={img.name} style={{ width: "100%", maxWidth: images.length === 1 ? 260 : 120, height: images.length === 1 ? 180 : 90, objectFit: "cover", borderRadius: 10, display: "block" }} />
+            <img key={img.id} src={img.preview} alt={img.name} className={`w-full ${images.length === 1 ? 'max-w-65 h-45' : 'max-w-30 h-22'} object-cover rounded-lg block`} />
           ))}
         </div>
       )}
       {docs.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        <div className="flex flex-wrap gap-1">
           {docs.map(doc => (
-            <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "4px 10px 4px 7px" }}>
-              <span style={{ width: 24, height: 24, borderRadius: 5, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, fontWeight: 700, color: "#fff", letterSpacing: 0.3, flexShrink: 0 }}>
+            <div key={doc.id} className="flex items-center gap-1.5 bg-white/[0.15] border border-white/20 rounded-lg py-1 pl-2 pr-2.5">
+              <span className="w-6 h-6 rounded-sm bg-white/20 flex items-center justify-center text-xs font-bold text-white tracking-tight shrink-0">
                 {fileExt(doc.name)}
               </span>
-              <span style={{ fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300, fontSize: 12, color: "rgba(255,255,255,0.9)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span className="font-light text-xs text-white/90 max-w-35 overflow-hidden text-ellipsis whitespace-nowrap">
                 {doc.name}
               </span>
             </div>
@@ -72,9 +74,6 @@ function UserBubble({
   const hasText        = message.content.trim().length > 0;
   const canEdit        = hasText || hasAttachments;
 
-  // Sincronizar draft cuando el mensaje cambia desde afuera
-  useEffect(() => { setDraft(message.content); }, [message.content]);
-
   // Focus y resize al entrar en modo edición
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -99,17 +98,10 @@ function UserBubble({
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); confirmEdit(); }
     if (e.key === "Escape") onCancelEdit();
   };
-  const pp = { fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 as const };
 
   return (
     <div
-      style={{
-        position: "relative",
-        marginLeft: "auto",
-        marginBottom: 12,
-        maxWidth: "85%",
-        paddingLeft: 44,
-      }}
+      className="relative ml-auto mb-3 max-w-[85%] pl-11 max-md:max-w-[94%] max-md:pl-0"
       // Solo activar hover si ningún mensaje está siendo editado
       onMouseEnter={() => { if (!anyEditing) setHovered(true); }}
       onMouseLeave={() => setHovered(false)}
@@ -118,23 +110,7 @@ function UserBubble({
       {hovered && !anyEditing && canEdit && (
         <button
           onClick={() => { setHovered(false); onStartEdit(flatIndex); }}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: 0,
-            transform: "translateY(-50%)",
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 8,
-            padding: 6,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "rgba(255,255,255,0.5)",
-            transition: "all .15s",
-            zIndex: 10,
-          }}
+          className="absolute top-1/2 left-0 -translate-y-1/2 bg-[rgba(255,255,255,0.07)] border border-[rgba(255,255,255,0.12)] rounded-lg p-1.5 cursor-pointer flex items-center justify-center text-[rgba(255,255,255,0.5)] transition-all duration-150 z-10"
           onMouseEnter={e => {
             (e.currentTarget as HTMLButtonElement).style.background = "rgba(130,109,210,0.2)";
             (e.currentTarget as HTMLButtonElement).style.color = "#826dd2";
@@ -155,22 +131,14 @@ function UserBubble({
       )}
 
       {/* Burbuja */}
-      <div
-        style={{
-          padding: hasAttachments && !hasText ? "10px 13px" : "13px 17px",
-          borderRadius: "18px 18px 4px 18px",
-          background: "#826dd2",
-          fontFamily: "var(--font-poppins), sans-serif",
-          fontWeight: 300,
-          fontSize: 16,
-          lineHeight: "28px",
-        }}
+<div
+        className={`${hasAttachments && !hasText ? 'py-2.5 px-3.25' : 'p-3.25'} rounded-[18px_18px_4px_18px] bg-[#826dd2] font-light text-base leading-7`}
       >
         {hasAttachments && <AttachmentList attachments={message.attachments!} />}
 
         {isEditing ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <textarea
+          <div className="flex flex-col gap-2">
+<textarea
               ref={textareaRef}
               value={draft}
               onChange={e => {
@@ -180,40 +148,25 @@ function UserBubble({
               }}
               onKeyDown={handleKeyDown}
               rows={1}
-              style={{
-                ...pp,
-                fontSize: 16,
-                lineHeight: "26px",
-                color: "#fff",
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                borderRadius: 10,
-                padding: "6px 10px",
-                outline: "none",
-                resize: "none",
-                width: "100%",
-                minWidth: 180,
-                boxSizing: "border-box",
-                overflowY: "hidden",
-              }}
+              className="font-light text-base leading-7 text-white bg-white/[0.12] border border-white/30 rounded-lg py-1.5 px-2.5 outline-none resize-none w-full min-w-45 box-border overflow-y-hidden"
             />
-            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            <div className="flex gap-1.5 justify-end">
               <button
                 onClick={onCancelEdit}
-                style={{ ...pp, fontSize: 12, padding: "4px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "rgba(255,255,255,0.65)", cursor: "pointer" }}
+                className="font-light text-xs py-1 px-3 rounded-lg border border-white/20 bg-transparent text-white/65 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmEdit}
-                style={{ ...pp, fontSize: 12, padding: "4px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.22)", color: "#fff", cursor: "pointer", fontWeight: 500 }}
+                className="font-medium text-xs py-1 px-3.5 rounded-lg border-none bg-white/[0.22] text-white cursor-pointer"
               >
                 Enviar
               </button>
             </div>
           </div>
         ) : (
-          hasText && <span style={{ color: "#fff" }}>{message.content}</span>
+          hasText && <span className="text-white">{message.content}</span>
         )}
       </div>
     </div>
@@ -224,6 +177,7 @@ function UserBubble({
 export default function MessageList({
   messages,
   loading,
+  typing,
   onTypingComplete,
   onEditMessage,
 }: MessageListProps) {
@@ -237,7 +191,7 @@ export default function MessageList({
     []
   );
 
-  useEffect(() => scrollToBottom(), [messages, loading, scrollToBottom]);
+  useEffect(() => { scrollToBottom(); }, [messages, loading, scrollToBottom]);
 
   // Cerrar edición si llegan mensajes nuevos (p.ej. después de enviar)
   useEffect(() => { setEditingIndex(null); }, [messages.length]);
@@ -256,11 +210,11 @@ export default function MessageList({
   let flatIndex = -1;
 
   return (
-    <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column", paddingBottom: 32 }}>
+    <div className="w-full flex flex-col pb-8">
       {displayGroups.length === 0 && <ChatReadyBanner />}
 
       {displayGroups.map((group, gi) => (
-        <div key={group[0]?.id ?? gi} style={{ width: "100%", display: "flex", flexDirection: "column", marginBottom: 24 }}>
+        <div key={group[0]?.id ?? gi} className="w-full flex flex-col mb-6">
           {group.map((m) => {
             flatIndex++;
             const currentFlatIndex = flatIndex;
@@ -269,7 +223,7 @@ export default function MessageList({
             if (m.role === "user") {
               return (
                 <UserBubble
-                  key={m.id}
+                  key={`${m.id}-${m.content}`}
                   message={m}
                   flatIndex={currentFlatIndex}
                   isEditing={editingIndex === currentFlatIndex}
@@ -287,27 +241,15 @@ export default function MessageList({
             return (
               <div
                 key={m.id}
-                style={{
-                  marginBottom: 12,
-                  padding: m.role === "sys" ? "5px 16px" : "13px 17px",
-                  borderRadius: m.role === "sys" ? 999 : "18px 18px 18px 4px",
-                  maxWidth: "85%",
-                  width: "fit-content",
-                  marginLeft: m.role === "sys" ? "auto" : undefined,
-                  marginRight: m.role === "sys" ? 0 : undefined,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  backdropFilter: "blur(8px)",
-                  fontFamily: "var(--font-poppins), sans-serif",
-                  fontWeight: 300,
-                  fontSize: m.role === "sys" ? 13 : 16,
-                  lineHeight: m.role === "sys" ? "22px" : "28px",
-                }}
+                className={`mb-3 ${m.role === 'sys'
+                  ? 'py-1.25 px-4 rounded-full ml-auto mr-0 text-sm leading-6 bg-white/[0.06] border border-white/[0.08]'
+                  : 'p-3.25 rounded-[18px_18px_18px_4px] text-base leading-7 bg-white/[0.06] border border-white/[0.08] max-w-[85%] w-fit font-light max-md:max-w-[94%]'
+                }`}
               >
-                {m.role === "sys" && <span style={{ color: "rgba(255,255,255,0.38)" }}>{m.content}</span>}
+                {m.role === "sys" && <span className="text-white/38">{m.content}</span>}
                 {m.role === "ai" && (
-                  <span style={{ display: "block", ...gradText }}>
-                    {isLastAi ? (
+                  <span className="block whitespace-pre-wrap text-white/90">
+                    {isLastAi && typing ? (
                       <Typewriter text={m.content} onUpdate={scrollToBottom} onComplete={onTypingComplete} />
                     ) : (
                       m.content
@@ -319,10 +261,9 @@ export default function MessageList({
           })}
 
           {gi === displayGroups.length - 1 && loading && (
-            <div style={{ display: "flex", gap: 6, alignItems: "center", marginLeft: 12, marginBottom: 16 }}>
-              <style>{`@keyframes bBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}`}</style>
+            <div className="flex gap-1.5 items-center ml-3 mb-4">
               {[0, 0.15, 0.3].map((d, k) => (
-                <span key={k} style={{ width: 7, height: 7, borderRadius: "50%", background: "#826dd2", display: "inline-block", animation: `bBounce 1s ${d}s infinite` }} />
+                <span key={k} className="w-1.5 h-1.5 rounded-full bg-[#826dd2] inline-block" style={{ animation: `bBounce 1s ${d}s infinite` }} />
               ))}
             </div>
           )}

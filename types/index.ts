@@ -55,6 +55,7 @@ export type FlashcardSet = {
 
 export type Summary = {
   id: string;
+  fileId?: string;
   title?: string;
   docName: string;
   createdAt: Date;
@@ -84,44 +85,39 @@ export interface LoginResponse {
 }
 
 export interface User {
-  id: string;
+  id: number;
+  nombre: string;
   email: string;
-  full_name: string;
   is_active: boolean;
-  is_superuser: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 /* Notebooks */
 export interface Notebook {
-  id: string;
+  id: number;
   title: string;
-  description?: string;
+  description: string;
   created_at: string;
-  updated_at: string;
+  usuario_id: number;
 }
 
 export interface NotebookFile {
-  id: string;
-  notebook_id: string;
+  id: number;
   filename: string;
-  size: number;
-  type: string;
-  uploaded_at: string;
-  content?: string;
+  file_type: string;
+  notebook_id: number;
+  created_at: string;
 }
 
 export interface NotebookChat {
-  id: string;
-  notebook_id: string;
-  title?: string;
+  id: number;
+  title: string;
+  notebook_id: number;
   created_at: string;
 }
 
 export interface ChatMessage {
-  id: string;
-  chat_id: string;
+  id: number;
+  chat_id: number;
   role: "user" | "assistant";
   content: string;
   created_at: string;
@@ -129,169 +125,154 @@ export interface ChatMessage {
 
 /* Study Rooms */
 export interface StudyRoom {
-  id: string;
-  notebook_id: string;
-  code: string;
-  creator_id: string;
+  id: number;
+  title: string;
+  codigo: string;
+  notebook_id: number;
+  creado_por_id: number;
   created_at: string;
 }
 
 export interface StudyRoomAccess {
-  role: "creator" | "invitado";
+  role: "admin" | "invitado";
+  sala_id: number;
+  title: string;
+  codigo: string;
+  notebook_id: number;
+  creado_por_id: number;
 }
 
 /* Assessments */
 export interface AssessmentFlashcard {
-  id: string;
-  notebook_id: string;
+  id: number;
   question: string;
   answer: string;
-  hint?: string;
-  status: "pending" | "learned" | "review";
+  notebook_id: number;
   created_at: string;
+  hint?: string;
+  status?: "pending" | "learned" | "review";
 }
 
 export interface AssessmentExam {
-  id: string;
-  notebook_id?: string;
-  sala_id?: string;
+  id: number;
   title: string;
-  total_questions: number;
+  notebook_id: number;
+  sala_id?: number | null;
   created_at: string;
+  preguntas: AssessmentQuestion[];
 }
 
 export interface AssessmentQuestion {
   id: number;
-  question: string;
-  options: { text: string; isCorrect: boolean; rationale?: string }[];
-  answer_explanation?: string;
+  question_text: string;
+  opciones: { letra: string; texto: string }[];
 }
 
 export interface ExamSubmitResponse {
+  id: number;
+  examen_id: number;
+  usuario_id: number;
+  participante_sala_id?: number | null;
   score: number;
-  total: number;
-  percentage: number;
-  passed: boolean;
+  completed_at: string;
+  respuestas: { id: number; pregunta_id: number; opcion: string; is_correct: boolean }[];
 }
 
 export interface ExamAttempt {
-  id: string;
-  exam_id: string;
-  score?: number;
-  total: number;
-  completed_at?: string;
-  answers?: { question_id: number; selected: number; correct: boolean }[];
+  id: number;
+  examen_id: number;
+  usuario_id: number;
+  participante_sala_id?: number | null;
+  score: number;
+  completed_at: string;
+  respuestas: { id: number; pregunta_id: number; opcion: string; is_correct: boolean }[];
 }
 
 /* Progress */
 export interface ProgressMetrics {
+  total_exams_completed: number;
   average_score: number;
-  total_exams: number;
-  total_cards: number;
-  learned_cards: number;
-  pending_cards: number;
 }
 
 export interface DailyActivity {
   date: string;
-  files_uploaded: number;
-  exams_completed: number;
-  messages_sent: number;
+  events_count: number;
 }
 
 /* API Keys */
 export interface ApiKey {
   id: string;
-  name: string;
-  key_preview: string;
+  title: string;
   created_at: string;
-  last_used_at?: string;
-  is_active: boolean;
+  expires_at: string;
+  active: boolean;
 }
 
 export interface ApiKeyCreateResponse {
-  id: string;
-  name: string;
-  full_key: string;
-  created_at: string;
+  api_key: string;
+  title: string;
+  jti: string;
+  expires_at: string;
 }
 
 /* Webhooks */
 export interface WebhookSubscription {
-  id: string;
-  org_id: string;
+  id: number;
+  org_id: number;
   url: string;
-  events: string[];
-  is_active: boolean;
-  secret?: string;
   created_at: string;
 }
 
 export interface WebhookAttempt {
   id: string;
-  subscription_id: string;
-  event: string;
-  status: "success" | "failed" | "pending";
-  request_body?: string;
-  response_status?: number;
-  attempted_at: string;
+  subscription_id: number;
+  url: string;
+  payload: Record<string, unknown>;
+  status_code: number | null;
+  response_body: string | null;
+  timestamp: string;
+  success: boolean;
 }
 
 /* Admin */
 export interface AdminClassStats {
-  total_students: number;
-  total_flashcards: number;
-  total_quizzes: number;
-  average_progress: number;
+  sala_id: number;
+  total_attempts: number;
+  average_score: number;
 }
 
 export interface AdminUserAuditLog {
-  id: string;
-  user_id: string;
+  id: number;
+  user_id: number;
   action: string;
-  details?: string;
-  ip_address?: string;
-  created_at: string;
+  timestamp: string;
+  ip: string;
 }
 
 export interface AdminUserStorage {
-  used_bytes: number;
-  limit_bytes: number;
-  file_count: number;
+  user_id: number;
+  total_files: number;
+  storage_characters: number;
+  storage_mb: number;
 }
 
 /* Health */
 export interface HealthStatus {
-  status: "healthy" | "degraded" | "unhealthy";
-  version: string;
-  uptime_seconds: number;
+  status: string;
+  timestamp: string;
 }
 
 export interface HealthProcess {
-  name: string;
-  status: "running" | "stopped" | "error";
-  pid?: number;
-  memory_mb?: number;
+  background_tasks_active: number;
+  active_threads: number;
+  status: string;
+  scheduler: string;
 }
 
 export interface HealthMetadata {
+  name: string;
+  version: string;
+  description: string;
   environment: string;
-  commit_sha?: string;
-  build_time?: string;
-  python_version?: string;
+  author: string;
 }
-
-/* ─── Design tokens ──────────────────────────────────────── */
-export const BG = "linear-gradient(135deg, #000000 0%, #3c2850 100%)";
-
-export const gradText: React.CSSProperties = {
-  background: "linear-gradient(90deg, #ffffff 0%, #a5a5a5 100%)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  backgroundClip: "text",
-};
-
-export const pp: React.CSSProperties = {
-  fontFamily: "var(--font-poppins), sans-serif",
-  fontWeight: 300,
-};

@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import { BG, pp } from "../../types";
-import Sidebar from "../layout/Sidebar";
+import { useState, FormEvent, useEffect } from "react";
+import Sidebar from "@/components/layout/Sidebar";
+import { loadGoogleScript, initGoogleSignIn, triggerGoogleSignIn } from "@/lib/googleAuth";
 
 interface RegisterScreenProps {
   onRegister: (name: string, email: string, password: string) => Promise<void>;
+  onGoogle: (credential: string) => Promise<void>;
   onGoLogin: () => void;
   onGoHome: () => void;
 }
 
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
 export default function RegisterScreen({
   onRegister,
+  onGoogle,
   onGoLogin,
   onGoHome,
 }: RegisterScreenProps) {
@@ -22,7 +26,26 @@ export default function RegisterScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    const onCredential = async (credential: string) => {
+      setGoogleLoading(true);
+      setError("");
+      try {
+        await onGoogle(credential);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo iniciar sesión con Google");
+      } finally {
+        setGoogleLoading(false);
+      }
+    };
+    loadGoogleScript()
+      .then(() => initGoogleSignIn(GOOGLE_CLIENT_ID!, onCredential))
+      .catch(() => {});
+  }, [onGoogle]);
 
   // ── Fortaleza de contraseña (mínimo 8 caracteres) ───────────
   const passwordStrength = (p: string) => {
@@ -68,69 +91,36 @@ export default function RegisterScreen({
   };
 
   const handleGoogle = () => {
-    // TODO: conecta tu proveedor OAuth (NextAuth, Supabase, Firebase, etc.)
-    // TODO: Google OAuth
+    if (!GOOGLE_CLIENT_ID) {
+      setError("Google Sign-In no está configurado. Falta NEXT_PUBLIC_GOOGLE_CLIENT_ID.");
+      return;
+    }
+    setError("");
+    setGoogleLoading(true);
+    loadGoogleScript()
+      .then(() => triggerGoogleSignIn())
+      .catch(() => {
+        setError("No se pudo cargar Google Sign-In");
+        setGoogleLoading(false);
+      });
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: BG,
-        display: "flex",
-        position: "relative",
-        fontFamily: "var(--font-poppins), sans-serif",
-      }}
-    >
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .auth-input:focus {
-          border-color: rgba(130,109,210,0.6) !important;
-          background: rgba(130,109,210,0.07) !important;
-        }
-        .auth-input.error { border-color: rgba(229,57,53,0.5) !important; }
-        .auth-btn-primary:hover:not(:disabled) { background: #9b85e0 !important; }
-        .auth-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-        .google-btn:hover { background: rgba(255,255,255,0.09) !important; border-color: rgba(255,255,255,0.2) !important; }
-        .back-btn:hover { color: #826dd2 !important; background: rgba(130,109,210,0.08) !important; }
-        .logo-btn:hover { opacity: 0.75; }
-      `}</style>
+    <div className="app-background min-h-screen flex relative">
 
       <Sidebar
         phase="onboard"
-        docsOpen={false}
-        docsFullscreen={false}
         hasMessages={false}
         onChatClick={() => {}}
-        onDocsClick={() => {}}
+        onStudyClick={() => {}}
+        onSummariesClick={() => {}}
+        onStudyRoomsClick={() => {}}
       />
 
       {/* Botón de regreso */}
       <button
         onClick={onGoHome}
-        className="back-btn"
-        style={{
-          position: "fixed",
-          top: 18,
-          left: 76,
-          zIndex: 60,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          color: "rgba(255,255,255,0.45)",
-          ...pp,
-          fontSize: 13,
-          padding: "6px 10px",
-          borderRadius: 8,
-          transition: "color .15s, background .15s",
-        }}
+        className="fixed top-5 left-[92px] max-md:left-4 z-[60] flex items-center gap-1.5 bg-white/[0.035] border border-white/[0.08] cursor-pointer text-white/55 text-sm px-3 py-2 rounded-xl hover:text-white hover:bg-white/[0.08] transition-all"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
@@ -138,50 +128,13 @@ export default function RegisterScreen({
         Volver
       </button>
 
-      <main
-        style={{
-          flex: 1,
-          marginLeft: 64,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "72px 48px 48px",
-          minHeight: "100vh",
-          overflowY: "auto",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 440,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 24,
-            padding: "44px 40px 40px",
-            backdropFilter: "blur(20px)",
-            animation: "fadeUp .38s ease both",
-          }}
-        >
+      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen overflow-y-auto max-md:pb-24">
+        <div className="glass-panel w-full max-w-[28rem] rounded-[28px] px-6 sm:px-10 pt-9 sm:pt-11 pb-9 animate-[fadeUp_.38s_ease_both]">
           {/* Logo + título */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
+          <div className="flex items-center gap-3 mb-8">
             <button
               onClick={onGoHome}
-              className="logo-btn"
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 13,
-                background: "rgba(130,109,210,0.15)",
-                border: "1px solid rgba(130,109,210,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                cursor: "pointer",
-                transition: "opacity .15s",
-                padding: 0,
-              }}
+              className="w-[2.875rem] h-[2.875rem] rounded-[0.8125rem] bg-[rgba(130,109,210,0.15)] border border-[rgba(130,109,210,0.3)] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:opacity-75"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3" />
@@ -190,10 +143,10 @@ export default function RegisterScreen({
               </svg>
             </button>
             <div>
-              <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: "0 0 6px" }}>
+              <h1 className="font-semibold text-[1.375rem] text-white m-0 mb-1.5">
                 Crea tu cuenta
               </h1>
-              <p style={{ ...pp, fontSize: 13, color: "rgba(255,255,255,0.38)", margin: 0 }}>
+              <p className="text-[0.8125rem] text-[rgba(255,255,255,0.38)] m-0">
                 Únete a IAnik y empieza a organizar tu conocimiento
               </p>
             </div>
@@ -201,16 +154,7 @@ export default function RegisterScreen({
 
           {/* Error banner */}
           {error && (
-            <div style={{
-              background: "rgba(229,57,53,0.12)",
-              border: "1px solid rgba(229,57,53,0.3)",
-              borderRadius: 10,
-              padding: "10px 14px",
-              marginBottom: 20,
-              ...pp,
-              fontSize: 13,
-              color: "#ef9a9a",
-            }}>
+            <div className="bg-[rgba(229,57,53,0.12)] border border-[rgba(229,57,53,0.3)] rounded-[0.625rem] px-3.5 py-2.5 mb-5 text-[0.8125rem] text-[#ef9a9a]">
               {error}
             </div>
           )}
@@ -219,24 +163,8 @@ export default function RegisterScreen({
           <button
             type="button"
             onClick={handleGoogle}
-            className="google-btn"
-            style={{
-              ...pp,
-              width: "100%",
-              padding: "11px 0",
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.13)",
-              color: "rgba(255,255,255,0.85)",
-              fontSize: 14,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              marginBottom: 20,
-              transition: "background .15s, border-color .15s",
-            }}
+            disabled={googleLoading}
+            className="w-full py-[0.6875rem] rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.13)] text-[rgba(255,255,255,0.85)] text-sm cursor-pointer flex items-center justify-center gap-2.5 mb-5 hover:bg-[rgba(255,255,255,0.09)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -248,10 +176,10 @@ export default function RegisterScreen({
           </button>
 
           {/* Divider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-            <span style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>o con tu correo</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-[rgba(255,255,255,0.08)]" />
+            <span className="text-xs text-[rgba(255,255,255,0.25)]">o con tu correo</span>
+            <div className="flex-1 h-px bg-[rgba(255,255,255,0.08)]" />
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -290,7 +218,7 @@ export default function RegisterScreen({
                 autoComplete="new-password"
                 hasError={passwordTooShort}
                 endAdornment={
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 2, display: "flex" }}>
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="bg-none border-none cursor-pointer text-[rgba(255,255,255,0.3)] p-0.5 flex">
                     {showPassword
                       ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                       : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -300,19 +228,19 @@ export default function RegisterScreen({
               />
               {/* Mensaje si es muy corta */}
               {passwordTooShort && (
-                <p style={{ ...pp, fontSize: 11, color: "#ef9a9a", margin: "5px 0 0" }}>
+                <p className="text-[0.6875rem] text-[#ef9a9a] mt-[0.3125rem] mb-0">
                   La contraseña debe tener al menos 8 caracteres
                 </p>
               )}
               {/* Barra de fortaleza */}
               {password.length >= 8 && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+                <div className="mt-2">
+                  <div className="flex gap-1 mb-1">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i <= strength ? strengthColor : "rgba(255,255,255,0.1)", transition: "background .25s" }} />
+                      <div key={i} className="flex-1 h-[0.1875rem] rounded-full transition-[background_.25s]" style={{ background: i <= strength ? strengthColor : "rgba(255,255,255,0.1)" }} />
                     ))}
                   </div>
-                  <p style={{ ...pp, fontSize: 11, color: strengthColor, margin: 0, transition: "color .25s" }}>
+                  <p className="text-[0.6875rem] m-0 transition-[color_.25s]" style={{ color: strengthColor }}>
                     {strengthLabel}
                   </p>
                 </div>
@@ -330,7 +258,7 @@ export default function RegisterScreen({
                 autoComplete="new-password"
                 hasError={confirmMismatch}
                 endAdornment={
-                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 2, display: "flex" }}>
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="bg-none border-none cursor-pointer text-[rgba(255,255,255,0.3)] p-0.5 flex">
                     {showConfirm
                       ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                       : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -339,7 +267,7 @@ export default function RegisterScreen({
                 }
               />
               {confirmMismatch && (
-                <p style={{ ...pp, fontSize: 11, color: "#ef9a9a", margin: "5px 0 0" }}>
+                <p className="text-[0.6875rem] text-[#ef9a9a] mt-[0.3125rem] mb-0">
                   Las contraseñas no coinciden
                 </p>
               )}
@@ -349,29 +277,11 @@ export default function RegisterScreen({
             <button
               type="submit"
               disabled={!canSubmit}
-              className="auth-btn-primary"
-              style={{
-                ...pp,
-                fontWeight: 400,
-                width: "100%",
-                padding: "12px 0",
-                borderRadius: 12,
-                background: "#826dd2",
-                color: "#fff",
-                border: "none",
-                fontSize: 15,
-                cursor: "pointer",
-                transition: "background .15s, opacity .15s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                marginTop: 8,
-              }}
+              className="w-full py-3 rounded-xl bg-[#826dd2] text-white border-none text-[0.9375rem] cursor-pointer flex items-center justify-center gap-2 font-[400] enabled:hover:bg-[#9b85e0] disabled:opacity-45 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
                 <>
-                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} />
+                  <span className="w-4 h-4 border-2 border-[rgba(255,255,255,0.3)] border-t-white rounded-full inline-block animate-[spin_.7s_linear_infinite]" />
                   Creando cuenta...
                 </>
               ) : "Crear cuenta"}
@@ -379,19 +289,19 @@ export default function RegisterScreen({
           </form>
 
           {/* Divider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "28px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-            <span style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>o</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <div className="flex items-center gap-3 my-7">
+            <div className="flex-1 h-px bg-[rgba(255,255,255,0.08)]" />
+            <span className="text-xs text-[rgba(255,255,255,0.25)]">o</span>
+            <div className="flex-1 h-px bg-[rgba(255,255,255,0.08)]" />
           </div>
 
           {/* Login link */}
-          <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.4)", textAlign: "center", margin: 0 }}>
+          <p className="text-sm text-[rgba(255,255,255,0.4)] text-center m-0">
             ¿Ya tienes cuenta?{" "}
             <button
               type="button"
               onClick={onGoLogin}
-              style={{ ...pp, fontSize: 14, fontWeight: 500, color: "#826dd2", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              className="text-sm font-medium text-[#826dd2] bg-none border-none cursor-pointer p-0"
             >
               Inicia sesión
             </button>
@@ -404,10 +314,9 @@ export default function RegisterScreen({
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  const pp = { fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 };
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>
+    <div className="mb-4">
+      <label className="text-xs text-[rgba(255,255,255,0.45)] block mb-[0.4375rem] tracking-[0.03125rem] uppercase">
         {label}
       </label>
       {children}
@@ -427,36 +336,21 @@ function IconInput({
   endAdornment?: React.ReactNode;
   hasError?: boolean;
 }) {
-  const pp = { fontFamily: "var(--font-poppins), sans-serif", fontWeight: 300 };
   return (
-    <div style={{ position: "relative" }}>
-      <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
+    <div className="relative">
+      <span className="absolute left-[0.8125rem] top-1/2 -translate-y-1/2 text-[rgba(255,255,255,0.25)] pointer-events-none flex">
         {icon}
       </span>
       <input
-        className={`auth-input${hasError ? " error" : ""}`}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        style={{
-          width: "100%",
-          boxSizing: "border-box" as const,
-          background: "rgba(255,255,255,0.05)",
-          border: `1px solid ${hasError ? "rgba(229,57,53,0.5)" : "rgba(255,255,255,0.1)"}`,
-          borderRadius: 11,
-          padding: `11px ${endAdornment ? "44px" : "14px"} 11px 40px`,
-          color: "#fff",
-          outline: "none",
-          ...pp,
-          fontSize: 14,
-          transition: "border-color .15s, background .15s",
-          caretColor: "#826dd2",
-        }}
+        className={`w-full box-border bg-[rgba(255,255,255,0.05)] rounded-[0.6875rem] text-white text-sm outline-none caret-[#826dd2] py-[0.6875rem] pl-10 ${endAdornment ? "pr-[2.75rem]" : "pr-3.5"} ${hasError ? "border-[rgba(229,57,53,0.5)]" : "border-[rgba(255,255,255,0.1)]"} focus:border-[rgba(130,109,210,0.6)] focus:bg-[rgba(130,109,210,0.07)]`}
       />
       {endAdornment && (
-        <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex" }}>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 flex">
           {endAdornment}
         </span>
       )}

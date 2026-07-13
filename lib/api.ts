@@ -1,8 +1,8 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://api.localhost:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /* Compat: maps to NotebookFile shape used by existing UI */
 export type RAGFileResponse = {
-  id?: string;
+  id?: string | number;
   filename?: string;
   name?: string;
   size?: number;
@@ -19,13 +19,13 @@ import type {
   LoginResponse, User,
   Notebook, NotebookFile, NotebookChat, ChatMessage,
   StudyRoom, StudyRoomAccess,
-  AssessmentFlashcard, AssessmentExam, AssessmentQuestion, ExamSubmitResponse, ExamAttempt,
+  AssessmentFlashcard, AssessmentExam, ExamSubmitResponse, ExamAttempt,
   ProgressMetrics, DailyActivity,
   ApiKey, ApiKeyCreateResponse,
   WebhookSubscription, WebhookAttempt,
   AdminClassStats, AdminUserAuditLog, AdminUserStorage,
   HealthStatus, HealthProcess, HealthMetadata,
-} from "../types";
+} from "@/types";
 
 type APIRequestOptions = RequestInit & {
   params?: Record<string, string>;
@@ -114,21 +114,23 @@ function withAuthHeader(headers: HeadersInit = {}, authHeader?: string | null): 
 /* ─── Auth / Users ──────────────────────────────────────── */
 
 export async function registerUser(email: string, password: string, full_name: string) {
-  return fetchAPI<User>("/users/register", {
+  return fetchAPI<{ message: string }>("/users/register", {
     method: "POST",
-    body: JSON.stringify({ email, password, full_name }),
+    body: JSON.stringify({ nombre: full_name, email, password }),
   });
 }
 
 export async function loginUser(email: string, password: string) {
-  const form = new URLSearchParams();
-  form.set("username", email);
-  form.set("password", password);
   return fetchAPI<LoginResponse>("/users/login", {
     method: "POST",
-    body: form.toString(),
-    skipJsonContentType: true,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function logoutUser() {
+  return fetchAPI<{ message: string }>("/users/logout", {
+    method: "POST",
+    headers: withAuthHeader(),
   });
 }
 
@@ -138,10 +140,10 @@ export async function getMe() {
   });
 }
 
-export async function deleteMe(password: string) {
-  return fetchAPI<void>("/users/me", {
+export async function deleteMe(email: string, password: string) {
+  return fetchAPI<{ message: string }>("/users/me", {
     method: "DELETE",
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ email, password }),
     headers: withAuthHeader(),
   });
 }
@@ -149,7 +151,7 @@ export async function deleteMe(password: string) {
 /* ─── Notebooks ─────────────────────────────────────────── */
 
 export async function createNotebook(title: string, description: string, apiKey: string) {
-  return fetchAPI<Notebook>("/notebooks", {
+  return fetchAPI<{ id: number; message: string }>("/notebooks", {
     method: "POST",
     body: JSON.stringify({ title, description }),
     headers: withAuthHeader({ "X-API-Key": apiKey }),
@@ -168,8 +170,8 @@ export async function getNotebook(notebookId: string) {
   });
 }
 
-export async function updateNotebook(notebookId: string, data: { title?: string; description?: string }) {
-  return fetchAPI<Notebook>(`/notebooks/${encodeURIComponent(notebookId)}`, {
+export async function updateNotebook(notebookId: string, data: { title: string; description?: string }) {
+  return fetchAPI<{ message: string }>(`/notebooks/${encodeURIComponent(notebookId)}`, {
     method: "PUT",
     body: JSON.stringify(data),
     headers: withAuthHeader(),
@@ -177,7 +179,7 @@ export async function updateNotebook(notebookId: string, data: { title?: string;
 }
 
 export async function deleteNotebook(notebookId: string) {
-  return fetchAPI<void>(`/notebooks/${encodeURIComponent(notebookId)}`, {
+  return fetchAPI<{ message: string }>(`/notebooks/${encodeURIComponent(notebookId)}`, {
     method: "DELETE",
     headers: withAuthHeader(),
   });
@@ -186,7 +188,7 @@ export async function deleteNotebook(notebookId: string) {
 export async function uploadNotebookFile(notebookId: string, file: File) {
   const form = new FormData();
   form.append("file", file);
-  return fetchAPI<NotebookFile>(`/notebooks/${encodeURIComponent(notebookId)}/files`, {
+  return fetchAPI<{ id: number; filename: string; message: string }>(`/notebooks/${encodeURIComponent(notebookId)}/files`, {
     method: "POST",
     body: form,
     skipJsonContentType: true,
@@ -201,15 +203,16 @@ export async function listNotebookFiles(notebookId: string) {
 }
 
 export async function deleteNotebookFile(fileId: string) {
-  return fetchAPI<void>(`/notebooks/files/${encodeURIComponent(fileId)}`, {
+  return fetchAPI<{ message: string }>(`/notebooks/files/${encodeURIComponent(fileId)}`, {
     method: "DELETE",
     headers: withAuthHeader(),
   });
 }
 
-export async function createNotebookChat(notebookId: string) {
-  return fetchAPI<NotebookChat>(`/notebooks/${encodeURIComponent(notebookId)}/chats`, {
+export async function createNotebookChat(notebookId: string, title: string) {
+  return fetchAPI<{ id: number; message: string }>(`/notebooks/${encodeURIComponent(notebookId)}/chats`, {
     method: "POST",
+    body: JSON.stringify({ title }),
     headers: withAuthHeader(),
   });
 }
@@ -221,21 +224,24 @@ export async function listNotebookChats(notebookId: string) {
 }
 
 export async function deleteNotebookChat(chatId: string) {
-  return fetchAPI<void>(`/notebooks/chats/${encodeURIComponent(chatId)}`, {
+  return fetchAPI<{ message: string }>(`/notebooks/chats/${encodeURIComponent(chatId)}`, {
     method: "DELETE",
     headers: withAuthHeader(),
   });
 }
 
 export async function getChatMessages(chatId: string, params?: { page?: number; limit?: number }) {
+  const query: Record<string, string> = {};
+  if (params?.page !== undefined) query.page = String(params.page);
+  if (params?.limit !== undefined) query.limit = String(params.limit);
   return fetchAPI<ChatMessage[]>(`/notebooks/chats/${encodeURIComponent(chatId)}/messages`, {
-    params: params as Record<string, string>,
+    params: Object.keys(query).length > 0 ? query : undefined,
     headers: withAuthHeader(),
   });
 }
 
 export async function sendChatMessage(chatId: string, content: string) {
-  return fetchAPI<ChatMessage>(`/notebooks/chats/${encodeURIComponent(chatId)}/messages`, {
+  return fetchAPI<ChatMessage[]>(`/notebooks/chats/${encodeURIComponent(chatId)}/messages`, {
     method: "POST",
     body: JSON.stringify({ content }),
     headers: withAuthHeader(),
@@ -244,18 +250,25 @@ export async function sendChatMessage(chatId: string, content: string) {
 
 /* ─── Study Rooms ───────────────────────────────────────── */
 
-export async function createStudyRoom(notebookId: string) {
-  return fetchAPI<StudyRoom>("/study-rooms", {
+export async function createStudyRoom(title: string, notebookId: string) {
+  return fetchAPI<{ id: number; codigo: string; message: string }>("/study-rooms", {
     method: "POST",
-    body: JSON.stringify({ notebook_id: notebookId }),
+    body: JSON.stringify({ title, notebook_id: notebookId }),
     headers: withAuthHeader(),
   });
 }
 
-export async function joinStudyRoom(code: string) {
-  return fetchAPI<StudyRoom>("/study-rooms/join", {
+export async function joinStudyRoom(codigo: string) {
+  return fetchAPI<{ id: number; message: string }>("/study-rooms/join", {
     method: "POST",
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ codigo }),
+    headers: withAuthHeader(),
+  });
+}
+
+export async function leaveStudyRoom(roomId: string) {
+  return fetchAPI<{ message: string }>(`/study-rooms/${encodeURIComponent(roomId)}/leave`, {
+    method: "DELETE",
     headers: withAuthHeader(),
   });
 }
@@ -287,7 +300,7 @@ export async function getRoomAccess(roomId: string) {
 export async function uploadRoomFile(roomId: string, file: File) {
   const form = new FormData();
   form.append("file", file);
-  return fetchAPI<NotebookFile>(`/study-rooms/${encodeURIComponent(roomId)}/files`, {
+  return fetchAPI<{ id: number; filename: string; message: string }>(`/study-rooms/${encodeURIComponent(roomId)}/files`, {
     method: "POST",
     body: form,
     skipJsonContentType: true,
@@ -302,7 +315,7 @@ export async function listRoomFiles(roomId: string) {
 }
 
 export async function deleteRoomFile(roomId: string, fileId: string) {
-  return fetchAPI<void>(`/study-rooms/${encodeURIComponent(roomId)}/files/${encodeURIComponent(fileId)}`, {
+  return fetchAPI<{ message: string }>(`/study-rooms/${encodeURIComponent(roomId)}/files/${encodeURIComponent(fileId)}`, {
     method: "DELETE",
     headers: withAuthHeader(),
   });
@@ -321,15 +334,19 @@ export async function getRoomChatMessages(roomId: string, chatId: string) {
 }
 
 export async function sendRoomChatMessage(roomId: string, chatId: string, content: string) {
-  return fetchAPI<ChatMessage>(`/study-rooms/${encodeURIComponent(roomId)}/chats/${encodeURIComponent(chatId)}/messages`, {
+  return fetchAPI<ChatMessage[]>(`/study-rooms/${encodeURIComponent(roomId)}/chats/${encodeURIComponent(chatId)}/messages`, {
     method: "POST",
     body: JSON.stringify({ content }),
     headers: withAuthHeader(),
   });
 }
 
-export async function createRoomFlashcard(roomId: string, data: { question: string; answer: string; hint?: string }) {
-  return fetchAPI<AssessmentFlashcard>(`/study-rooms/${encodeURIComponent(roomId)}/flashcards`, {
+export async function listRoomSummaries(roomId: string) {
+  return fetchAPI<NotebookSummaryResponse[]>(`/study-rooms/${encodeURIComponent(roomId)}/summaries`, { headers: withAuthHeader() });
+}
+
+export async function createRoomFlashcard(roomId: string, data: { prompt: string; cantidad?: number }) {
+  return fetchAPI<AssessmentFlashcard[]>(`/study-rooms/${encodeURIComponent(roomId)}/flashcards`, {
     method: "POST",
     body: JSON.stringify(data),
     headers: withAuthHeader(),
@@ -342,9 +359,10 @@ export async function listRoomFlashcards(roomId: string) {
   });
 }
 
-export async function createRoomExam(roomId: string) {
+export async function createRoomExam(roomId: string, data: { prompt: string }) {
   return fetchAPI<AssessmentExam>(`/study-rooms/${encodeURIComponent(roomId)}/exam`, {
     method: "POST",
+    body: JSON.stringify(data),
     headers: withAuthHeader(),
   });
 }
@@ -357,10 +375,10 @@ export async function listRoomExams(roomId: string) {
 
 /* ─── Assessments ───────────────────────────────────────── */
 
-export async function generateFlashcards(notebookId: string) {
+export async function generateFlashcards(notebookId: string, prompt: string, cantidad?: number) {
   return fetchAPI<AssessmentFlashcard[]>("/assessments/flashcards", {
     method: "POST",
-    body: JSON.stringify({ notebook_id: notebookId }),
+    body: JSON.stringify({ notebook_id: notebookId, prompt, ...(cantidad !== undefined ? { cantidad } : {}) }),
     headers: withAuthHeader(),
   });
 }
@@ -371,18 +389,19 @@ export async function getNotebookFlashcards(notebookId: string) {
   });
 }
 
-export async function generateExam(notebookId: string) {
+export async function generateExam(notebookId: string, prompt: string) {
   return fetchAPI<AssessmentExam>("/assessments/exam", {
     method: "POST",
-    body: JSON.stringify({ notebook_id: notebookId }),
+    body: JSON.stringify({ notebook_id: notebookId, prompt }),
     headers: withAuthHeader(),
   });
 }
 
 export async function getExam(examId: string) {
-  return fetchAPI<{ exam: AssessmentExam; questions: AssessmentQuestion[] }>(`/assessments/exam/${encodeURIComponent(examId)}`, {
+  const exam = await fetchAPI<AssessmentExam>(`/assessments/exam/${encodeURIComponent(examId)}`, {
     headers: withAuthHeader(),
   });
+  return { exam, questions: exam.preguntas || [] };
 }
 
 export async function getNotebookExams(notebookId: string) {
@@ -397,10 +416,10 @@ export async function getRoomExams(roomId: string) {
   });
 }
 
-export async function submitExam(examId: string, answers: { question_id: number; selected_option: number }[]) {
+export async function submitExam(examId: string, answers: { pregunta_id: number; opcion: string }[]) {
   return fetchAPI<ExamSubmitResponse>(`/assessments/exam/${encodeURIComponent(examId)}/submit`, {
     method: "POST",
-    body: JSON.stringify({ answers }),
+    body: JSON.stringify({ respuestas: answers }),
     headers: withAuthHeader(),
   });
 }
@@ -419,6 +438,35 @@ export async function getAttempt(attemptId: string) {
 
 export async function getExamAttempts(examId: string) {
   return fetchAPI<ExamAttempt[]>(`/assessments/attempts/exam/${encodeURIComponent(examId)}`, {
+    headers: withAuthHeader(),
+  });
+}
+
+/* ─── Summaries ────────────────────────────────────────── */
+
+export interface NotebookSummaryResponse {
+  id: number;
+  content: string;
+  notebook_id: number;
+  archivo_id: number | null;
+  created_at: string;
+}
+
+export async function generateNotebookSummary(notebookId: string, fileId?: string) {
+  return fetchAPI<{ id: number; message: string }>(`/notebooks/${encodeURIComponent(notebookId)}/summaries`, {
+    method: "POST",
+    params: fileId ? { archivo_id: fileId } : undefined,
+    headers: withAuthHeader(),
+  });
+}
+
+export async function listNotebookSummaries(notebookId: string) {
+  return fetchAPI<NotebookSummaryResponse[]>(`/notebooks/${encodeURIComponent(notebookId)}/summaries`, { headers: withAuthHeader() });
+}
+
+export async function deleteNotebookSummary(summaryId: string) {
+  return fetchAPI<{ message: string }>(`/notebooks/summaries/${encodeURIComponent(summaryId)}`, {
+    method: "DELETE",
     headers: withAuthHeader(),
   });
 }
@@ -445,10 +493,10 @@ export async function getDailyActivity() {
 
 /* ─── API Keys ──────────────────────────────────────────── */
 
-export async function createApiKey(name: string) {
+export async function createApiKey(title: string) {
   return fetchAPI<ApiKeyCreateResponse>("/api-keys", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ title }),
     headers: withAuthHeader(),
   });
 }
@@ -460,7 +508,7 @@ export async function listApiKeys() {
 }
 
 export async function deleteApiKey(keyId: string) {
-  return fetchAPI<void>(`/api-keys/${encodeURIComponent(keyId)}`, {
+  return fetchAPI<{ message: string }>(`/api-keys/${encodeURIComponent(keyId)}`, {
     method: "DELETE",
     headers: withAuthHeader(),
   });
@@ -468,7 +516,7 @@ export async function deleteApiKey(keyId: string) {
 
 /* ─── Webhooks ──────────────────────────────────────────── */
 
-export async function createWebhookSubscription(data: { org_id: string; url: string; events: string[]; secret?: string }) {
+export async function createWebhookSubscription(data: { org_id: number; url: string }) {
   return fetchAPI<WebhookSubscription>("/webhooks/subscriptions", {
     method: "POST",
     body: JSON.stringify(data),
@@ -489,7 +537,7 @@ export async function getWebhookAttempts() {
 }
 
 export async function retryWebhookAttempt(attemptId: string) {
-  return fetchAPI<void>(`/internal/webhooks/attempts/${encodeURIComponent(attemptId)}/retry`, {
+  return fetchAPI<{ message: string; attempt_id: string }>(`/internal/webhooks/attempts/${encodeURIComponent(attemptId)}/retry`, {
     method: "POST",
     headers: withAuthHeader(),
   });
@@ -526,7 +574,7 @@ export async function healthCheck() {
 }
 
 export async function getHealthProcesses() {
-  return fetchAPI<HealthProcess[]>("/health/processes");
+  return fetchAPI<HealthProcess>("/health/processes");
 }
 
 export async function getHealthMetadata(apiKey: string) {

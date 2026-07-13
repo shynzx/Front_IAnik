@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { pp, ExamSet, ExamCard } from "../../../types";
-import ExamModal from "../ExamModal";
+import type { ExamSet, ExamCard } from "@/types";
+import ExamModal from "@/components/study/ExamModal";
 import CategoryButton from "./CategoryButton";
 import CategoryDrawer from "./CategoryDrawer";
 import { FilterCat, categorizeExam } from "./types";
 
 export default function ExamColumn({ examSets, onUpdateExamCard }: { examSets: ExamSet[]; onUpdateExamCard: (setId: string, cardId: string, status: ExamCard["status"]) => void }) {
-  const [drawerCat, setDrawerCat]   = useState<FilterCat | null>(null);
+  const [drawerCat, setDrawerCat] = useState<FilterCat | null>(null);
   const [openExamId, setOpenExamId] = useState<string | null>(null);
   const activeExam = openExamId ? examSets.find(s => s.id === openExamId) ?? null : null;
 
   const counts = {
-    pending:   examSets.filter(s => !s.loading && categorizeExam(s) === "pending").length,
-    review:    examSets.filter(s => !s.loading && categorizeExam(s) === "review").length,
+    pending: examSets.filter(s => !s.loading && categorizeExam(s) === "pending").length,
+    review: examSets.filter(s => !s.loading && categorizeExam(s) === "review").length,
     completed: examSets.filter(s => !s.loading && categorizeExam(s) === "completed").length,
   };
 
@@ -29,24 +29,23 @@ export default function ExamColumn({ examSets, onUpdateExamCard }: { examSets: E
         />
       )}
 
-      <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "16px", boxSizing: "border-box", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(130,109,210,0.18)", border: "1px solid rgba(130,109,210,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div className="flex-1 min-w-[16rem] flex flex-col bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4 gap-2.5">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 rounded-lg bg-[rgba(130,109,210,0.18)] border border-[rgba(130,109,210,0.3)] flex items-center justify-center shrink-0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/>
             </svg>
           </div>
-          <p style={{ ...pp, fontWeight: 500, fontSize: 14, color: "rgba(255,255,255,0.85)", margin: 0 }}>Exámenes</p>
-          <span style={{ ...pp, fontSize: 11, padding: "1px 7px", borderRadius: 99, background: "rgba(130,109,210,0.18)", color: "#c4b5fd", border: "1px solid rgba(130,109,210,0.25)" }}>
+          <p className="font-medium text-sm text-white/85 m-0">Exámenes</p>
+          <span className="text-[0.7rem] px-1.5 py-0.5 rounded-full bg-[rgba(130,109,210,0.18)] text-[#c4b5fd] border border-[rgba(130,109,210,0.25)]">
             {examSets.filter(s => !s.loading).length}
           </span>
         </div>
 
         {examSets.some(s => s.loading) && (
-          <div style={{ padding: "10px 12px", borderRadius: 11, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-            <p style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", margin: 0 }}>Generando…</p>
+          <div className="px-3 py-2.5 rounded-xl bg-white/[0.025] border border-white/[0.06] flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" className="animate-spin"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <p className="text-xs text-white/45 m-0">Generando…</p>
           </div>
         )}
 

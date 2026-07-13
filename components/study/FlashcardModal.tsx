@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { pp, Flashcard, FlashcardSet } from "../../types";
+import { useState, useEffect, useCallback } from "react";
+import { pp, visiblePaginationIndexes } from "@/lib/constants";
+import type { Flashcard, FlashcardSet } from "@/types";
+import CloseButton from "@/components/ui/CloseButton";
 
 interface FlashcardModalProps {
   set: FlashcardSet;
@@ -14,19 +16,6 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
   const [flipped, setFlipped] = useState(false);
   const [cards, setCards]   = useState<Flashcard[]>(set.cards);
 
-  useEffect(() => { setCards(set.cards); setFlipped(false); }, [set, set.cards]);
-
-  if (cards.length === 0) {
-    return (
-      <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(16px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ background: "rgba(10,6,24,0.97)", border: "1px solid rgba(130,109,210,0.3)", borderRadius: 24, padding: "40px 32px", textAlign: "center" }}>
-          <p style={{ ...pp, fontSize: 15, color: "rgba(255,255,255,0.6)", margin: 0 }}>Este mazo no tiene tarjetas.</p>
-          <button onClick={onClose} style={{ ...pp, marginTop: 16, fontSize: 13, padding: "8px 18px", borderRadius: 9, border: "1px solid rgba(130,109,210,0.3)", background: "rgba(130,109,210,0.1)", color: "#c4b5fd", cursor: "pointer" }}>Cerrar</button>
-        </div>
-      </div>
-    );
-  }
-
   const card    = cards[index];
   const total   = cards.length;
   const learned = cards.filter(c => c.status === "learned").length;
@@ -35,8 +24,15 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
   const goNext = () => setIndex(i => Math.min(i + 1, total - 1));
   const goPrev = () => setIndex(i => Math.max(i - 1, 0));
 
+  const closeModal = useCallback(() => {
+    cards.forEach((current) => {
+      const original = set.cards.find((item) => item.id === current.id);
+      if (original && original.status !== current.status) onUpdateCard(set.id, current.id, current.status);
+    });
+    onClose();
+  }, [cards, onClose, onUpdateCard, set.cards, set.id]);
+
   const markAndNext = (status: Flashcard["status"]) => {
-    onUpdateCard(set.id, card.id, status);
     setCards(prev => prev.map((c, i) => i === index ? { ...c, status } : c));
     setFlipped(false);
     if (index < total - 1) goNext();
@@ -44,44 +40,32 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape")     onClose();
-      if (e.key === "ArrowRight") goNext();
-      if (e.key === "ArrowLeft")  goPrev();
+      if (e.key === "Escape")     closeModal();
+      if (e.key === "ArrowRight") setIndex(i => Math.min(i + 1, total - 1));
+      if (e.key === "ArrowLeft")  setIndex(i => Math.max(i - 1, 0));
       if (e.key === " ")          { e.preventDefault(); setFlipped(f => !f); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [closeModal, total]);
 
   const allDone  = cards.every(c => c.status !== "pending");
   const progress = total > 0 ? Math.round((learned / total) * 100) : 0;
+  const visibleIndexes = visiblePaginationIndexes(total, index);
 
   return (
-    <div
+    <div className="immersive-modal"
       style={{
         position: "fixed", inset: 0, zIndex: 100,
-        background: "rgba(0,0,0,0.88)", backdropFilter: "blur(16px)",
         display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       }}
-      onClick={e => e.target === e.currentTarget && onClose()}
+      onClick={e => e.target === e.currentTarget && closeModal()}
     >
-      <style>{`
-        .fcard { transition: transform 0.42s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; perspective: 1200px; }
-        .fcard.flipped { transform: rotateY(180deg); }
-        .fcard-front { backface-visibility: hidden; transform: rotateY(0deg); }
-        .fcard-back  { backface-visibility: hidden; transform: rotateY(180deg); }
-        @keyframes fcIn { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:none; } }
-      `}</style>
-
-      <div style={{
+      <div className="immersive-panel" role="dialog" aria-modal="true" style={{
         width: "100%", maxWidth: 680,
         maxHeight: "calc(100vh - 48px)",
-        background: "rgba(10,6,24,0.97)",
-        border: "1px solid rgba(130,109,210,0.3)",
-        borderRadius: 24,
         display: "flex", flexDirection: "column",
         overflow: "hidden",
-        boxShadow: "0 32px 80px rgba(0,0,0,0.8)",
         animation: "fcIn .2s ease",
       }}>
 
@@ -120,11 +104,7 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f87171", display: "inline-block" }}/>
               {review}
             </span>
-            <button aria-label="Cerrar" onClick={onClose} style={{ color: "rgba(255,255,255,0.4)", background: "transparent", border: "none", cursor: "pointer", padding: 6, borderRadius: 8, lineHeight: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+            <CloseButton onClick={closeModal} />
           </div>
         </div>
 
@@ -135,7 +115,9 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
 
         {/* ── Dot navigator ── */}
         <div style={{ padding: "10px 22px 0", display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
-          {cards.map((c, i) => (
+          {visibleIndexes.map((i) => {
+            const c = cards[i];
+            return (
             <button
               key={c.id}
               aria-label={`Ir a tarjeta ${i + 1}`}
@@ -145,7 +127,8 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
                 background: i === index ? "#826dd2" : c.status === "learned" ? "#4ade80" : c.status === "review" ? "#f87171" : "rgba(255,255,255,0.15)",
               }}
             />
-          ))}
+          );})}
+          {total > visibleIndexes.length && <span style={{ ...pp, fontSize: 10, color: "rgba(255,255,255,.3)", marginLeft: 4 }}>{index + 1}/{total}</span>}
         </div>
 
         {/* ── Flip card ── */}

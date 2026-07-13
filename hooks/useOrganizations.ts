@@ -3,17 +3,16 @@ import {
   createStudyRoom, joinStudyRoom, listCreatedRooms, listJoinedRooms,
   getStudyRoom, getRoomAccess,
 } from "@/lib/api";
-import type { StudyRoom, StudyRoomAccess } from "@/types";
 
 export function useOrganizations() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const create = useCallback(async (notebookId: string) => {
+  const create = useCallback(async (title: string, notebookId: string) => {
     setLoading(true);
     setError(null);
     try {
-      return await createStudyRoom(notebookId);
+      return await createStudyRoom(title, notebookId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al crear sala";
       setError(msg);
@@ -23,11 +22,11 @@ export function useOrganizations() {
     }
   }, []);
 
-  const join = useCallback(async (code: string) => {
+  const join = useCallback(async (codigo: string) => {
     setLoading(true);
     setError(null);
     try {
-      return await joinStudyRoom(code);
+      return await joinStudyRoom(codigo);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al unirse a la sala";
       setError(msg);

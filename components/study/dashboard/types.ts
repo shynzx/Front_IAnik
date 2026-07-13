@@ -8,7 +8,7 @@ export function formatDate(d?: Date) {
   return d ? d.toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "";
 }
 
-import { ExamSet, FlashcardSet } from "../../../types";
+import { ExamSet, FlashcardSet } from "@/types";
 
 export function categorizeExam(set: ExamSet): FilterCat {
   if (set.cards.some(c => c.status === "pending")) return "pending";

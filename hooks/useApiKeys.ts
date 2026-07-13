@@ -1,17 +1,17 @@
 import { useState, useCallback } from "react";
 import { createApiKey, listApiKeys, deleteApiKey } from "@/lib/api";
-import type { ApiKey, ApiKeyCreateResponse } from "@/types";
+import type { ApiKey } from "@/types";
 
 export function useApiKeys() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keys, setKeys] = useState<ApiKey[]>([]);
 
-  const create = useCallback(async (name: string) => {
+  const create = useCallback(async (title: string) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await createApiKey(name);
+      const res = await createApiKey(title);
       return res;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al crear API key";

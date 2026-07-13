@@ -1,4 +1,4 @@
-import { pp } from "../../../types";
+import { pp } from "@/lib/constants";
 import { pct } from "./types";
 
 export default function OverallBar({ learned, review, pending, total }: { learned: number; review: number; pending: number; total: number }) {

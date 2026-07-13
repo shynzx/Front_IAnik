@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import { BG, pp } from "../../types";
-import Sidebar from "../layout/Sidebar";
+import { useState, FormEvent, useEffect } from "react";
+import Sidebar from "@/components/layout/Sidebar";
+import { loadGoogleScript, initGoogleSignIn, triggerGoogleSignIn } from "@/lib/googleAuth";
 
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<void>;
+  onGoogle: (credential: string) => Promise<void>;
   onGoRegister: () => void;
   onGoRecover: () => void;
   onGoHome: () => void;
 }
 
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
 export default function LoginScreen({
   onLogin,
+  onGoogle,
   onGoRegister,
   onGoRecover,
   onGoHome,
@@ -21,7 +25,26 @@ export default function LoginScreen({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    const onCredential = async (credential: string) => {
+      setGoogleLoading(true);
+      setError("");
+      try {
+        await onGoogle(credential);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo iniciar sesión con Google");
+      } finally {
+        setGoogleLoading(false);
+      }
+    };
+    loadGoogleScript()
+      .then(() => initGoogleSignIn(GOOGLE_CLIENT_ID!, onCredential))
+      .catch(() => {});
+  }, [onGoogle]);
 
   const canSubmit = email.trim() && password.trim() && !loading;
 
@@ -40,69 +63,36 @@ export default function LoginScreen({
   };
 
   const handleGoogle = () => {
-    // TODO: conecta tu proveedor OAuth (NextAuth, Supabase, Firebase, etc.)
-    // TODO: Google OAuth
+    if (!GOOGLE_CLIENT_ID) {
+      setError("Google Sign-In no está configurado. Falta NEXT_PUBLIC_GOOGLE_CLIENT_ID.");
+      return;
+    }
+    setError("");
+    setGoogleLoading(true);
+    loadGoogleScript()
+      .then(() => triggerGoogleSignIn())
+      .catch(() => {
+        setError("No se pudo cargar Google Sign-In");
+        setGoogleLoading(false);
+      });
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: BG,
-        display: "flex",
-        position: "relative",
-        fontFamily: "var(--font-poppins), sans-serif",
-      }}
-    >
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .auth-input:focus {
-          border-color: rgba(130,109,210,0.6) !important;
-          background: rgba(130,109,210,0.07) !important;
-        }
-        .auth-btn-primary:hover:not(:disabled) { background: #9b85e0 !important; }
-        .auth-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-        .google-btn:hover { background: rgba(255,255,255,0.09) !important; border-color: rgba(255,255,255,0.2) !important; }
-        .back-btn:hover { color: #826dd2 !important; background: rgba(130,109,210,0.08) !important; }
-        .logo-btn:hover { opacity: 0.75; }
-        .auth-link:hover { color: #826dd2 !important; }
-      `}</style>
+    <div className="app-background min-h-screen flex relative">
 
       <Sidebar
         phase="onboard"
-        docsOpen={false}
-        docsFullscreen={false}
         hasMessages={false}
         onChatClick={() => {}}
-        onDocsClick={() => {}}
+        onStudyClick={() => {}}
+        onSummariesClick={() => {}}
+        onStudyRoomsClick={() => {}}
       />
 
       {/* Botón de regreso — esquina superior izquierda (sobre el sidebar) */}
       <button
         onClick={onGoHome}
-        className="back-btn"
-        style={{
-          position: "fixed",
-          top: 18,
-          left: 76,
-          zIndex: 60,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          color: "rgba(255,255,255,0.45)",
-          ...pp,
-          fontSize: 13,
-          padding: "6px 10px",
-          borderRadius: 8,
-          transition: "color .15s, background .15s",
-        }}
+        className="fixed top-5 left-[92px] max-md:left-4 z-[60] flex items-center gap-1.5 bg-white/[0.035] border border-white/[0.08] cursor-pointer text-white/55 text-sm px-3 py-2 rounded-xl hover:text-white hover:bg-white/[0.08] transition-all"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
@@ -110,56 +100,13 @@ export default function LoginScreen({
         Volver
       </button>
 
-      <main
-        style={{
-          flex: 1,
-          marginLeft: 64,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "72px 48px 48px",
-          minHeight: "100vh",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 440,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 24,
-            padding: "44px 40px 40px",
-            backdropFilter: "blur(20px)",
-            animation: "fadeUp .38s ease both",
-          }}
-        >
+      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen max-md:pb-24">
+        <div className="glass-panel w-full max-w-[28rem] rounded-[28px] px-6 sm:px-10 pt-9 sm:pt-11 pb-9 animate-[fadeUp_.38s_ease_both]">
           {/* Logo + título — clic lleva al inicio */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 32,
-            }}
-          >
+          <div className="flex items-center gap-3 mb-8">
             <button
               onClick={onGoHome}
-              className="logo-btn"
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 13,
-                background: "rgba(130,109,210,0.15)",
-                border: "1px solid rgba(130,109,210,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                cursor: "pointer",
-                transition: "opacity .15s",
-                padding: 0,
-              }}
+              className="w-[2.875rem] h-[2.875rem] rounded-[0.8125rem] bg-[rgba(130,109,210,0.15)] border border-[rgba(130,109,210,0.3)] flex items-center justify-center shrink-0 cursor-pointer p-0 hover:opacity-75"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#826dd2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3" />
@@ -168,10 +115,10 @@ export default function LoginScreen({
               </svg>
             </button>
             <div>
-              <h1 style={{ ...pp, fontWeight: 600, fontSize: 22, color: "#fff", margin: 0, lineHeight: "1.2" }}>
+              <h1 className="font-semibold text-[1.375rem] text-white m-0 leading-[1.2]">
                 Bienvenido a IAnik
               </h1>
-              <p style={{ ...pp, fontSize: 13, color: "rgba(255,255,255,0.38)", margin: "4px 0 0" }}>
+              <p className="text-[0.8125rem] text-[rgba(255,255,255,0.38)] mt-1 mb-0">
                 Inicia sesión para continuar
               </p>
             </div>
@@ -179,16 +126,7 @@ export default function LoginScreen({
 
           {/* Error */}
           {error && (
-            <div style={{
-              background: "rgba(229,57,53,0.12)",
-              border: "1px solid rgba(229,57,53,0.3)",
-              borderRadius: 10,
-              padding: "10px 14px",
-              marginBottom: 20,
-              ...pp,
-              fontSize: 13,
-              color: "#ef9a9a",
-            }}>
+            <div className="bg-[rgba(229,57,53,0.12)] border border-[rgba(229,57,53,0.3)] rounded-md px-3.5 py-2.5 mb-5 text-sm text-[#ef9a9a]">
               {error}
             </div>
           )}
@@ -197,24 +135,8 @@ export default function LoginScreen({
           <button
             type="button"
             onClick={handleGoogle}
-            className="google-btn"
-            style={{
-              ...pp,
-              width: "100%",
-              padding: "11px 0",
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.13)",
-              color: "rgba(255,255,255,0.85)",
-              fontSize: 14,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              marginBottom: 20,
-              transition: "background .15s, border-color .15s",
-            }}
+            disabled={googleLoading}
+            className="w-full py-[0.6875rem] rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.13)] text-[rgba(255,255,255,0.85)] text-sm cursor-pointer flex items-center justify-center gap-2.5 mb-5 hover:bg-[rgba(255,255,255,0.09)] hover:border-[rgba(255,255,255,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {/* Google "G" icon */}
             <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -227,90 +149,62 @@ export default function LoginScreen({
           </button>
 
           {/* Divider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-            <span style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>o con tu correo</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-white/[0.08]" />
+            <span className="text-xs text-[rgba(255,255,255,0.25)]">o con tu correo</span>
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit}>
             {/* Email */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
+            <div className="mb-4">
+              <label className="text-xs text-[rgba(255,255,255,0.45)] block mb-[0.4375rem] tracking-[0.03125rem] uppercase">
                 Correo electrónico
               </label>
-              <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none flex">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                   </svg>
                 </span>
                 <input
-                  className="auth-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@correo.com"
                   autoComplete="email"
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 11,
-                    padding: "11px 14px 11px 40px",
-                    color: "#fff",
-                    outline: "none",
-                    ...pp,
-                    fontSize: 14,
-                    transition: "border-color .15s, background .15s",
-                    caretColor: "#826dd2",
-                  }}
+                  className="w-full box-border bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-xl px-3.5 py-2.75 pl-10 text-white text-sm outline-none caret-[#826dd2] focus:border-[rgba(130,109,210,0.6)] focus:bg-[rgba(130,109,210,0.07)]"
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.45)", display: "block", marginBottom: 7, letterSpacing: "0.5px", textTransform: "uppercase" }}>
+            <div className="mb-2.5">
+              <label className="text-xs text-[rgba(255,255,255,0.45)] block mb-[0.4375rem] tracking-[0.03125rem] uppercase">
                 Contraseña
               </label>
-              <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", pointerEvents: "none", display: "flex" }}>
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none flex">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0110 0v4"/>
                   </svg>
                 </span>
                 <input
-                  className="auth-input"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 11,
-                    padding: "11px 44px 11px 40px",
-                    color: "#fff",
-                    outline: "none",
-                    ...pp,
-                    fontSize: 14,
-                    transition: "border-color .15s, background .15s",
-                    caretColor: "#826dd2",
-                  }}
+                  className="w-full box-border bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-xl px-3.5 py-2.75 pl-10 text-white text-sm outline-none caret-[#826dd2] focus:border-[rgba(130,109,210,0.6)] focus:bg-[rgba(130,109,210,0.07)]"
                 />
                 <button
                   type="button"
                   aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 2, display: "flex" }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-[rgba(255,255,255,0.3)] p-0.5 flex"
                 >
                   {showPassword ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -329,12 +223,11 @@ export default function LoginScreen({
             </div>
 
             {/* Forgot password */}
-            <div style={{ textAlign: "right", marginBottom: 24 }}>
+            <div className="text-right mb-6">
               <button
                 type="button"
                 onClick={onGoRecover}
-                style={{ ...pp, color: "rgba(255,255,255,0.45)", cursor: "pointer", background: "none", border: "none", fontSize: 13, padding: 0, transition: "color .15s" }}
-                className="auth-link"
+                className="text-[rgba(255,255,255,0.45)] cursor-pointer bg-none border-none text-[0.8125rem] p-0 hover:text-[#826dd2]"
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -344,28 +237,11 @@ export default function LoginScreen({
             <button
               type="submit"
               disabled={!canSubmit}
-              className="auth-btn-primary"
-              style={{
-                ...pp,
-                fontWeight: 400,
-                width: "100%",
-                padding: "12px 0",
-                borderRadius: 12,
-                background: "#826dd2",
-                color: "#fff",
-                border: "none",
-                fontSize: 15,
-                cursor: "pointer",
-                transition: "background .15s, opacity .15s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-              }}
+              className="w-full py-3 rounded-xl bg-[#826dd2] text-white border-none text-[0.9375rem] cursor-pointer flex items-center justify-center gap-2 font-[400] enabled:hover:bg-[#9b85e0] disabled:opacity-45 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} />
+                  <span className="w-4 h-4 border-2 border-[rgba(255,255,255,0.3)] border-t-white rounded-full inline-block animate-[spin_.7s_linear_infinite]" />
                   Entrando...
                 </>
               ) : "Iniciar sesión"}
@@ -373,19 +249,19 @@ export default function LoginScreen({
           </form>
 
           {/* Divider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "28px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-            <span style={{ ...pp, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>o</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <div className="flex items-center gap-3 my-7">
+            <div className="flex-1 h-px bg-white/[0.08]" />
+            <span className="text-xs text-[rgba(255,255,255,0.25)]">o</span>
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
 
           {/* Register link */}
-          <p style={{ ...pp, fontSize: 14, color: "rgba(255,255,255,0.4)", textAlign: "center", margin: 0 }}>
+          <p className="text-sm text-[rgba(255,255,255,0.4)] text-center m-0">
             ¿No tienes cuenta?{" "}
             <button
               type="button"
               onClick={onGoRegister}
-              style={{ ...pp, fontSize: 14, fontWeight: 500, color: "#826dd2", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              className="text-sm font-medium text-[#826dd2] bg-none border-none cursor-pointer p-0"
             >
               Regístrate gratis
             </button>

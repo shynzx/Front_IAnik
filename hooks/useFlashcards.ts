@@ -1,16 +1,15 @@
 import { useState, useCallback } from "react";
 import { generateFlashcards, getNotebookFlashcards, createRoomFlashcard, listRoomFlashcards } from "@/lib/api";
-import type { AssessmentFlashcard } from "@/types";
 
 export function useFlashcards() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = useCallback(async (notebookId: string) => {
+  const generate = useCallback(async (notebookId: string, prompt: string) => {
     setLoading(true);
     setError(null);
     try {
-      return await generateFlashcards(notebookId);
+      return await generateFlashcards(notebookId, prompt);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al generar flashcards";
       setError(msg);
@@ -34,7 +33,7 @@ export function useFlashcards() {
     }
   }, []);
 
-  const createInRoom = useCallback(async (roomId: string, data: { question: string; answer: string; hint?: string }) => {
+  const createInRoom = useCallback(async (roomId: string, data: { prompt: string; cantidad?: number }) => {
     setLoading(true);
     setError(null);
     try {

@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { pp, gradText, BG } from "../../types";
-import Sidebar from "../layout/Sidebar";
-import AuthButtons from "../layout/AuthButtons";
+import Sidebar from "@/components/layout/Sidebar";
+import AuthButtons from "@/components/layout/AuthButtons";
 import DragOverlay from "./DragOverlay";
 
 interface OnboardingScreenProps {
@@ -13,8 +12,6 @@ interface OnboardingScreenProps {
   onGoLogin: () => void;
   onGoRegister: () => void;
 }
-
-const SIDEBAR_W = 64;
 
 export default function OnboardingScreen({
   dragActive,
@@ -27,74 +24,36 @@ export default function OnboardingScreen({
 
   return (
     <div
-      style={{
-        height: "100vh",
-        width: "100vw",
-        overflow: "hidden",
-        background: BG,
-        display: "flex",
-        position: "relative",
-        fontFamily: "var(--font-poppins), sans-serif",
-      }}
+      className="app-background h-screen w-screen overflow-hidden flex relative"
     >
       <Sidebar
         phase="onboard"
-        docsOpen={false}
-        docsFullscreen={false}
         hasMessages={false}
-        onChatClick={() => { } }
-        onDocsClick={() => { } } />
-
+        onChatClick={onGoLogin}
+        onStudyClick={onGoLogin}
+        onSummariesClick={onGoLogin}
+        onStudyRoomsClick={onGoLogin}
+      />
       {/* Main content area, offset by sidebar */}
       <div
-        style={{
-          marginLeft: SIDEBAR_W,
-          width: `calc(100% - ${SIDEBAR_W}px)`,
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          position: "relative",
-        }}
+        className="ml-[76px] w-[calc(100%-76px)] h-screen flex flex-col overflow-hidden relative max-md:ml-0 max-md:w-full max-md:pb-[68px]"
       >
         {/* Auth buttons — inside main area so they never overlap sidebar */}
         <div
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 24,
-            display: "flex",
-            gap: 12,
-            zIndex: 40,
-          }}
+          className="absolute top-5 right-6 flex gap-3 z-40"
         >
           <AuthButtons onGoLogin={onGoLogin} onGoRegister={onGoRegister} />
         </div>
 
         {/* Centered content */}
         <main
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "72px 48px 48px",
-            overflowY: "auto",
-          }}
+          className="flex-1 flex flex-col items-center justify-center pt-[72px] px-12 pb-12 overflow-y-auto"
         >
           {/* Greeting */}
           <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 14,
-              marginBottom: 40,
-              maxWidth: 620,
-              width: "100%",
-            }}
+            className="flex items-start gap-4 mb-8 max-w-[680px] w-full animate-[fadeUp_.5s_ease-out]"
           >
-            <div style={{ marginTop: 2, color: "#826dd2", flexShrink: 0 }}>
+            <div className="mt-[2px] text-[#826dd2] shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M12 3c4.97 0 9 3.582 9 8s-4.03 8-9 8-9-3.582-9-8 4.03-8 9-8" />
@@ -103,18 +62,11 @@ export default function OnboardingScreen({
             </div>
             <div>
               <p
-                style={{
-                  fontWeight: 600,
-                  fontSize: 20,
-                  color: "#fff",
-                  marginBottom: 12,
-                  lineHeight: "28px",
-                  fontFamily: "var(--font-poppins), sans-serif",
-                }}
+                className="font-semibold text-3xl text-white mb-3 leading-tight tracking-tight"
               >
                 Hola, soy IAnik
               </p>
-              <p style={{ ...pp, fontSize: 17, lineHeight: "30px", ...gradText }}>
+              <p className="font-normal text-[17px] leading-[30px] bg-gradient-to-r from-white to-[#c8c8c8] bg-clip-text text-transparent">
                 Estoy aquí para acompañarte. Tus apuntes y documentos estarán
                 guardados de manera segura, y con ellos te daré respuestas
                 claras y útiles para lo que necesites.
@@ -124,23 +76,10 @@ export default function OnboardingScreen({
 
           {/* Upload zone */}
           <div
-            onClick={() => fileRef.current?.click()}
+            onClick={onGoLogin}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}
-            style={{
-              width: "100%",
-              maxWidth: 620,
-              background: "rgba(255,255,255,0.03)",
-              border: "1.5px solid rgba(255,255,255,0.1)",
-              borderRadius: 22,
-              padding: "64px 48px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 22,
-              cursor: "pointer",
-              transition: "border-color .2s, background .2s",
-            }}
+            className="glass-panel w-full max-w-[680px] rounded-[28px] py-16 px-8 flex flex-col items-center gap-[22px] cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:border-[#9b8cf8]/50 hover:bg-[#8b7cf6]/[0.08] animate-[fadeUp_.6s_ease-out]"
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(130,109,210,0.5)";
               (e.currentTarget as HTMLDivElement).style.background  = "rgba(130,109,210,0.06)";
@@ -151,12 +90,7 @@ export default function OnboardingScreen({
             }}
           >
             <div
-              style={{
-                width: 84, height: 84, borderRadius: "50%",
-                background: "#826dd2",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 0 48px rgba(130,109,210,0.55)",
-              }}
+              className="w-[84px] h-[84px] rounded-full bg-[#826dd2] flex items-center justify-center shadow-[0_0_48px_rgba(130,109,210,0.55)]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
@@ -164,15 +98,15 @@ export default function OnboardingScreen({
                 <line x1="12" y1="4" x2="12" y2="16" />
               </svg>
             </div>
-            <p style={{ ...pp, fontSize: 17, textAlign: "center", color: "rgba(255,255,255,0.55)", lineHeight: "26px" }}>
-              <strong style={{ fontWeight: 600, color: "#fff" }}>Sube o arrastra</strong>{" "}tus archivos
+            <p className="font-light text-[17px] text-center text-[rgba(255,255,255,0.55)] leading-[26px]">
+              <strong className="font-semibold text-white">Sube o arrastra</strong>{" "}tus archivos
             </p>
           </div>
 
           <input
             type="file"
             ref={fileRef}
-            style={{ display: "none" }}
+            className="hidden"
             multiple
             accept=".pdf,.doc,.docx"
             onChange={(e) => onFiles(e.target.files)}
