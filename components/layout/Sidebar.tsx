@@ -139,7 +139,7 @@ export default function Sidebar({
                 className="fixed inset-0 z-[70] cursor-default bg-transparent"
                 onClick={() => setProfileMenuOpen(false)}
               />
-              <div className={`absolute z-[80] w-[220px] overflow-hidden rounded-2xl border border-white/[0.1] bg-[#100d1b]/98 p-1.5 shadow-[0_18px_55px_rgba(0,0,0,.65)] backdrop-blur-xl ${expanded ? "bottom-[calc(100%+10px)] left-0" : "bottom-0 left-[calc(100%+14px)]"} max-md:bottom-[calc(100%+14px)] max-md:left-auto max-md:right-0`}>
+              <div className={`absolute z-[80] w-[220px] overflow-hidden rounded-2xl border border-white/[0.1] bg-[#100d1b]/98 p-1.5 shadow-[0_18px_55px_rgba(0,0,0,.65)] backdrop-blur-xl animate-[userPopIn_.2s_cubic-bezier(.22,1,.36,1)_both] ${expanded ? "bottom-[calc(100%+10px)] left-0" : "bottom-0 left-[calc(100%+14px)]"} max-md:bottom-[calc(100%+14px)] max-md:left-auto max-md:right-0`}>
                 <div className="border-b border-white/[0.07] px-3 py-2.5">
                   <p className="m-0 truncate text-sm font-medium text-white">{userName}</p>
                   <p className="m-0 mt-0.5 text-[11px] text-white/40">Cuenta de IAnik</p>

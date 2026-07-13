@@ -137,7 +137,7 @@ export default function Home() {
           }}
           {...nav}
         >
-          {screenContent}
+          <div key={screen} className="screen-transition h-full">{screenContent}</div>
         </AppLayout>
         {profileOpen && user && (
           <ProfileModal user={user} onClose={() => setProfileOpen(false)} onAccountDeleted={() => { setProfileOpen(false); logout(); }} />
@@ -149,7 +149,7 @@ export default function Home() {
 
   return (
     <>
-      {screenContent}
+      <div key={screen} className="screen-transition h-full">{screenContent}</div>
     </>
   );
 }

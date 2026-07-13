@@ -214,7 +214,7 @@ export default function MessageList({
       {displayGroups.length === 0 && <ChatReadyBanner />}
 
       {displayGroups.map((group, gi) => (
-        <div key={group[0]?.id ?? gi} className="w-full flex flex-col mb-6">
+        <div key={group[0]?.id ?? gi} className="w-full flex flex-col mb-6 animate-[messageIn_.28s_cubic-bezier(.22,1,.36,1)_both]">
           {group.map((m) => {
             flatIndex++;
             const currentFlatIndex = flatIndex;
