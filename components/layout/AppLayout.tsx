@@ -49,7 +49,7 @@ export default function AppLayout({
         onProfileClick={headerProps.onProfileClick}
         onLogout={headerProps.onLogout}
       />
-      <main className={`absolute inset-0 ${sidebarExpanded ? "ml-[200px]" : "ml-16"} pt-6 max-md:ml-0 max-md:pt-4 max-md:pb-20 overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-out`}>
+      <main className={`absolute inset-0 ${sidebarExpanded ? "ml-[200px]" : "ml-16"} ${phase === "study-room" ? "pt-0" : "pt-6 max-md:pt-4"} max-md:ml-0 max-md:pb-20 overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-out`}>
         {children}
       </main>
     </div>

@@ -101,7 +101,7 @@ function UserBubble({
 
   return (
     <div
-      className="relative ml-auto mb-3 max-w-[85%] pl-11"
+      className="relative ml-auto mb-3 max-w-[85%] pl-11 max-md:max-w-[94%] max-md:pl-0"
       // Solo activar hover si ningún mensaje está siendo editado
       onMouseEnter={() => { if (!anyEditing) setHovered(true); }}
       onMouseLeave={() => setHovered(false)}
@@ -243,7 +243,7 @@ export default function MessageList({
                 key={m.id}
                 className={`mb-3 ${m.role === 'sys'
                   ? 'py-1.25 px-4 rounded-full ml-auto mr-0 text-sm leading-6 bg-white/[0.06] border border-white/[0.08]'
-                  : 'p-3.25 rounded-[18px_18px_18px_4px] text-base leading-7 bg-white/[0.06] border border-white/[0.08] max-w-[85%] w-fit font-light'
+                  : 'p-3.25 rounded-[18px_18px_18px_4px] text-base leading-7 bg-white/[0.06] border border-white/[0.08] max-w-[85%] w-fit font-light max-md:max-w-[94%]'
                 }`}
               >
                 {m.role === "sys" && <span className="text-white/38">{m.content}</span>}

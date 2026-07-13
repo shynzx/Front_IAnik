@@ -54,6 +54,7 @@ export default function StudyRoomScreen({
   const [copied, setCopied] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ type: "leave" } | { type: "chat"; id: number; name: string } | { type: "file"; id: string; name: string } | null>(null);
   const [viewingSummary, setViewingSummary] = useState<Summary | null>(null);
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uiMessages: Msg[] = messages.map(toMsg);
@@ -80,6 +81,7 @@ export default function StudyRoomScreen({
     if (res) {
       await onRefreshChats();
       onSelectChat(res.id);
+      setMobileChatOpen(true);
     }
     setChatCreating(false);
     setChatSearch("");
@@ -124,7 +126,7 @@ export default function StudyRoomScreen({
         onConfirm={async () => { if (confirmAction.type === "leave") await onLeave(); else if (confirmAction.type === "chat") await onDeleteChat(String(confirmAction.id)); else await onDeleteFile(confirmAction.id); }}
       />}
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 py-4 border-b border-white/[0.08] shrink-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-5 py-4 border-b border-white/[0.08] shrink-0 max-md:px-3 max-md:py-3">
         <div className="flex items-center gap-3 min-w-0">
           <button onClick={onBack} className="ui-secondary px-3 min-h-9">← Volver</button>
           <div>
@@ -141,7 +143,7 @@ export default function StudyRoomScreen({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 py-3 border-b border-white/[0.08] shrink-0 overflow-x-auto">
+      <div className="flex gap-1 px-5 py-3 border-b border-white/[0.08] shrink-0 overflow-x-auto max-md:px-2 max-md:py-2">
         {(["chat", "files", "summaries", "flashcards", "exams"] as const).map((t) => (
           <button
             key={t}
@@ -159,7 +161,7 @@ export default function StudyRoomScreen({
         {tab === "chat" && (
           <div className="flex h-full max-md:flex-col">
             {/* Chats list panel */}
-            <div className="w-64 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-full max-md:max-h-52 max-md:border-r-0 max-md:border-b">
+            <div className={`w-64 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-full max-md:h-full max-md:max-h-none max-md:border-r-0 ${mobileChatOpen ? "max-md:hidden" : ""}`}>
               <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium text-white/50 uppercase tracking-wider">Chats</span>
@@ -193,7 +195,7 @@ export default function StudyRoomScreen({
                     {filteredChats.map((chat) => (
                       <div
                         key={chat.id}
-                        onClick={() => onSelectChat(chat.id)}
+                        onClick={() => { onSelectChat(chat.id); setMobileChatOpen(true); }}
                         className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 ${activeChatId === chat.id ? 'bg-[rgba(130,109,210,0.18)] border border-[rgba(130,109,210,0.3)]' : 'border border-transparent hover:bg-white/[0.05]'}`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -205,7 +207,7 @@ export default function StudyRoomScreen({
                             <div className="text-[0.65rem] text-white/25 mt-0.5">{new Date(chat.created_at).toLocaleDateString()}</div>
                           </div>
                         </div>
-                        <button onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "chat", id: chat.id, name: chat.title }); }} className="opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5">✕</button>
+                        <button onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "chat", id: chat.id, name: chat.title }); }} aria-label={`Eliminar ${chat.title}`} className="opacity-0 group-hover:opacity-100 max-md:opacity-100 text-[#ff6464] text-xs bg-transparent border-none cursor-pointer transition-opacity p-2">✕</button>
                       </div>
                     ))}
                   </div>
@@ -214,7 +216,7 @@ export default function StudyRoomScreen({
             </div>
 
             {/* Chat area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden ${mobileChatOpen ? "max-md:flex" : "max-md:hidden"}`}>
               {!activeChatId ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
@@ -229,18 +231,26 @@ export default function StudyRoomScreen({
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.08] shrink-0">
-                    <h3 className="m-0 text-sm font-semibold text-white">{activeChatTitle}</h3>
-                    <span className="text-xs text-white/30">· {messages.length} mensaje{messages.length !== 1 ? 's' : ''}</span>
+                  <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.08] shrink-0 max-md:px-3">
+                    <button
+                      type="button"
+                      onClick={() => setMobileChatOpen(false)}
+                      aria-label="Volver a la lista de chats"
+                      className="hidden max-md:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70 cursor-pointer"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                    </button>
+                    <h3 className="m-0 min-w-0 truncate text-sm font-semibold text-white">{activeChatTitle}</h3>
+                    <span className="shrink-0 text-xs text-white/30 max-sm:hidden">· {messages.length} mensaje{messages.length !== 1 ? 's' : ''}</span>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center pt-6 px-6 pb-0">
+                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col items-center pt-6 px-6 pb-0 max-md:px-3 max-md:pt-4">
                     <div className="w-full max-w-3xl">
                       <MessageList messages={uiMessages} loading={sending} typing={typing} onTypingComplete={handleTypingComplete} onEditMessage={handleEditMessage} />
                     </div>
                   </div>
 
-                  <div className="shrink-0 flex justify-center px-6 pb-4 pt-3 bg-gradient-to-t from-black/35 to-transparent">
+                  <div className="shrink-0 flex justify-center px-6 pb-4 pt-3 bg-gradient-to-t from-black/35 to-transparent max-md:px-3 max-md:pb-3 max-md:pt-2">
                     <div className="w-full max-w-3xl">
                       <ChatInput value={chatInput} loading={sending} typing={typing} onChange={setChatInput} onSubmit={handleSend} />
                     </div>

@@ -72,7 +72,7 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
   }, [roomId]);
 
   return (
-    <div className="h-full p-6 pb-12 md:p-8 md:pb-16">
+    <div className="h-full min-h-0 w-full overflow-hidden">
       <StudyRoomScreen
           roomId={roomId}
           access={access}

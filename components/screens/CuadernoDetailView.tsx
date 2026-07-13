@@ -174,10 +174,10 @@ export default function CuadernoDetailView({
   const activeChatTitle = chats.find(c => c.id === activeChatId)?.title || "Chat";
 
   return (
-    <div className="h-full flex overflow-hidden max-md:flex-col">
+    <div className="h-full min-h-0 flex overflow-hidden max-md:flex-col">
       {confirmAction && <ConfirmDialog title={confirmAction.type === "chat" ? "Eliminar chat" : "Eliminar archivo"} description={`Se eliminará “${confirmAction.type === "chat" ? confirmAction.name : confirmAction.file.filename}”. Esta acción no se puede deshacer.`} onClose={() => setConfirmAction(null)} onConfirm={async () => { if (confirmAction.type === "chat") await handleDeleteChat(confirmAction.id); else await handleDeleteFile(confirmAction.file); }} />}
       {/* ── Left panel ── */}
-      <div className="w-72 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-full max-md:max-h-60 max-md:border-r-0 max-md:border-b">
+      <div className={`w-72 shrink-0 border-r border-white/[0.08] flex flex-col overflow-hidden bg-black/20 max-md:w-full max-md:h-full max-md:max-h-none max-md:border-r-0 ${activeChatId ? "max-md:hidden" : ""}`}>
         {/* Header */}
         <div className="px-4 pt-5 pb-3 border-b border-white/[0.06]">
           <div className="flex items-center justify-between mb-3">
@@ -247,7 +247,7 @@ export default function CuadernoDetailView({
                         <div className="text-[0.65rem] text-white/25 mt-0.5">{new Date(chat.created_at).toLocaleDateString()}</div>
                       </div>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "chat", id: chat.id, name: chat.title }); }} className="opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5">✕</button>
+                    <button onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "chat", id: chat.id, name: chat.title }); }} aria-label={`Eliminar ${chat.title}`} className="opacity-0 group-hover:opacity-100 max-md:opacity-100 text-[#ff6464] text-xs bg-transparent border-none cursor-pointer transition-opacity p-2">✕</button>
                   </div>
                 ))}
               </div>
@@ -279,7 +279,7 @@ export default function CuadernoDetailView({
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmAction({ type: "file", file }); }}
                       disabled={deletingFileId === file.id}
-                      className={`opacity-0 group-hover:opacity-100 text-[#ff6464] text-[0.65rem] bg-transparent border-none cursor-pointer transition-opacity px-1 py-0.5 ${deletingFileId === file.id ? 'opacity-100' : ''}`}
+                      className={`opacity-0 group-hover:opacity-100 max-md:opacity-100 text-[#ff6464] text-xs bg-transparent border-none cursor-pointer transition-opacity p-2 ${deletingFileId === file.id ? 'opacity-100' : ''}`}
                     >
                       {deletingFileId === file.id ? "..." : "✕"}
                     </button>
@@ -301,8 +301,16 @@ export default function CuadernoDetailView({
       </div>
 
       {/* ── Right: chat area ── */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/[0.08] shrink-0">
+      <div className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden relative ${activeChatId ? "max-md:flex" : "max-md:hidden"}`}>
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/[0.08] shrink-0 max-md:px-3 max-md:py-3">
+          <button
+            type="button"
+            onClick={() => setActiveChatId(null)}
+            aria-label="Volver a la lista de chats"
+            className="hidden max-md:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70 cursor-pointer"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
           <h2 className="text-base font-semibold text-white m-0">{activeChatTitle}</h2>
           {activeChatId && (
             <span className="text-xs text-white/30">· {messages.length} mensaje{messages.length !== 1 ? 's' : ''}</span>
@@ -323,13 +331,13 @@ export default function CuadernoDetailView({
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center pt-6 px-6 md:px-8 pb-0">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col items-center pt-6 px-6 md:px-8 pb-0 max-md:px-3 max-md:pt-4">
               <div className="w-full max-w-3xl">
                 <MessageList messages={messages} loading={sending} typing={typing} onTypingComplete={handleTypingComplete} onEditMessage={handleEditMessage} />
               </div>
             </div>
 
-            <div className="shrink-0 flex justify-center px-6 md:px-8 pb-6 pt-4 bg-gradient-to-t from-black/35 to-transparent">
+            <div className="shrink-0 flex justify-center px-6 md:px-8 pb-6 pt-4 bg-gradient-to-t from-black/35 to-transparent max-md:px-3 max-md:pb-3 max-md:pt-2">
               <div className="w-full max-w-3xl">
                 {chatError && <p role="alert" className="m-0 mb-2 px-1 text-sm text-red-300">{chatError}</p>}
                 <ChatInput value={input} loading={sending} typing={typing} onChange={(value) => { setInput(value); if (chatError) setChatError(null); }} onSubmit={handleSend} />

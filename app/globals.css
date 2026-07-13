@@ -16,8 +16,8 @@ html { background: #08070d; }
 
 body {
   margin: 0;
-  font-weight: 300;
-  font-size: 16px;
+  font-weight: 400;
+  font-size: 1rem;
   line-height: 1.6;
   color: #f7f5ff;
   background: #08070d;
@@ -39,7 +39,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border: 3px solid transparent; border-radius: 999px; background-clip: padding-box; }
 
 .app-background {
-  background: radial-gradient(circle at 82% 5%, rgba(139,124,246,.20), transparent 30rem), radial-gradient(circle at 20% 90%, rgba(77,164,255,.10), transparent 28rem), linear-gradient(145deg, #09080f 0%, #100d1b 55%, #171027 100%);
+  background: linear-gradient(135deg, #000000 0%, #3c2850 100%);
 }
 
 .glass-panel { background: var(--surface); border: 1px solid var(--stroke); box-shadow: 0 24px 80px rgba(0,0,0,.28); backdrop-filter: blur(20px); }
@@ -47,9 +47,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .page-shell { width: 100%; max-width: 1440px; margin-inline: auto; padding: 1.5rem 1.75rem 4rem; }
 .page-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.75rem; }
 .page-title { margin: 0; font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 600; letter-spacing: -.035em; color: white; }
-.page-subtitle { margin: .4rem 0 0; color: rgba(255,255,255,.45); font-size: .875rem; line-height: 1.5; }
+.page-subtitle { margin: .4rem 0 0; color: rgba(255,255,255,.58); font-size: .875rem; font-weight: 450; line-height: 1.5; }
 .page-header h1 { margin: 0; font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 600; letter-spacing: -.035em; color: white; }
-.page-header h1 + p { margin: .4rem 0 0; color: rgba(255,255,255,.45); font-size: .875rem; line-height: 1.5; }
+.page-header h1 + p { margin: .4rem 0 0; color: rgba(255,255,255,.58); font-size: .875rem; font-weight: 450; line-height: 1.5; }
 .ui-card { background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.09); border-radius: 1.125rem; box-shadow: 0 12px 40px rgba(0,0,0,.14); }
 .ui-card-interactive { transition: transform .22s ease, border-color .22s ease, background .22s ease, box-shadow .22s ease; }
 .ui-card-interactive:hover { transform: translateY(-3px); border-color: rgba(139,124,246,.42); background: rgba(139,124,246,.07); box-shadow: 0 18px 44px rgba(0,0,0,.24); }
@@ -72,7 +72,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .modal-panel { width: 100%; max-width: 28rem; max-height: min(88vh, 760px); overflow-y: auto; border-radius: 1.25rem; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(160deg,#191625,#11101b); box-shadow: 0 30px 90px rgba(0,0,0,.55); }
 .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.5rem 1.5rem 0; }
 .modal-title { margin: 0; color: white; font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; }
-.modal-description { margin: .35rem 0 0; color: rgba(255,255,255,.4); font-size: .8125rem; line-height: 1.5; }
+.modal-description { margin: .35rem 0 0; color: rgba(255,255,255,.55); font-size: .8125rem; font-weight: 450; line-height: 1.5; }
 .modal-body { padding: 1.5rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: .625rem; margin-top: 1.5rem; }
 .immersive-modal { position: fixed !important; inset: 0 !important; z-index: 1000 !important; padding: clamp(.75rem, 3vw, 1.5rem) !important; background: rgba(3,3,8,.94) !important; backdrop-filter: none !important; display: flex !important; align-items: center !important; justify-content: center !important; }

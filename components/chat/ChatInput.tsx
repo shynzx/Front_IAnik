@@ -91,7 +91,7 @@ export default function ChatInput({
 
       <form onSubmit={handleSubmit}>
         <div
-          className={`flex flex-col bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border border-white/10 rounded-2xl relative gap-0 ${attachments.length ? 'py-2 pr-2 pl-1.5 pb-1.5' : 'p-2 pl-1.5'}`}
+          className={`flex flex-col bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border border-white/10 rounded-2xl relative gap-0 max-md:rounded-xl ${attachments.length ? 'py-2 pr-2 pl-1.5 pb-1.5' : 'p-2 pl-1.5'}`}
           style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
         >
 
@@ -171,7 +171,7 @@ export default function ChatInput({
               {menuOpen && (
                 <div
                   ref={menuRef}
-                  className="absolute bottom-full left-0 mb-2.5 bg-[rgba(14,8,30,0.97)] backdrop-blur-xl border border-white/10 rounded-xl p-1.5 min-w-75 shadow-[0_12px_400px_rgba(0,0,0,0.6),0_0_0_1px_rgba(130,109,210,0.15)] z-[100] animate-[attachMenuIn_0.15s_ease]"
+                  className="absolute bottom-full left-0 mb-2.5 bg-[rgba(14,8,30,0.97)] backdrop-blur-xl border border-white/10 rounded-xl p-1.5 min-w-75 shadow-[0_12px_400px_rgba(0,0,0,0.6),0_0_0_1px_rgba(130,109,210,0.15)] z-[100] animate-[attachMenuIn_0.15s_ease] max-md:min-w-0 max-md:w-[calc(100vw-1.5rem)]"
                 >
                   <button
                     type="button"

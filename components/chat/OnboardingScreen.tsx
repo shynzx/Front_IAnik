@@ -66,7 +66,7 @@ export default function OnboardingScreen({
               >
                 Hola, soy IAnik
               </p>
-              <p className="font-light text-[17px] leading-[30px] bg-gradient-to-r from-white to-[#a5a5a5] bg-clip-text text-transparent">
+              <p className="font-normal text-[17px] leading-[30px] bg-gradient-to-r from-white to-[#c8c8c8] bg-clip-text text-transparent">
                 Estoy aquí para acompañarte. Tus apuntes y documentos estarán
                 guardados de manera segura, y con ellos te daré respuestas
                 claras y útiles para lo que necesites.

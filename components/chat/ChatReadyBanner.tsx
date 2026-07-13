@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 const gradText: CSSProperties = {
-  background: "linear-gradient(90deg, #ffffff 0%, #a5a5a5 100%)",
+  background: "linear-gradient(90deg, #ffffff 0%, #c8c8c8 100%)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
@@ -22,7 +22,7 @@ export default function ChatReadyBanner() {
         </h1>
       </div>
       <p
-        className="text-base leading-8 max-w-[520px] font-[family-name:var(--font-poppins)] font-light"
+        className="text-base leading-8 max-w-[520px] font-[family-name:var(--font-poppins)] font-normal"
         style={gradText}
       >
         Tus apuntes y documentos están guardados de manera segura. Ahora
