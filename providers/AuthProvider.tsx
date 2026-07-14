@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { setStoredToken, clearStoredToken, loginUser, registerUser, getMe, logoutUser } from "@/lib/api";
+import { APIError, setStoredToken, clearStoredToken, loginUser, registerUser, getMe, logoutUser } from "@/lib/api";
 import { parseGoogleCredential, googleSyntheticPassword } from "@/lib/googleAuth";
 import type { User, LoginResponse } from "@/types";
 
@@ -16,6 +16,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -50,9 +51,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(`${res.token_type} ${res.access_token}`);
     try {
       const me = await getMe();
-      if (me) setUser(me);
-    } catch {
-      console.warn("No se pudo obtener el perfil del usuario");
+      if (!me) throw new Error("El servidor no devolvió el perfil del usuario");
+      setUser(me);
+    } catch (error) {
+      clearStoredToken();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_token_type");
+      setToken(null);
+      setUser(null);
+      throw new Error(error instanceof Error ? error.message : "No se pudo completar la sesión");
     }
   }, []);
 
@@ -70,33 +77,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Adapta el id_token de Google al flujo email/password del back. Si el
   // usuario no existe (login falla) lo registramos (upsert) y reintentamos.
   const loginWithGoogle = useCallback(async (credential: string) => {
-    const { email, name, sub } = parseGoogleCredential(credential);
+    const { email, name, sub } = parseGoogleCredential(credential, GOOGLE_CLIENT_ID);
     const password = googleSyntheticPassword(sub);
     try {
       const res = await loginUser(email, password);
       await setSession(res);
       return;
-    } catch {
-      // usuario ausente o contraseña distinta -> intentamos registrar
+    } catch (error) {
+      if (!(error instanceof APIError)) {
+        throw new Error("No se pudo conectar con el servidor. Inténtalo nuevamente.");
+      }
+      if (error.status === 401) {
+        throw new Error("Este correo ya tiene una cuenta con contraseña. Inicia sesión con tu correo para vincularla.");
+      }
+      if (error.status !== 404) throw error;
     }
-    let registerErr: unknown = null;
     try {
       await registerUser(email, password, name);
-    } catch (err) {
-      registerErr = err;
-      console.error("Google register failed:", err);
-    }
-    try {
       const res = await loginUser(email, password);
       await setSession(res);
-    } catch (loginErr) {
-      if (registerErr) {
-        throw new Error(
-          "No se pudo completar el registro con Google: " +
-            (registerErr instanceof Error ? registerErr.message : String(registerErr))
-        );
+    } catch (error) {
+      if (error instanceof APIError && (error.status === 400 || error.status === 409)) {
+        throw new Error("No se pudo vincular Google porque el correo ya está registrado.");
       }
-      throw loginErr;
+      if (!(error instanceof APIError)) throw new Error("Se perdió la conexión durante el registro con Google.");
+      throw error;
     }
   }, [setSession]);
 

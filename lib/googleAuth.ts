@@ -15,6 +15,19 @@ declare global {
             callback: (response: GoogleCredentialResponse) => void;
             auto_select?: boolean;
           }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              type?: "standard" | "icon";
+              theme?: "outline" | "filled_blue" | "filled_black";
+              size?: "large" | "medium" | "small";
+              text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+              shape?: "rectangular" | "pill" | "circle" | "square";
+              logo_alignment?: "left" | "center";
+              width?: number;
+              locale?: string;
+            }
+          ) => void;
           prompt: (
             callback?: (notification: {
               isNotDisplayed: () => boolean;
@@ -64,28 +77,47 @@ export function loadGoogleScript(): Promise<void> {
 }
 
 let initializedClientId: string | null = null;
+let activeCredentialCallback: ((credential: string) => void) | null = null;
 
 export function initGoogleSignIn(
   clientId: string,
   callback: (credential: string) => void
 ): void {
   if (typeof window === "undefined" || !window.google?.accounts?.id) return;
+  activeCredentialCallback = callback;
   if (initializedClientId === clientId) return;
   initializedClientId = clientId;
   window.google.accounts.id.initialize({
     client_id: clientId,
     callback: (response: GoogleCredentialResponse) => {
-      if (response.credential) callback(response.credential);
+      if (response.credential) activeCredentialCallback?.(response.credential);
     },
   });
 }
 
-export function triggerGoogleSignIn(): void {
-  window.google?.accounts?.id.prompt();
+export function clearGoogleSignInCallback(callback: (credential: string) => void): void {
+  if (activeCredentialCallback === callback) activeCredentialCallback = null;
 }
 
-export function parseGoogleCredential(credential: string): GoogleProfile {
+export function renderGoogleSignInButton(parent: HTMLElement): void {
+  if (!window.google?.accounts?.id) throw new Error("Google Sign-In todavía no está disponible");
+  parent.replaceChildren();
+  window.google.accounts.id.renderButton(parent, {
+    type: "standard",
+    theme: "filled_black",
+    size: "large",
+    text: "continue_with",
+    shape: "rectangular",
+    logo_alignment: "left",
+    width: Math.min(Math.max(parent.clientWidth, 240), 400),
+    locale: "es",
+  });
+}
+
+export function parseGoogleCredential(credential: string, expectedClientId?: string): GoogleProfile {
   try {
+    const parts = credential.split(".");
+    if (parts.length !== 3 || !parts[1]) throw new Error("Formato de credencial inválido");
     const base64 = credential
       .split(".")[1]
       .replace(/-/g, "+")
@@ -96,15 +128,28 @@ export function parseGoogleCredential(credential: string): GoogleProfile {
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
         .join("")
     );
-    const payload = JSON.parse(json);
+    const payload = JSON.parse(json) as Record<string, unknown>;
+    const now = Math.floor(Date.now() / 1000);
+    const issuer = payload.iss;
+    const audience = payload.aud;
+    const audienceMatches = !expectedClientId || audience === expectedClientId || (Array.isArray(audience) && audience.includes(expectedClientId));
+
+    if (issuer !== "accounts.google.com" && issuer !== "https://accounts.google.com") throw new Error("Emisor de Google inválido");
+    if (!audienceMatches) throw new Error("La credencial pertenece a otra aplicación");
+    if (typeof payload.exp !== "number" || payload.exp <= now) throw new Error("La credencial de Google expiró");
+    if (typeof payload.nbf === "number" && payload.nbf > now + 60) throw new Error("La credencial de Google aún no es válida");
+    if (payload.email_verified !== true) throw new Error("Google no verificó este correo");
+    if (typeof payload.email !== "string" || !payload.email.trim()) throw new Error("La credencial no incluye un correo");
+    if (typeof payload.sub !== "string" || !payload.sub.trim()) throw new Error("La credencial no incluye un identificador");
+
     return {
       email: payload.email,
-      name: payload.name || (payload.email ? payload.email.split("@")[0] : "Usuario"),
+      name: typeof payload.name === "string" && payload.name.trim() ? payload.name : payload.email.split("@")[0],
       sub: payload.sub,
-      picture: payload.picture,
+      picture: typeof payload.picture === "string" ? payload.picture : undefined,
     };
-  } catch {
-    throw new Error("No se pudo leer la credencial de Google");
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "No se pudo leer la credencial de Google");
   }
 }
 

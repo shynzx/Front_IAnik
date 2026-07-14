@@ -32,6 +32,13 @@ type APIRequestOptions = RequestInit & {
   skipJsonContentType?: boolean;
 };
 
+export class APIError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "APIError";
+  }
+}
+
 function buildUrl(endpoint: string, params?: Record<string, string>) {
   const url = API_URL ? new URL(endpoint, API_URL) : new URL(endpoint);
   if (params) {
@@ -64,7 +71,7 @@ export async function fetchAPI<T = unknown>(endpoint: string, { params, skipJson
   });
 
   if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
+    throw new APIError(await parseErrorMessage(res), res.status);
   }
 
   if (res.status === 204) {
