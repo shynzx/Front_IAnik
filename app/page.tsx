@@ -114,7 +114,7 @@ export default function Home() {
     if (screen === "onboard") return <OnboardingScreen dragActive={false} onFiles={() => setScreen("login")} onDragLeave={() => {}} onGoLogin={() => setScreen("login")} onGoRegister={() => setScreen("register")} />;
 
     if (screen === "study") return <StudyView notebookId={activeCuadernoId ?? ""} {...nav} />;
-    if (screen === "summaries") return <SummariesView notebookId={activeCuadernoId ?? ""} {...nav} />;
+    if (screen === "summaries") return <SummariesView notebookId={activeCuadernoId ?? ""} onNotebookChange={setActiveCuadernoId} {...nav} />;
     if (screen === "study-rooms") return <StudyRoomsView {...nav} onOpenRoom={(id) => { setActiveRoomId(id); setScreen("study-room"); }} />;
     if (screen === "study-room" && activeRoomId) return <StudyRoomDetailView roomId={activeRoomId} {...nav} onBack={() => setScreen("study-rooms")} />;
     if (screen === "cuaderno-detail" && activeCuadernoId) return <CuadernoDetailView notebookId={activeCuadernoId} onBack={() => setScreen("chat")} {...nav} />;
