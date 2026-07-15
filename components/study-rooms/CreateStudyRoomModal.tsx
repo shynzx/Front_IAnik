@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { listNotebooks } from "@/lib/api";
 import type { Notebook } from "@/types";
 import CloseButton from "@/components/ui/CloseButton";
+import { useFeedback } from "@/providers/FeedbackProvider";
 
 interface CreateStudyRoomModalProps {
   loading: boolean;
@@ -18,6 +19,22 @@ export default function CreateStudyRoomModal({ loading, onCreate, onClose }: Cre
   const [loadingNotebooks, setLoadingNotebooks] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createdRoom, setCreatedRoom] = useState<{ id: number; codigo: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const { notify } = useFeedback();
+
+  const copyRoomCode = async () => {
+    if (!createdRoom) return;
+    setCopyError(null);
+    try {
+      await navigator.clipboard.writeText(createdRoom.codigo);
+      setCopied(true);
+      notify({ message: "Código de la sala copiado.", tone: "success" });
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopyError("No se pudo copiar automáticamente. Selecciona el código e inténtalo de nuevo.");
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -50,8 +67,14 @@ export default function CreateStudyRoomModal({ loading, onCreate, onClose }: Cre
           </div>
           <div className="px-6 pb-6 text-center">
             <div className="text-sm text-white/60 mb-3">Comparte este código con tus compañeros:</div>
-            <div className="text-3xl font-bold text-[#826dd2] tracking-widest mb-6 font-mono">{createdRoom.codigo}</div>
-            <button onClick={onClose} className="ui-primary">Entendido</button>
+            <button type="button" onClick={copyRoomCode} className="group mb-3 flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[#826dd2]/30 bg-[#826dd2]/10 px-4 py-4 text-left transition-colors hover:border-[#826dd2]/55 hover:bg-[#826dd2]/15" aria-label={`Copiar código ${createdRoom.codigo}`}>
+              <span className="select-all font-mono text-2xl font-bold tracking-[0.2em] text-[#a99cff]">{createdRoom.codigo}</span>
+              <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-white/60 group-hover:text-white">
+                {copied ? <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>Copiado</> : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>Copiar código</>}
+              </span>
+            </button>
+            {copyError && <p role="alert" className="mb-4 mt-0 text-left text-xs text-red-300">{copyError}</p>}
+            <button onClick={onClose} className="ui-primary mt-3 w-full">Entendido</button>
           </div>
         </div>
       </div>
