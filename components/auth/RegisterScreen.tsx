@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import Sidebar from "@/components/layout/Sidebar";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 interface RegisterScreenProps {
@@ -74,19 +73,10 @@ export default function RegisterScreen({
   return (
     <div className="app-background min-h-screen flex relative">
 
-      <Sidebar
-        phase="onboard"
-        hasMessages={false}
-        onChatClick={() => {}}
-        onStudyClick={() => {}}
-        onSummariesClick={() => {}}
-        onStudyRoomsClick={() => {}}
-      />
-
       {/* Botón de regreso */}
       <button
         onClick={onGoHome}
-        className="fixed top-5 left-[92px] max-md:left-4 z-[60] flex items-center gap-1.5 bg-white/[0.035] border border-white/[0.08] cursor-pointer text-white/55 text-sm px-3 py-2 rounded-xl hover:text-white hover:bg-white/[0.08] transition-all"
+        className="fixed top-5 left-5 max-md:left-4 z-[60] flex items-center gap-1.5 bg-white/[0.035] border border-white/[0.08] cursor-pointer text-white/55 text-sm px-3 py-2 rounded-xl hover:text-white hover:bg-white/[0.08] transition-all"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
@@ -94,7 +84,7 @@ export default function RegisterScreen({
         Volver
       </button>
 
-      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen overflow-y-auto max-md:pb-24">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen overflow-y-auto">
         <div className="glass-panel w-full max-w-[28rem] rounded-[28px] px-6 sm:px-10 pt-9 sm:pt-11 pb-9 animate-[fadeUp_.38s_ease_both]">
           {/* Logo + título */}
           <div className="flex items-center gap-3 mb-8">

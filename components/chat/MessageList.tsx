@@ -182,16 +182,33 @@ export default function MessageList({
   onEditMessage,
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  const [showJump, setShowJump] = useState(false);
+  const pinnedRef = useRef(true);
 
   // Un solo índice controla qué mensaje está en edición; null = ninguno
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const scrollToBottom = useCallback(
-    () => endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }),
+    () => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); pinnedRef.current = true; setShowJump(false); },
     []
   );
 
-  useEffect(() => { scrollToBottom(); }, [messages, loading, scrollToBottom]);
+  useEffect(() => { if (pinnedRef.current) scrollToBottom(); else setShowJump(true); }, [messages, loading, scrollToBottom]);
+
+  useEffect(() => {
+    const end = endRef.current;
+    let container = end?.parentElement ?? null;
+    while (container && getComputedStyle(container).overflowY !== "auto" && getComputedStyle(container).overflowY !== "scroll") container = container.parentElement;
+    if (!container) return;
+    const handleScroll = () => {
+      const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 96;
+      pinnedRef.current = nearBottom;
+      if (nearBottom) setShowJump(false);
+    };
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Cerrar edición si llegan mensajes nuevos (p.ej. después de enviar)
   useEffect(() => { setEditingIndex(null); }, [messages.length]);
@@ -271,6 +288,7 @@ export default function MessageList({
       ))}
 
       <div ref={endRef} />
+      {showJump && <button type="button" className="sticky bottom-3 self-center rounded-full border border-white/10 bg-[#1b1728] px-4 py-2 text-xs text-white shadow-xl" onClick={scrollToBottom}>Nuevos mensajes ↓</button>}
     </div>
   );
 }

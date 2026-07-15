@@ -5,6 +5,9 @@ import type { ExamSet, FlashcardSet, Flashcard, ExamCard, AssessmentFlashcard, A
 import DashboardScreen from "@/components/study/DashboardScreen";
 import { useQuizzes } from "@/hooks/useQuizzes";
 import { useFlashcards } from "@/hooks/useFlashcards";
+import InlineError from "@/components/ui/InlineError";
+import Skeleton from "@/components/ui/Skeleton";
+import { cachedResource, invalidateResource } from "@/lib/resourceCache";
 
 interface StudyViewProps {
   notebookId: string | undefined;
@@ -21,12 +24,17 @@ export default function StudyView({ notebookId }: StudyViewProps) {
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [examSets, setExamSets] = useState<ExamSet[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!notebookId) return;
+    setLoadingContent(true);
+    setLoadError(null);
     Promise.all([
-      listFlashcards(notebookId),
-      listExams(notebookId),
+      cachedResource(`study:${notebookId}:flashcards`, () => listFlashcards(notebookId)),
+      cachedResource(`study:${notebookId}:exams`, () => listExams(notebookId)),
     ]).then(([rawFlashcards, rawExams]) => {
       const fcs = rawFlashcards as unknown as AssessmentFlashcard[];
       const exs = rawExams as unknown as AssessmentExam[];
@@ -48,8 +56,8 @@ export default function StudyView({ notebookId }: StudyViewProps) {
       }));
       setFlashcardSets(fSets);
       setExamSets(eSets);
-    }).catch(() => {});
-  }, [notebookId, listFlashcards, listExams]);
+    }).catch((cause) => setLoadError(cause instanceof Error ? cause.message : "No se pudo cargar el material de estudio.")).finally(() => setLoadingContent(false));
+  }, [notebookId, listFlashcards, listExams, retryKey]);
 
   const handleUpdateFlashcard = async (setId: string, cardId: string, status: Flashcard["status"]) => {
     setFlashcardSets((prev) => prev.map((s) =>
@@ -76,6 +84,7 @@ export default function StudyView({ notebookId }: StudyViewProps) {
           createdAt: new Date(),
         };
         setFlashcardSets(prev => [...prev, newSet]);
+        invalidateResource(`study:${notebookId}:flashcards`);
       }
     } finally { setGenerating(false); }
   };
@@ -97,12 +106,15 @@ export default function StudyView({ notebookId }: StudyViewProps) {
           createdAt: new Date(exam.created_at),
         };
         setExamSets(prev => [...prev, newSet]);
+        invalidateResource(`study:${notebookId}:exams`);
       }
     } finally { setGenerating(false); }
   };
 
   return (
     <div className="page-shell h-full overflow-hidden">
+      {loadError && <div className="mb-4"><InlineError message={loadError} onRetry={() => { invalidateResource(`study:${notebookId}:`); setRetryKey((value) => value + 1); }} /></div>}
+      {loadingContent && examSets.length === 0 && flashcardSets.length === 0 ? <div className="grid gap-4" role="status" aria-label="Cargando progreso"><Skeleton className="h-24" /><Skeleton className="h-52" /></div> :
       <DashboardScreen
         examSets={examSets}
         flashcardSets={flashcardSets}
@@ -111,7 +123,7 @@ export default function StudyView({ notebookId }: StudyViewProps) {
         onGenerateFlashcards={handleGenerateFlashcards}
         onGenerateExam={handleGenerateExam}
         generating={generating}
-      />
+      />}
     </div>
   );
 }

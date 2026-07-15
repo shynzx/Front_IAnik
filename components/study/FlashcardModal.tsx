@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { pp, visiblePaginationIndexes } from "@/lib/constants";
 import type { Flashcard, FlashcardSet } from "@/types";
 import CloseButton from "@/components/ui/CloseButton";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface FlashcardModalProps {
   set: FlashcardSet;
@@ -12,9 +13,13 @@ interface FlashcardModalProps {
 }
 
 export default function FlashcardModal({ set, onClose, onUpdateCard }: FlashcardModalProps) {
-  const [index, setIndex]   = useState(0);
+  const storageKey = `ianik:flashcards:${set.id}`;
+  const saved = typeof window !== "undefined" ? localStorage.getItem(storageKey) : null;
+  const restored = saved ? (() => { try { return JSON.parse(saved) as { index?: number; cards?: Flashcard[] }; } catch { return null; } })() : null;
+  const [index, setIndex]   = useState(() => Math.min(restored?.index ?? 0, Math.max(set.cards.length - 1, 0)));
   const [flipped, setFlipped] = useState(false);
-  const [cards, setCards]   = useState<Flashcard[]>(set.cards);
+  const [cards, setCards]   = useState<Flashcard[]>(() => restored?.cards?.length === set.cards.length ? restored.cards : set.cards);
+  const [exitConfirm, setExitConfirm] = useState(false);
 
   const card    = cards[index];
   const total   = cards.length;
@@ -32,6 +37,14 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
     onClose();
   }, [cards, onClose, onUpdateCard, set.cards, set.id]);
 
+  const requestClose = useCallback(() => {
+    const hasProgress = index > 0 || cards.some((card, cardIndex) => card.status !== set.cards[cardIndex]?.status);
+    if (hasProgress && !cards.every((card) => card.status !== "pending")) setExitConfirm(true);
+    else closeModal();
+  }, [cards, closeModal, index, set.cards]);
+
+  useEffect(() => { localStorage.setItem(storageKey, JSON.stringify({ index, cards })); }, [cards, index, storageKey]);
+
   const markAndNext = (status: Flashcard["status"]) => {
     setCards(prev => prev.map((c, i) => i === index ? { ...c, status } : c));
     setFlipped(false);
@@ -40,26 +53,27 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape")     closeModal();
+      if (e.key === "Escape")     requestClose();
       if (e.key === "ArrowRight") setIndex(i => Math.min(i + 1, total - 1));
       if (e.key === "ArrowLeft")  setIndex(i => Math.max(i - 1, 0));
       if (e.key === " ")          { e.preventDefault(); setFlipped(f => !f); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [closeModal, total]);
+  }, [requestClose, total]);
 
   const allDone  = cards.every(c => c.status !== "pending");
   const progress = total > 0 ? Math.round((learned / total) * 100) : 0;
   const visibleIndexes = visiblePaginationIndexes(total, index);
 
-  return (
+  return (<>
+    {exitConfirm && <ConfirmDialog title="Salir de las flashcards" description="Tu avance queda guardado y podrás continuar después." confirmLabel="Salir" onClose={() => setExitConfirm(false)} onConfirm={closeModal} />}
     <div className="immersive-modal"
       style={{
         position: "fixed", inset: 0, zIndex: 100,
         display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       }}
-      onClick={e => e.target === e.currentTarget && closeModal()}
+      onClick={e => e.target === e.currentTarget && requestClose()}
     >
       <div className="immersive-panel" role="dialog" aria-modal="true" style={{
         width: "100%", maxWidth: 680,
@@ -104,7 +118,7 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f87171", display: "inline-block" }}/>
               {review}
             </span>
-            <CloseButton onClick={closeModal} />
+            <CloseButton onClick={requestClose} />
           </div>
         </div>
 
@@ -263,6 +277,6 @@ export default function FlashcardModal({ set, onClose, onUpdateCard }: Flashcard
           </p>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }

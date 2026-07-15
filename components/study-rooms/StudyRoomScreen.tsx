@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam, Summary } from "@/types";
 import type { Msg } from "@/types";
 import MessageList from "@/components/chat/MessageList";
 import ChatInput from "@/components/chat/ChatInput";
 import SummaryModal from "@/components/summaries/SummaryModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { useDraft } from "@/hooks/useDraft";
+import { useFeedback } from "@/providers/FeedbackProvider";
 
 interface StudyRoomScreenProps {
   roomId: number;
@@ -20,7 +22,7 @@ interface StudyRoomScreenProps {
   activeChatId: number | null;
   onSelectChat: (chatId: number | null) => void;
   loading: boolean;
-  onUploadFile: (file: File) => Promise<void>;
+  onUploadFile: (file: File, onProgress: (progress: number) => void, signal?: AbortSignal) => Promise<void>;
   onDeleteFile: (fileId: string) => Promise<void>;
   onSendMessage: (chatId: string, content: string) => Promise<ChatMessage | null>;
   onGenerateFlashcards: (prompt: string) => Promise<AssessmentFlashcard[]>;
@@ -30,6 +32,8 @@ interface StudyRoomScreenProps {
   onRefreshChats: () => Promise<void>;
   onBack: () => void;
   onLeave: () => Promise<void>;
+  initialTab?: string;
+  onTabChange?: (tab: "chat" | "files" | "summaries" | "flashcards" | "exams") => void;
 }
 
 function toMsg(m: ChatMessage): Msg {
@@ -40,10 +44,12 @@ export default function StudyRoomScreen({
   roomId, access, files, chats, messages, flashcards, exams, summaries,
   activeChatId, onSelectChat,
   onUploadFile, onDeleteFile, onSendMessage,
-  onGenerateFlashcards, onGenerateExam, onCreateChat, onDeleteChat, onRefreshChats, onBack, onLeave,
+  onGenerateFlashcards, onGenerateExam, onCreateChat, onDeleteChat, onRefreshChats, onBack, onLeave, initialTab = "chat", onTabChange,
 }: StudyRoomScreenProps) {
-  const [tab, setTab] = useState<"chat" | "files" | "summaries" | "flashcards" | "exams">("chat");
-  const [chatInput, setChatInput] = useState("");
+  const validTab = (["chat", "files", "summaries", "flashcards", "exams"] as const).find((item) => item === initialTab) ?? "chat";
+  const [tab, setTab] = useState<"chat" | "files" | "summaries" | "flashcards" | "exams">(validTab);
+  useEffect(() => { queueMicrotask(() => setTab(validTab)); }, [validTab]);
+  const { value: chatInput, setValue: setChatInput, clear: clearChatDraft } = useDraft(`room:${roomId}:chat:${activeChatId ?? "new"}`);
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [flashcardPrompt, setFlashcardPrompt] = useState("");
@@ -55,20 +61,27 @@ export default function StudyRoomScreen({
   const [confirmAction, setConfirmAction] = useState<{ type: "leave" } | { type: "chat"; id: number; name: string } | { type: "file"; id: string; name: string } | null>(null);
   const [viewingSummary, setViewingSummary] = useState<Summary | null>(null);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadName, setUploadName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadController = useRef<AbortController | null>(null);
+  const { notify } = useFeedback();
 
   const uiMessages: Msg[] = messages.map(toMsg);
 
   const handleSend = async () => {
-    if (!chatInput.trim() || !activeChatId || sending) return;
+    if (!chatInput.trim() || !activeChatId || sending) return false;
     setSending(true);
     const content = chatInput.trim();
-    setChatInput("");
-    const reply = await onSendMessage(String(activeChatId), content);
-    if (reply) {
-      setTyping(true);
-    }
-    setSending(false);
+    try {
+      const reply = await onSendMessage(String(activeChatId), content);
+      clearChatDraft();
+      if (reply) setTyping(true);
+      return true;
+    } catch (error) {
+      notify({ message: error instanceof Error ? error.message : "No se pudo enviar el mensaje.", tone: "error" });
+      return false;
+    } finally { setSending(false); }
   };
 
   const handleTypingComplete = () => { setTyping(false); };
@@ -90,9 +103,18 @@ export default function StudyRoomScreen({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await onUploadFile(file);
+    if (!/\.(pdf|doc|docx)$/i.test(file.name) || file.size > 25 * 1024 * 1024 || files.some((item) => item.filename.toLowerCase() === file.name.toLowerCase())) {
+      notify({ message: !/\.(pdf|doc|docx)$/i.test(file.name) ? "Formato no compatible." : file.size > 25 * 1024 * 1024 ? "El archivo supera 25 MB." : "Ese archivo ya existe en la sala.", tone: "error" });
+      return;
+    }
+    const controller = new AbortController(); uploadController.current = controller; setUploadName(file.name); setUploadProgress(0);
+    try { await onUploadFile(file, setUploadProgress, controller.signal); notify({ message: "Archivo subido correctamente.", tone: "success" }); }
+    catch (error) { notify({ message: error instanceof Error ? error.message : "No se pudo subir el archivo.", tone: "error" }); }
+    finally { setUploadProgress(null); setUploadName(""); uploadController.current = null; }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  useEffect(() => () => uploadController.current?.abort(), []);
 
   const handleGenerateFlashcards = async () => {
     if (!flashcardPrompt.trim() || generating) return;
@@ -147,7 +169,7 @@ export default function StudyRoomScreen({
         {(["chat", "files", "summaries", "flashcards", "exams"] as const).map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); onTabChange?.(t); }}
             className={`px-4 py-2 rounded-lg border-none text-[0.8rem] font-medium cursor-pointer whitespace-nowrap transition-colors ${tab === t ? "bg-[rgba(130,109,210,0.2)] text-[#826dd2]" : "bg-transparent text-white/50 hover:text-white/70 hover:bg-white/[0.05]"}`}
           >
             {t === "chat" ? "Chat" : t === "files" ? `Archivos (${files.length})` : t === "summaries" ? `Resúmenes (${summaries.length})` : t === "flashcards" ? `Flashcards (${flashcards.length})` : `Exámenes (${exams.length})`}
@@ -268,7 +290,7 @@ export default function StudyRoomScreen({
               <div className="text-sm text-white/60">{files.length} archivo(s)</div>
               <div className="flex gap-2">
                 <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="px-5 py-2.5 rounded-lg border-none bg-[#826dd2] text-white text-sm font-medium cursor-pointer hover:bg-[#7059be] transition-colors">Subir archivo</button>
+                {uploadProgress === null ? <button onClick={() => fileInputRef.current?.click()} className="px-5 py-2.5 rounded-lg border-none bg-[#826dd2] text-white text-sm font-medium cursor-pointer hover:bg-[#7059be] transition-colors">Subir archivo</button> : <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><div className="flex items-center justify-between gap-3 text-xs text-white/60"><span className="truncate">{uploadName}</span><button type="button" className="border-0 bg-transparent text-red-300" onClick={() => uploadController.current?.abort()}>{uploadProgress}% · Cancelar</button></div><div className="mt-2 h-1.5 overflow-hidden rounded bg-white/10"><span className="block h-full bg-[#826dd2] transition-[width]" style={{ width: `${uploadProgress}%` }} /></div></div>}
               </div>
             </div>
             {files.length === 0 ? (

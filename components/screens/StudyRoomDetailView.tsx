@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { StudyRoomAccess, NotebookFile, NotebookChat, ChatMessage, AssessmentFlashcard, AssessmentExam, Summary } from "@/types";
 import StudyRoomScreen from "@/components/study-rooms/StudyRoomScreen";
 import { useStudyRooms } from "@/hooks/useStudyRooms";
+import InlineError from "@/components/ui/InlineError";
 
 interface StudyRoomDetailViewProps {
   roomId: number;
@@ -12,9 +13,12 @@ interface StudyRoomDetailViewProps {
   onSummariesClick: () => void;
   onStudyRoomsClick: () => void;
   onBack: () => void;
+  initialSection?: string;
+  initialChatId?: number | null;
+  onNavigationChange?: (section: string, chatId: number | null) => void;
 }
 
-export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailViewProps) {
+export default function StudyRoomDetailView({ roomId, onBack, initialSection = "chat", initialChatId = null, onNavigationChange }: StudyRoomDetailViewProps) {
   const studyRooms = useStudyRooms();
   const [access, setAccess] = useState<StudyRoomAccess | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
@@ -23,7 +27,11 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
   const [flashcards, setFlashcards] = useState<AssessmentFlashcard[]>([]);
   const [exams, setExams] = useState<AssessmentExam[]>([]);
   const [summaries, setSummaries] = useState<Summary[]>([]);
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
+  const [activeChatId, setActiveChatId] = useState<number | null>(initialChatId);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [currentSection, setCurrentSection] = useState(initialSection);
 
   const loadChats = async () => {
     try {
@@ -42,7 +50,10 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
 
   useEffect(() => {
     const load = async () => {
+      setInitialLoading(true);
+      setLoadError(null);
       try {
+        if (!Number.isFinite(roomId) || roomId <= 0) throw new Error("La sala solicitada no es válida.");
         const [acc, f] = await Promise.all([
           studyRooms.getRoomAccess(String(roomId)),
           studyRooms.listFiles(String(roomId)),
@@ -51,8 +62,9 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
         setFiles(f);
         const c = await loadChats();
         if (c.length > 0) {
-          const firstId = c[0].id;
+          const firstId = initialChatId && c.some((chat) => chat.id === initialChatId) ? initialChatId : c[0].id;
           setActiveChatId(firstId);
+          onNavigationChange?.(currentSection, firstId);
           await loadMessages(firstId);
         }
         const [fcs, exs, roomSummaries] = await Promise.all([
@@ -64,12 +76,16 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
         setExams(exs);
         const names = new Map(f.map((file) => [String(file.id), file.filename]));
         setSummaries(roomSummaries.map((summary) => summary.fileId ? { ...summary, title: `Resumen de ${names.get(summary.fileId) ?? "archivo"}`, docName: names.get(summary.fileId) ?? summary.docName } : summary));
-      } catch (e) { console.warn("Error loading room:", e); }
+      } catch (e) { setLoadError(e instanceof Error ? e.message : "No se pudo cargar la sala."); }
+      finally { setInitialLoading(false); }
     };
     load();
     // The room hook exposes memoized commands; roomId is the lifecycle boundary for this initial orchestration.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId]);
+  }, [roomId, reloadKey]);
+
+  if (initialLoading && !access) return <div className="flex h-full items-center justify-center" role="status" aria-label="Cargando sala"><span className="ui-loader" /></div>;
+  if (loadError && !access) return <div className="page-shell"><button type="button" className="ui-secondary mb-4" onClick={onBack}>← Volver a salas</button><InlineError message={loadError} onRetry={() => setReloadKey((value) => value + 1)} /></div>;
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden">
@@ -83,8 +99,11 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
           exams={exams}
           summaries={summaries}
           activeChatId={activeChatId}
+          initialTab={initialSection}
+          onTabChange={(section) => { setCurrentSection(section); onNavigationChange?.(section, activeChatId); }}
           onSelectChat={(chatId) => {
             setActiveChatId(chatId);
+            onNavigationChange?.(currentSection, chatId);
             if (chatId) {
               loadMessages(chatId);
             } else {
@@ -92,8 +111,8 @@ export default function StudyRoomDetailView({ roomId, onBack }: StudyRoomDetailV
             }
           }}
           loading={studyRooms.loading}
-          onUploadFile={async (file) => {
-            await studyRooms.uploadFile(String(roomId), file);
+          onUploadFile={async (file, onProgress, signal) => {
+            await studyRooms.uploadFileWithProgress(String(roomId), file, onProgress, signal);
             setFiles(await studyRooms.listFiles(String(roomId)));
           }}
           onDeleteFile={async (fileId) => {

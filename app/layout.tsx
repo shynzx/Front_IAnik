@@ -3,9 +3,11 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { FeedbackProvider } from "@/providers/FeedbackProvider";
+import { Suspense } from "react";
 
 const poppins = Poppins({
-  weight: ["300", "400", "600"],
+  weight: ["300", "400", "500", "600"],
   subsets: ["latin"],
   variable: "--font-poppins",
 });
@@ -28,7 +30,7 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased font-sans`}
       >
-        <ErrorBoundary><AuthProvider>{children}</AuthProvider></ErrorBoundary>
+        <ErrorBoundary><AuthProvider><FeedbackProvider><Suspense fallback={<div className="app-background flex min-h-screen items-center justify-center"><span className="ui-loader" /></div>}>{children}</Suspense></FeedbackProvider></AuthProvider></ErrorBoundary>
       </body>
     </html>
   );

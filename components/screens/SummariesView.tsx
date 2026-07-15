@@ -5,6 +5,7 @@ import type { Doc, Notebook, Summary } from "@/types";
 import SummaryScreen from "@/components/summaries/SummaryScreen";
 import { useSummaries } from "@/hooks/useSummaries";
 import { listNotebookFiles, listNotebooks } from "@/lib/api";
+import { cachedResource, invalidateResource } from "@/lib/resourceCache";
 
 interface SummariesViewProps {
   notebookId: string;
@@ -32,8 +33,8 @@ export default function SummariesView({ notebookId, onNotebookChange, onChatClic
     }
 
     const [summaryList, files] = await Promise.all([
-      list(),
-      listNotebookFiles(selectedNotebookId),
+      cachedResource(`summaries:${selectedNotebookId}:list`, list),
+      cachedResource(`summaries:${selectedNotebookId}:files`, () => listNotebookFiles(selectedNotebookId)),
     ]);
     const mappedDocs: Doc[] = files.map((file) => ({
       id: String(file.id),
@@ -84,11 +85,13 @@ export default function SummariesView({ notebookId, onNotebookChange, onChatClic
 
   const handleGenerateSummary = async (fileId?: string) => {
     await generate(fileId);
+    invalidateResource(`summaries:${selectedNotebookId}:`);
     await refresh();
   };
 
   const handleDeleteSummary = async (id: string) => {
     await remove(id);
+    invalidateResource(`summaries:${selectedNotebookId}:`);
     setSummaries((current) => current.filter((summary) => summary.id !== id));
   };
 
@@ -125,7 +128,7 @@ export default function SummariesView({ notebookId, onNotebookChange, onChatClic
           <button onClick={onChatClick} className="ui-primary">Ir a Cuadernos</button>
         </div>
       ) : selectedNotebookId ? (
-        <SummaryScreen docs={docs} summaries={summaries} onGenerateSummary={handleGenerateSummary} onDeleteSummary={handleDeleteSummary} />
+        <SummaryScreen docs={docs} summaries={summaries} loading={summariesApi.loading} onGenerateSummary={handleGenerateSummary} onDeleteSummary={handleDeleteSummary} />
       ) : null}
     </div>
   );

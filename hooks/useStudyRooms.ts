@@ -118,6 +118,12 @@ export function useStudyRooms() {
     }
   }, []);
 
+  const uploadFileWithProgress = useCallback(async (roomId: string, file: File, onProgress: (progress: number) => void, signal?: AbortSignal) => {
+    setError(null);
+    try { return await api.uploadRoomFileWithProgress(roomId, file, onProgress, signal); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo subir el archivo"); throw cause; }
+  }, []);
+
   const listFiles = useCallback(async (roomId: string): Promise<NotebookFile[]> => {
     try {
       return await api.listRoomFiles(roomId);
@@ -244,7 +250,7 @@ export function useStudyRooms() {
     loading, error, clearError,
     createRoom, joinRoom, leaveRoom,
     listCreatedRooms, listJoinedRooms, getRoom, getRoomAccess,
-    uploadFile, listFiles, deleteFile,
+    uploadFile, uploadFileWithProgress, listFiles, deleteFile,
     listChats, getChatMessages, sendMessage, createChat, deleteChat, listSummaries,
     generateFlashcards, listFlashcards,
     generateExam, listExams,

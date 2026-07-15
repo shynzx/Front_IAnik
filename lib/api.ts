@@ -1,4 +1,5 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { AppError, type AppErrorKind } from "@/types/ui";
 
 /* Compat: maps to NotebookFile shape used by existing UI */
 export type RAGFileResponse = {
@@ -30,13 +31,24 @@ import type {
 type APIRequestOptions = RequestInit & {
   params?: Record<string, string>;
   skipJsonContentType?: boolean;
+  timeoutMs?: number;
+  retry?: boolean;
 };
 
-export class APIError extends Error {
-  constructor(message: string, public readonly status: number) {
-    super(message);
+export class APIError extends AppError {
+  constructor(message: string, public readonly status: number, kind: AppErrorKind = statusKind(status), retryable = status >= 500) {
+    super(message, kind, status, retryable);
     this.name = "APIError";
   }
+}
+
+function statusKind(status: number): AppErrorKind {
+  if (status === 401) return "unauthorized";
+  if (status === 403) return "forbidden";
+  if (status === 404) return "not_found";
+  if (status === 400 || status === 409 || status === 422) return "validation";
+  if (status >= 500) return "server";
+  return "unknown";
 }
 
 function buildUrl(endpoint: string, params?: Record<string, string>) {
@@ -61,24 +73,44 @@ async function parseErrorMessage(res: Response) {
   return `Error ${res.status}: ${res.statusText || "Request failed"}`;
 }
 
-export async function fetchAPI<T = unknown>(endpoint: string, { params, skipJsonContentType, headers, ...options }: APIRequestOptions = {}) {
-  const res = await fetch(buildUrl(endpoint, params), {
-    ...options,
-    headers: {
-      ...(skipJsonContentType ? {} : { "Content-Type": "application/json" }),
-      ...(headers || {}),
-    },
-  });
+export async function fetchAPI<T = unknown>(endpoint: string, { params, skipJsonContentType, headers, timeoutMs = 45_000, retry, signal, ...options }: APIRequestOptions = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const maxAttempts = (retry ?? method === "GET") ? 2 : 1;
+  let lastError: unknown;
 
-  if (!res.ok) {
-    throw new APIError(await parseErrorMessage(res), res.status);
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const abortFromParent = () => controller.abort(signal?.reason);
+    signal?.addEventListener("abort", abortFromParent, { once: true });
+    const timer = window.setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
+    try {
+      const res = await fetch(buildUrl(endpoint, params), {
+        ...options,
+        signal: controller.signal,
+        headers: { ...(skipJsonContentType ? {} : { "Content-Type": "application/json" }), ...(headers || {}) },
+      });
+      if (!res.ok) {
+        const error = new APIError(await parseErrorMessage(res), res.status);
+        if (res.status === 401 && typeof window !== "undefined") window.dispatchEvent(new CustomEvent("ianik:unauthorized"));
+        if (attempt + 1 < maxAttempts && [502, 503, 504].includes(res.status)) { lastError = error; continue; }
+        throw error;
+      }
+      if (res.status === 204) return null as T;
+      return (await res.json()) as T;
+    } catch (cause) {
+      if (cause instanceof APIError) throw cause;
+      if (signal?.aborted) throw new AppError("La solicitud fue cancelada.", "network", undefined, true);
+      lastError = cause;
+      if (attempt + 1 >= maxAttempts) {
+        const timedOut = controller.signal.aborted;
+        throw new AppError(timedOut ? "El servidor tardó demasiado en responder." : "No se pudo conectar con el servidor.", "network", undefined, true);
+      }
+    } finally {
+      window.clearTimeout(timer);
+      signal?.removeEventListener("abort", abortFromParent);
+    }
   }
-
-  if (res.status === 204) {
-    return null as T;
-  }
-
-  return (await res.json()) as T;
+  throw lastError;
 }
 
 let _token: string | null = null;
@@ -203,6 +235,33 @@ export async function uploadNotebookFile(notebookId: string, file: File) {
   });
 }
 
+function uploadFileWithProgress<T>(endpoint: string, file: File, onProgress: (progress: number) => void, signal?: AbortSignal) {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", buildUrl(endpoint));
+    const token = getStoredToken();
+    if (token) xhr.setRequestHeader("Authorization", token);
+    xhr.responseType = "json";
+    xhr.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100)); };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) { onProgress(100); resolve(xhr.response as T); return; }
+      if (xhr.status === 401) window.dispatchEvent(new CustomEvent("ianik:unauthorized"));
+      const message = typeof xhr.response?.detail === "string" ? xhr.response.detail : `No se pudo subir el archivo (${xhr.status}).`;
+      reject(new APIError(message, xhr.status));
+    };
+    xhr.onerror = () => reject(new AppError("No se pudo conectar con el servidor.", "network", undefined, true));
+    xhr.onabort = () => reject(new AppError("La carga fue cancelada.", "network", undefined, true));
+    const abort = () => xhr.abort();
+    signal?.addEventListener("abort", abort, { once: true });
+    xhr.onloadend = () => signal?.removeEventListener("abort", abort);
+    const form = new FormData(); form.append("file", file); xhr.send(form);
+  });
+}
+
+export function uploadNotebookFileWithProgress(notebookId: string, file: File, onProgress: (progress: number) => void, signal?: AbortSignal) {
+  return uploadFileWithProgress<{ id: number; filename: string; message: string }>(`/notebooks/${encodeURIComponent(notebookId)}/files`, file, onProgress, signal);
+}
+
 export async function listNotebookFiles(notebookId: string) {
   return fetchAPI<NotebookFile[]>(`/notebooks/${encodeURIComponent(notebookId)}/files`, {
     headers: withAuthHeader(),
@@ -313,6 +372,10 @@ export async function uploadRoomFile(roomId: string, file: File) {
     skipJsonContentType: true,
     headers: withAuthHeader(),
   });
+}
+
+export function uploadRoomFileWithProgress(roomId: string, file: File, onProgress: (progress: number) => void, signal?: AbortSignal) {
+  return uploadFileWithProgress<{ id: number; filename: string; message: string }>(`/study-rooms/${encodeURIComponent(roomId)}/files`, file, onProgress, signal);
 }
 
 export async function listRoomFiles(roomId: string) {

@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useState, FormEvent } from "react";
-import Sidebar from "@/components/layout/Sidebar";
 
 
 interface RecoverScreenProps {
@@ -108,20 +107,11 @@ export default function RecoverScreen({
   return (
     <div className="app-background min-h-screen flex relative">
 
-      <Sidebar
-        phase="onboard"
-        hasMessages={false}
-        onChatClick={() => {}}
-        onStudyClick={() => {}}
-        onSummariesClick={() => {}}
-        onStudyRoomsClick={() => {}}
-      />
-
-      <main className="flex-1 ml-[76px] max-md:ml-0 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen max-md:pb-24">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-20 min-h-screen">
         {step !== "done" && (
           <button
             onClick={step === "email" ? onGoLogin : () => { setStep("email"); setError(""); }}
-            className="absolute top-7 left-[5.25rem] text-[0.8125rem] text-[rgba(255,255,255,0.35)] bg-none border-none cursor-pointer flex items-center gap-1.5 hover:text-[#826dd2]"
+            className="absolute top-7 left-5 text-[0.8125rem] text-[rgba(255,255,255,0.35)] bg-none border-none cursor-pointer flex items-center gap-1.5 hover:text-[#826dd2]"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"/>

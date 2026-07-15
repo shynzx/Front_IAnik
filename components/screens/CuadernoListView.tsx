@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import type { Notebook } from "@/types";
 import { listNotebooks, createNotebook, deleteNotebook, createApiKey } from "@/lib/api";
 import CloseButton from "@/components/ui/CloseButton";
+import InlineError from "@/components/ui/InlineError";
+import { useFeedback } from "@/providers/FeedbackProvider";
 
 interface CuadernoListViewProps {
   onSelect: (notebookId: string) => void;
@@ -23,10 +25,14 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Notebook | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"recent" | "name">(() => typeof window !== "undefined" && localStorage.getItem("ianik:notebook-sort") === "name" ? "name" : "recent");
+  const { notify } = useFeedback();
 
   const load = async () => {
     setLoading(true);
-    try { setNotebooks(await listNotebooks()); } catch { setNotebooks([]); } finally { setLoading(false); }
+    try { setNotebooks(await listNotebooks()); setLoadError(null); } catch (cause) { setLoadError(cause instanceof Error ? cause.message : "No se pudieron cargar los cuadernos."); } finally { setLoading(false); }
   };
 
   useEffect(() => { void load(); }, []);
@@ -45,6 +51,7 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
       setDescription("");
       setCreateOpen(false);
       await load();
+      notify({ message: "Cuaderno creado correctamente.", tone: "success" });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo crear el cuaderno");
     } finally { setCreating(false); }
@@ -53,8 +60,14 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    try { await deleteNotebook(String(deleteTarget.id)); await load(); } finally { setDeleteTarget(null); setDeleting(false); }
+    try { await deleteNotebook(String(deleteTarget.id)); await load(); notify({ message: "Cuaderno eliminado.", tone: "success" }); }
+    catch (cause) { notify({ message: cause instanceof Error ? cause.message : "No se pudo eliminar el cuaderno.", tone: "error" }); }
+    finally { setDeleteTarget(null); setDeleting(false); }
   };
+
+  const visibleNotebooks = notebooks
+    .filter((notebook) => `${notebook.title} ${notebook.description || ""}`.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => sort === "name" ? a.title.localeCompare(b.title, "es") : new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
     <div className="page-shell min-h-full">
@@ -68,7 +81,12 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
         </button>
       </div>
 
-      {loading ? (
+      <div className="mb-5 flex gap-2 max-sm:flex-col">
+        <input className="ui-input" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar cuadernos…" aria-label="Buscar cuadernos" />
+        <select className="ui-input sm:max-w-52" value={sort} onChange={(event) => { const value = event.target.value as "recent" | "name"; setSort(value); localStorage.setItem("ianik:notebook-sort", value); }} aria-label="Ordenar cuadernos"><option value="recent">Más recientes</option><option value="name">Nombre</option></select>
+      </div>
+
+      {loadError ? <InlineError message={loadError} onRetry={() => void load()} /> : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-label="Cargando cuadernos">
           {[1, 2, 3, 4].map((item) => <div key={item} className="ui-card h-36 animate-pulse bg-white/[0.035]" />)}
         </div>
@@ -81,9 +99,9 @@ export default function CuadernoListView({ onSelect }: CuadernoListViewProps) {
           <p className="text-sm text-white/40 mt-2 mb-6 max-w-sm">Agrupa documentos de un tema para conversar con ellos y generar material de estudio.</p>
           <button onClick={() => setCreateOpen(true)} className="ui-primary">Crear cuaderno</button>
         </div>
-      ) : (
+      ) : visibleNotebooks.length === 0 ? <div className="ui-empty"><h2 className="m-0 text-lg font-semibold">Sin resultados</h2><p className="mb-5 mt-2 text-sm text-white/50">Prueba con otro término de búsqueda.</p><button type="button" className="ui-secondary" onClick={() => setSearch("")}>Limpiar búsqueda</button></div> : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {notebooks.map((notebook) => (
+          {visibleNotebooks.map((notebook) => (
             <article key={notebook.id} onClick={() => onSelect(String(notebook.id))} className="ui-card ui-card-interactive group p-5 cursor-pointer min-h-40 flex flex-col" tabIndex={0} role="button" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onSelect(String(notebook.id)); }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#8b7cf6]/10 border border-[#8b7cf6]/20 flex items-center justify-center text-[#a99cff] shrink-0">

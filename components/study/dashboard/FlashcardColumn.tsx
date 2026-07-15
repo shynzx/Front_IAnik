@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { FlashcardSet, Flashcard } from "@/types";
-import FlashcardModal from "@/components/study/FlashcardModal";
+import dynamic from "next/dynamic";
+const FlashcardModal = dynamic(() => import("@/components/study/FlashcardModal"), { ssr: false, loading: () => <div className="immersive-modal" role="status"><span className="ui-loader" /></div> });
 import CategoryButton from "./CategoryButton";
 import CategoryDrawer from "./CategoryDrawer";
 import { FilterCat, categorizeFc } from "./types";

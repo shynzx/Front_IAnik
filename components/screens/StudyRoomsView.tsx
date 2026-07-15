@@ -6,6 +6,7 @@ import StudyRoomListScreen from "@/components/study-rooms/StudyRoomListScreen";
 import CreateStudyRoomModal from "@/components/study-rooms/CreateStudyRoomModal";
 import JoinStudyRoomModal from "@/components/study-rooms/JoinStudyRoomModal";
 import { useStudyRooms } from "@/hooks/useStudyRooms";
+import InlineError from "@/components/ui/InlineError";
 
 interface StudyRoomsViewProps {
   onChatClick: () => void;
@@ -40,6 +41,7 @@ export default function StudyRoomsView({ onOpenRoom }: StudyRoomsViewProps) {
 
   return (
     <div className="page-shell min-h-full">
+      {studyRooms.error && <div className="mb-4"><InlineError message={studyRooms.error} onRetry={() => void loadRooms()} /></div>}
       <StudyRoomListScreen
         rooms={rooms}
         loading={studyRooms.loading}

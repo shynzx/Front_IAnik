@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { pp, visiblePaginationIndexes } from "@/lib/constants";
 import type { ExamCard, ExamSet } from "@/types";
 import CloseButton from "@/components/ui/CloseButton";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface ExamModalProps {
   set: ExamSet;
@@ -12,11 +13,15 @@ interface ExamModalProps {
 }
 
 export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps) {
-  const [index, setIndex]                     = useState(0);
+  const storageKey = `ianik:exam:${set.id}`;
+  const saved = typeof window !== "undefined" ? localStorage.getItem(storageKey) : null;
+  const restored = saved ? (() => { try { return JSON.parse(saved) as { index?: number; cards?: ExamCard[]; selectedAnswers?: Record<string, number> }; } catch { return null; } })() : null;
+  const [index, setIndex]                     = useState(() => Math.min(restored?.index ?? 0, Math.max(set.cards.length - 1, 0)));
   const [flipped, setFlipped]                 = useState(false);
-  const [cards, setCards]                     = useState<ExamCard[]>(set.cards);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
+  const [cards, setCards]                     = useState<ExamCard[]>(() => restored?.cards?.length === set.cards.length ? restored.cards : set.cards);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>(restored?.selectedAnswers ?? {});
   const [showHint, setShowHint]               = useState(false);
+  const [exitConfirm, setExitConfirm]         = useState(false);
 
   const card     = cards[index];
   const total    = cards.length;
@@ -35,9 +40,17 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
     onClose();
   }, [cards, onClose, onUpdateCard, set.cards, set.id]);
 
+  const requestClose = useCallback(() => {
+    const hasProgress = index > 0 || Object.keys(selectedAnswers).length > 0 || cards.some((card, cardIndex) => card.status !== set.cards[cardIndex]?.status);
+    if (hasProgress && !cards.every((card) => card.status !== "pending")) setExitConfirm(true);
+    else closeModal();
+  }, [cards, closeModal, index, selectedAnswers, set.cards]);
+
+  useEffect(() => { localStorage.setItem(storageKey, JSON.stringify({ index, cards, selectedAnswers })); }, [cards, index, selectedAnswers, storageKey]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeModal();
+      if (e.key === "Escape") requestClose();
       if (e.key === "ArrowRight") setIndex(i => Math.min(i + 1, total - 1));
       if (e.key === "ArrowLeft") setIndex(i => Math.max(i - 1, 0));
       if (e.key === " " && (!card.answerOptions || card.answerOptions.length === 0)) {
@@ -47,21 +60,22 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [card.answerOptions, closeModal, total]);
+  }, [card.answerOptions, requestClose, total]);
 
   const allDone = cards.every(c => c.status !== "pending");
   const isQuiz  = card.answerOptions && card.answerOptions.length > 0;
   const currentSelected = selectedAnswers[card.id] !== undefined ? selectedAnswers[card.id] : null;
   const visibleIndexes = visiblePaginationIndexes(total, index);
 
-  return (
+  return (<>
+    {exitConfirm && <ConfirmDialog title="Salir del examen" description="Tus respuestas quedan guardadas y podrás continuar después." confirmLabel="Salir" onClose={() => setExitConfirm(false)} onConfirm={closeModal} />}
     <div
       className="fc-overlay immersive-modal"
       style={{
         position: "fixed", inset: 0, zIndex: 100,
         display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       }}
-      onClick={e => e.target === e.currentTarget && closeModal()}
+      onClick={e => e.target === e.currentTarget && requestClose()}
     >
       <div className="fc-modal-container immersive-panel" role="dialog" aria-modal="true" style={{
         width: "100%", maxWidth: 840,
@@ -104,7 +118,7 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f87171", display: "inline-block" }}/>
               {review}
             </span>
-            <CloseButton onClick={closeModal} />
+            <CloseButton onClick={requestClose} />
           </div>
         </div>
 
@@ -317,6 +331,6 @@ export default function ExamModal({ set, onClose, onUpdateCard }: ExamModalProps
           </p>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }

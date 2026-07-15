@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { ExamSet, ExamCard } from "@/types";
-import ExamModal from "@/components/study/ExamModal";
+import dynamic from "next/dynamic";
+const ExamModal = dynamic(() => import("@/components/study/ExamModal"), { ssr: false, loading: () => <div className="immersive-modal" role="status"><span className="ui-loader" /></div> });
 import CategoryButton from "./CategoryButton";
 import CategoryDrawer from "./CategoryDrawer";
 import { FilterCat, categorizeExam } from "./types";

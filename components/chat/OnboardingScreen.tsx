@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import Sidebar from "@/components/layout/Sidebar";
 import AuthButtons from "@/components/layout/AuthButtons";
 import DragOverlay from "./DragOverlay";
 
@@ -26,17 +25,9 @@ export default function OnboardingScreen({
     <div
       className="app-background h-screen w-screen overflow-hidden flex relative"
     >
-      <Sidebar
-        phase="onboard"
-        hasMessages={false}
-        onChatClick={onGoLogin}
-        onStudyClick={onGoLogin}
-        onSummariesClick={onGoLogin}
-        onStudyRoomsClick={onGoLogin}
-      />
       {/* Main content area, offset by sidebar */}
       <div
-        className="ml-[76px] w-[calc(100%-76px)] h-screen flex flex-col overflow-hidden relative max-md:ml-0 max-md:w-full max-md:pb-[68px]"
+        className="w-full h-screen flex flex-col overflow-hidden relative"
       >
         {/* Auth buttons — inside main area so they never overlap sidebar */}
         <div

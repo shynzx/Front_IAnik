@@ -117,6 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      clearStoredToken();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_token_type");
+      setToken(null);
+      setUser(null);
+    };
+    window.addEventListener("ianik:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("ianik:unauthorized", handleUnauthorized);
+  }, []);
+
   return (
     <AuthContext.Provider value={{ user, token, loading, login, signup, loginWithGoogle, logout }}>
       {children}

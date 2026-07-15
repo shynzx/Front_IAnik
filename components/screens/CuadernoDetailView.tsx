@@ -7,8 +7,11 @@ import MessageList from "@/components/chat/MessageList";
 import ChatInput from "@/components/chat/ChatInput";
 import type { Attachment } from "@/components/chat/ChatInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import InlineError from "@/components/ui/InlineError";
+import { useDraft } from "@/hooks/useDraft";
+import { useFeedback } from "@/providers/FeedbackProvider";
 import {
-  listNotebookFiles, uploadNotebookFile, deleteNotebookFile,
+  listNotebookFiles, uploadNotebookFileWithProgress, deleteNotebookFile,
   listNotebookChats, createNotebookChat, deleteNotebookChat,
   getChatMessages, sendChatMessage,
 } from "@/lib/api";
@@ -20,6 +23,8 @@ interface CuadernoDetailViewProps {
   onStudyClick: () => void;
   onSummariesClick: () => void;
   onStudyRoomsClick: () => void;
+  initialChatId?: number | null;
+  onChatChange?: (chatId: number | null) => void;
 }
 
 function toMsg(m: ChatMessage): Msg {
@@ -29,26 +34,35 @@ function toMsg(m: ChatMessage): Msg {
 const fileExt = (name: string) => name.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
 
 export default function CuadernoDetailView({
-  notebookId, onBack,
+  notebookId, onBack, initialChatId = null, onChatChange,
 }: CuadernoDetailViewProps) {
   const [chats, setChats] = useState<NotebookChat[]>([]);
   const [files, setFiles] = useState<NotebookFile[]>([]);
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
+  const [activeChatId, setActiveChatIdState] = useState<number | null>(initialChatId);
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
+  const { value: input, setValue: setInput, clear: clearDraft } = useDraft(`notebook:${notebookId}:chat:${activeChatId ?? "new"}`);
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [chatsError, setChatsError] = useState<string | null>(null);
+  const [filesError, setFilesError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [typing, setTyping] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"chats" | "docs">("chats");
   const [deletingFileId, setDeletingFileId] = useState<number | null>(null);
+  const [uploads, setUploads] = useState<Record<string, { name: string; progress: number; error?: string }>>({});
   const [confirmAction, setConfirmAction] = useState<{ type: "chat"; id: number; name: string } | { type: "file"; file: NotebookFile } | null>(null);
   const sendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadControllers = useRef(new Map<string, AbortController>());
+  const { notify } = useFeedback();
+  const setActiveChatId = useCallback((id: number | null) => { setActiveChatIdState(id); onChatChange?.(id); }, [onChatChange]);
 
-  const loadChats = useCallback(async () => { try { setChats(await listNotebookChats(notebookId)); } catch {} }, [notebookId]);
-  const loadFiles = useCallback(async () => { try { setFiles(await listNotebookFiles(notebookId)); } catch {} }, [notebookId]);
+  useEffect(() => { setActiveChatIdState(initialChatId); }, [initialChatId]);
+  useEffect(() => () => { uploadControllers.current.forEach((controller) => controller.abort()); }, []);
+
+  const loadChats = useCallback(async () => { try { setChats(await listNotebookChats(notebookId)); setChatsError(null); } catch (cause) { setChatsError(cause instanceof Error ? cause.message : "No se pudieron cargar los chats."); } }, [notebookId]);
+  const loadFiles = useCallback(async () => { try { setFiles(await listNotebookFiles(notebookId)); setFilesError(null); } catch (cause) { setFilesError(cause instanceof Error ? cause.message : "No se pudieron cargar los documentos."); } }, [notebookId]);
 
   useEffect(() => { void loadChats(); void loadFiles(); }, [loadChats, loadFiles]);
 
@@ -87,7 +101,7 @@ export default function CuadernoDetailView({
 
   const handleSend = async (e: FormEvent, attachments: Attachment[]) => {
     e.preventDefault();
-    if ((!input.trim() && attachments.length === 0) || sending) return;
+    if ((!input.trim() && attachments.length === 0) || sending) return false;
 
     sendingRef.current = true;
     let chatId = activeChatId;
@@ -97,11 +111,10 @@ export default function CuadernoDetailView({
         chatId = res.id;
         setActiveChatId(res.id);
         await loadChats();
-      } catch { sendingRef.current = false; return; }
+      } catch { sendingRef.current = false; return false; }
     }
 
     const content = input.trim();
-    setInput("");
     setSending(true);
     setChatError(null);
 
@@ -133,14 +146,17 @@ export default function CuadernoDetailView({
           setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: lastMsg.content } : m));
         }, 0);
       }
+      clearDraft();
+      return true;
     } catch (error) {
       // En caso de error, revertir el mensaje temporal del usuario
       setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
-      setInput(content);
       setChatError(error instanceof Error ? error.message : "No se pudo enviar el mensaje. Inténtalo nuevamente.");
+      return false;
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
     }
-    sendingRef.current = false;
-    setSending(false);
   };
 
   const handleTypingComplete = () => { setTyping(false); };
@@ -148,17 +164,33 @@ export default function CuadernoDetailView({
 
   const handleFiles = async (fileList: FileList | null) => {
     if (!fileList) return;
-    for (const file of Array.from(fileList)) {
-      try { await uploadNotebookFile(notebookId, file); } catch {}
-    }
+    const existingNames = new Set(files.map((file) => file.filename.toLowerCase()));
+    const candidates = Array.from(fileList).filter((file) => {
+      const validType = /\.(pdf|doc|docx)$/i.test(file.name);
+      if (!validType || file.size > 25 * 1024 * 1024 || existingNames.has(file.name.toLowerCase())) {
+        notify({ message: !validType ? `${file.name}: formato no compatible.` : file.size > 25 * 1024 * 1024 ? `${file.name}: supera 25 MB.` : `${file.name} ya existe en el cuaderno.`, tone: "error" });
+        return false;
+      }
+      existingNames.add(file.name.toLowerCase()); return true;
+    });
+    await Promise.all(candidates.map(async (file) => {
+      const id = `${file.name}-${file.size}-${file.lastModified}`;
+      const controller = new AbortController(); uploadControllers.current.set(id, controller);
+      setUploads((current) => ({ ...current, [id]: { name: file.name, progress: 0 } }));
+      try {
+        await uploadNotebookFileWithProgress(notebookId, file, (progress) => setUploads((current) => current[id] ? { ...current, [id]: { ...current[id], progress } } : current), controller.signal);
+        notify({ message: `${file.name} se subió correctamente.`, tone: "success" });
+        setUploads((current) => { const next = { ...current }; delete next[id]; return next; });
+      } catch (error) {
+        setUploads((current) => current[id] ? { ...current, [id]: { ...current[id], error: error instanceof Error ? error.message : "No se pudo subir." } } : current);
+      } finally { uploadControllers.current.delete(id); }
+    }));
     await loadFiles();
     setDragActive(false);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try { await uploadNotebookFile(notebookId, file); await loadFiles(); } catch {}
+    await handleFiles(e.target.files);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -220,6 +252,7 @@ export default function CuadernoDetailView({
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-2">
+          {(activeTab === "chats" ? chatsError : filesError) && <div className="mb-2"><InlineError message={(activeTab === "chats" ? chatsError : filesError)!} onRetry={() => void (activeTab === "chats" ? loadChats() : loadFiles())} /></div>}
           {activeTab === "chats" ? (
             filteredChats.length === 0 ? (
               <div className="text-center py-10 px-4">
@@ -292,6 +325,7 @@ export default function CuadernoDetailView({
 
         {/* Footer */}
         <div className="p-3 border-t border-white/[0.06]">
+          {Object.entries(uploads).map(([id, upload]) => <div key={id} className="mb-2 rounded-lg bg-white/[0.04] p-2 text-[11px] text-white/60"><div className="flex items-center justify-between gap-2"><span className="truncate">{upload.name}</span><button type="button" className="border-0 bg-transparent text-white/50" onClick={() => upload.error ? setUploads((current) => { const next = { ...current }; delete next[id]; return next; }) : uploadControllers.current.get(id)?.abort()}>{upload.error ? "Descartar" : `${upload.progress}% · Cancelar`}</button></div><div className="mt-1 h-1 overflow-hidden rounded bg-white/10"><span className="block h-full bg-[#826dd2] transition-[width]" style={{ width: `${upload.progress}%` }} /></div>{upload.error && <span className="mt-1 block text-red-300">{upload.error}</span>}</div>)}
           <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" multiple onChange={handleUpload} className="hidden" />
           <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-white/10 bg-transparent text-white/35 text-xs cursor-pointer hover:border-[rgba(130,109,210,0.3)] hover:text-white/50 transition-colors">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -339,7 +373,7 @@ export default function CuadernoDetailView({
 
             <div className="shrink-0 flex justify-center px-6 md:px-8 pb-6 pt-4 bg-gradient-to-t from-black/35 to-transparent max-md:px-3 max-md:pb-3 max-md:pt-2">
               <div className="w-full max-w-3xl">
-                {chatError && <p role="alert" className="m-0 mb-2 px-1 text-sm text-red-300">{chatError}</p>}
+                {chatError && <InlineError message={chatError} onRetry={() => setChatError(null)} />}
                 <ChatInput value={input} loading={sending} typing={typing} onChange={(value) => { setInput(value); if (chatError) setChatError(null); }} onSubmit={handleSend} />
               </div>
             </div>

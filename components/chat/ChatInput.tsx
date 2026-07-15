@@ -16,7 +16,7 @@ interface ChatInputProps {
   loading: boolean;
   typing: boolean;
   onChange: (value: string) => void;
-  onSubmit: (e: FormEvent, attachments: Attachment[]) => void;
+  onSubmit: (e: FormEvent, attachments: Attachment[]) => void | boolean | Promise<void | boolean>;
 }
 
 export default function ChatInput({
@@ -33,6 +33,8 @@ export default function ChatInput({
 
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const attachmentsRef = useRef(attachments);
   useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
 
@@ -59,7 +61,13 @@ export default function ChatInput({
   /* ── Add files — SOLO adjunta al mensaje, NO toca el panel de documentos ── */
   const addFiles = (files: FileList | null, kind: "image" | "document") => {
     if (!files) return;
-    const next: Attachment[] = Array.from(files).map(file => ({
+    setAttachmentError("");
+    const accepted = Array.from(files).filter((file) => {
+      if (file.size > 15 * 1024 * 1024) { setAttachmentError(`${file.name} supera el límite de 15 MB.`); return false; }
+      if (attachments.some((item) => item.name === file.name && item.file.size === file.size)) { setAttachmentError(`${file.name} ya está adjunto.`); return false; }
+      return true;
+    });
+    const next: Attachment[] = accepted.map(file => ({
       id:      `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       file,
       kind,
@@ -79,12 +87,19 @@ export default function ChatInput({
   };
 
   /* ── Submit ── */
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSend) return;
-    onSubmit(e, attachments);
-    setAttachments([]);
+    const result = await onSubmit(e, attachments);
+    if (result !== false) setAttachments([]);
   };
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`;
+  }, [value]);
 
   return (
     <div className="w-full">
@@ -218,18 +233,20 @@ export default function ChatInput({
             </div>
 
             {/* Text input */}
-            <input
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  if (canSend) handleSubmit(e as unknown as FormEvent);
+                  if (canSend) void handleSubmit(e as unknown as FormEvent);
                 }
               }}
               placeholder={attachments.length ? "Añade un mensaje..." : "Escribe tu mensaje a IAnik"}
               disabled={loading || typing}
-              className="flex-1 bg-transparent border-none outline-none font-light text-base text-white py-1.5 caret-[#826dd2]"
+              className="max-h-36 min-h-7 flex-1 resize-none overflow-y-auto bg-transparent border-none outline-none font-normal text-base leading-7 text-white py-0 caret-[#826dd2]"
             />
 
             {/* Count badge */}
@@ -253,17 +270,18 @@ export default function ChatInput({
           </div>
         </div>
       </form>
+      {attachmentError && <p role="alert" className="m-0 mt-2 px-1 text-xs text-red-300">{attachmentError}</p>}
 
       {/* Hidden file inputs — these feed ONLY the message attachments */}
       <input
         type="file" ref={photoRef} className="hidden"
         multiple accept="image/*"
-        onChange={(e) => addFiles(e.target.files, "image")}
+        onChange={(e) => { addFiles(e.target.files, "image"); e.currentTarget.value = ""; }}
       />
       <input
         type="file" ref={fileRef} className="hidden"
         multiple accept=".pdf,.doc,.docx"
-        onChange={(e) => addFiles(e.target.files, "document")}
+        onChange={(e) => { addFiles(e.target.files, "document"); e.currentTarget.value = ""; }}
       />
     </div>
   );
